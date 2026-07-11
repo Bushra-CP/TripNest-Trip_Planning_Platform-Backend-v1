@@ -1,17 +1,20 @@
 import type { Request, Response, NextFunction } from "express";
-import { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-import { AppError } from "../errors/app.error.js";
-import { env } from "../../config/env.js";
-import { STATUS_CODES } from "../constants/status.codes.js";
 import { ZodError } from "zod";
+import jwt from "jsonwebtoken";
+
+import { AppError } from "../shared/errors/app.error.js";
+import { STATUS_CODES } from "../shared/constants/status.codes.js";
+import { env } from "../config/env.js";
+
+const { JsonWebTokenError, TokenExpiredError } = jwt;
 
 export const errorMiddleware = (
-  err: Error,
+  err: unknown,
   _req: Request,
   res: Response,
   _next: NextFunction,
 ): Response => {
-  // Custom Application Errors
+  // Custom Application Error
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
@@ -19,15 +22,27 @@ export const errorMiddleware = (
     });
   }
 
-  // JWT Invalid Token
-  if (err instanceof JsonWebTokenError) {
-    return res.status(STATUS_CODES.UNAUTHORIZED).json({
+  // Zod Validation Error
+  if (err instanceof ZodError) {
+    return res.status(STATUS_CODES.BAD_REQUEST).json({
       success: false,
-      message: "Invalid token.",
+      message: "Validation failed",
+      errors: err.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      })),
     });
   }
 
-  // JWT Expired Token
+  // Invalid JWT
+  if (err instanceof JsonWebTokenError) {
+    return res.status(STATUS_CODES.UNAUTHORIZED).json({
+      success: false,
+      message: "Invalid token",
+    });
+  }
+
+  // Expired JWT
   if (err instanceof TokenExpiredError) {
     return res.status(STATUS_CODES.UNAUTHORIZED).json({
       success: false,
@@ -35,43 +50,41 @@ export const errorMiddleware = (
     });
   }
 
-  // MongoDB Duplicate Key Error
-  if ((err as { code?: number }).code === 11000) {
+  // Mongo Duplicate Key Error
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    err.code === 11000
+  ) {
+    const field = Object.keys((err as any).keyPattern)[0];
+
     return res.status(STATUS_CODES.CONFLICT).json({
       success: false,
-      message: "Resource already exists.",
+      message: `${field} already exists.`,
     });
   }
 
   // Mongoose Validation Error
-  if (err.name === "ValidationError") {
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "name" in err &&
+    err.name === "ValidationError"
+  ) {
     return res.status(STATUS_CODES.BAD_REQUEST).json({
       success: false,
-      message: err.message,
+      message: "Validation failed.",
     });
   }
 
-  //IF ZOD VALIDATION RELATED ERROR
-  if (err instanceof ZodError) {
-    return res.status(400).json({
-      success: false,
-      message: "Validation failed",
-      errors: err.issues.map((error) => ({
-        field: error.path.join("."),
-        message: error.message,
-      })),
-    });
-  }
-
-  // Log Unexpected Errors
-  if (env.NODE_ENV !== "production") {
+  // Log unknown errors in development
+  if (env.NODE_ENV === "development") {
     console.error(err);
   }
 
-  // Unknown Errors
   return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
     success: false,
     message: "Internal Server Error",
-    stack: env.NODE_ENV === "development" ? err.stack : undefined,
   });
 };
