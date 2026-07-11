@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,24 +22,40 @@
   },
   "homepage": "https://github.com/Bushra-CP/TripNest-Trip_Planning_Platform-Backend#readme",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "helmet": "^8.2.0",
+    "inversify": "^8.1.2",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.4.0",
     "mongoose": "^9.7.3",
+    "morgan": "^1.11.0",
+    "nodemailer": "^9.0.3",
+    "reflect-metadata": "^0.2.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^26.1.0",
+    "@types/nodemailer": "^8.0.1",
+    "eslint": "^10.7.0",
     "install": "^0.13.0",
     "npm": "^11.18.0",
+    "prettier": "^3.9.5",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.0",
     "typescript": "^6.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "bcrypt@6.0.0": true
   }
 }
