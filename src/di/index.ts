@@ -1,13 +1,17 @@
 import { Container } from "inversify";
-
-import { registerAuth } from "./auth.container";
-
-import { registerShared } from "./shared.container";
+import { registerIntegrationsContainer } from "./container/integrations.container.js";
+import { registerUserRegContainer } from "./container/userRegister.container.js";
+import { registerOTP } from "./container/otp.container.js";
+import { registerDatabase } from "./container/database.container.js";
 
 const container = new Container();
 
-registerShared(container);
+registerIntegrationsContainer(container);
 
-registerAuth(container);
+registerUserRegContainer(container);
+
+registerOTP(container);
+
+registerDatabase(container)
 
 export { container };

@@ -10,10 +10,16 @@ export const TYPES = {
   /* ==============================
    * REGISTER
    * ============================== */
-  UserRegisterRepository: Symbol.for("UserRegisterRepository"),
-  UserRegisterService: Symbol.for("UserRegisterService"),
-  UserRegisterController: Symbol.for("UserRegisterController"),
-  UserRegisterRoutes: Symbol.for("UserRegisterRoutes"),
+  UserRepository: Symbol.for("UserRepository"),
+  TravelerProfileRepository: Symbol.for("TravelerProfileRepository"),
+  TravelerProfileService: Symbol.for("TravelerProfileService"),
+  TravelerProfileController: Symbol.for("TravelerProfileController"),
+  TravelerProfileRoutes: Symbol.for("TravelerProfileRoutes"),
+
+  /* ==============================
+   * OTP
+   * ============================== */
+  OtpRepository: Symbol.for("OtpRepository"),
 
   /* ==============================
    * SHARED SERVICES (INTEGRATIONS)
@@ -26,5 +32,5 @@ export const TYPES = {
   /* ==============================
    * DATABASE
    * ============================== */
-  Database: Symbol.for("Database"),
+  DatabaseService: Symbol.for("DatabaseService"),
 } as const;

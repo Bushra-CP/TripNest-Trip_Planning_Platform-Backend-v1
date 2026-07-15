@@ -1,33 +1,31 @@
 import { Container } from "inversify";
 
-import { TYPES } from "./types";
+import { TYPES } from "../types.js";
+import type { IUserRepository } from "../../features/traveler/register/interfaces/IUserRepository.js";
+import { UserRepository } from "../../features/traveler/register/repositories/userRepository.js";
+import type { ITravelerProfileRepository } from "../../features/traveler/register/interfaces/ITravelerProfileRepository.js";
+import { TravelerProfileRepository } from "../../features/traveler/register/repositories/travelerProfileRepository.js";
+import type { ITravelerProfileService } from "../../features/traveler/register/interfaces/ITravelerProfileService.js";
+import { TravelerProfileService } from "../../features/traveler/register/services/traveler-profile.service.js";
+import { TravelerProfileController } from "../../features/traveler/register/controller/traveler-profile.controller.js";
+import { TravelerProfileRoutes } from "../../features/traveler/register/routes/traveler-profile.routes.js";
 
-import { IAuthRepository } from "../../features/auth/interfaces/IAuthRepository";
+export function registerUserRegContainer(container: Container): void {
+  container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
 
-import { AuthRepository } from "../../features/auth/repository/AuthRepository";
+  container
+    .bind<ITravelerProfileRepository>(TYPES.TravelerProfileRepository)
+    .to(TravelerProfileRepository);
 
-import { AuthService } from "../../features/auth/service/AuthService";
+  container
+    .bind<ITravelerProfileService>(TYPES.TravelerProfileService)
+    .to(TravelerProfileService);
 
-import { AuthController } from "../../features/auth/controller/AuthController";
+  container
+    .bind<TravelerProfileController>(TYPES.TravelerProfileController)
+    .to(TravelerProfileController);
 
-import { AuthRoutes } from "../../features/auth/routes/AuthRoutes";
-
-export function registerAuth(container: Container): void {
-
-    container
-        .bind<IAuthRepository>(TYPES.AuthRepository)
-        .to(AuthRepository);
-
-    container
-        .bind<AuthService>(TYPES.AuthService)
-        .to(AuthService);
-
-    container
-        .bind<AuthController>(TYPES.AuthController)
-        .to(AuthController);
-
-    container
-        .bind<AuthRoutes>(TYPES.AuthRoutes)
-        .to(AuthRoutes);
-
+  container
+    .bind<TravelerProfileRoutes>(TYPES.TravelerProfileRoutes)
+    .to(TravelerProfileRoutes);
 }

@@ -1,11 +1,17 @@
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
-import { notFoundMiddleware } from "./middleware/notfound.middleware.js";
-import { errorMiddleware } from "./middleware/error.middleware.js";
-import routes from "./app/routes/index.js";
+import { notFoundMiddleware } from "../shared/middleware/notfound.middleware.js";
+import { errorMiddleware } from "../shared/middleware/error.middleware.js";
+import { container } from "../di/index.js";
+import type { TravelerProfileRoutes } from "../features/traveler/register/routes/traveler-profile.routes.js";
+import { TYPES } from "../di/types.js";
 
 const app = express();
+
+const travelerProfileRoutes = container.get<TravelerProfileRoutes>(
+  TYPES.TravelerProfileRoutes,
+);
 
 app.use(
   cors({
@@ -16,7 +22,7 @@ app.use(
 
 app.use(express.json());
 
-app.use("/", routes);
+app.use("/TripNest", travelerProfileRoutes.router);
 
 // Route not found
 app.use(notFoundMiddleware);

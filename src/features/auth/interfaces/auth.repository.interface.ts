@@ -1,7 +1,7 @@
-import type { IUserModel } from "../../../../interfaces/model interfaces/user.model.interface.js";
+import type { IUser } from "../../traveler/register/interfaces/IUser.js";
 
 export interface IAuthRepository {
-  findByEmail(email: string): Promise<IUserModel | null>;
+  findByEmail(email: string): Promise<IUser | null>;
 
-  findById(userId: string): Promise<IUserModel | null>;
+  findById(userId: string): Promise<IUser | null>;
 }

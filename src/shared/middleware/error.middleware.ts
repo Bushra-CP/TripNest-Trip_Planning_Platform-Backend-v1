@@ -2,9 +2,9 @@ import type { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import jwt from "jsonwebtoken";
 
-import { AppError } from "../shared/errors/app.error.js";
-import { STATUS_CODES } from "../shared/constants/status.codes.js";
-import { env } from "../config/env.js";
+import { AppError } from "../errors/app.error.js";
+import { STATUS_CODES } from "../constants/status.codes.js"
+import { env } from "../../config/env.js";
 
 const { JsonWebTokenError, TokenExpiredError } = jwt;
 
