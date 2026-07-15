@@ -5,31 +5,30 @@ SignOptions is a TypeScript type from jsonwebtoken that defines the valid config
 such as expiresIn, issuer, audience, and algorithm. It provides type safety and better IDE autocompletion 
 when creating JWTs.
 */
-import { env } from "../config/env.js";
+import { injectable } from "inversify";
 
-export interface TokenPayload {
-  userId: string;
-  role: string;
-}
+import { env } from "../../config/env.js";
+import type { IJwtService, JwtPayload } from "./IJwtService.js";
 
-export class JwtService {
-  static generateAccessToken(payload: TokenPayload): string {
+@injectable()
+export class JwtService implements IJwtService {
+  generateAccessToken(payload: JwtPayload): string {
     return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
       expiresIn: env.JWT_ACCESS_EXPIRY,
     } as SignOptions);
   }
 
-  static generateRefreshToken(payload: TokenPayload): string {
+  generateRefreshToken(payload: JwtPayload): string {
     return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
       expiresIn: env.JWT_REFRESH_EXPIRY,
     } as SignOptions);
   }
 
-  static verifyAccessToken(token: string): TokenPayload {
-    return jwt.verify(token, env.JWT_ACCESS_SECRET) as TokenPayload;
+  verifyAccessToken(token: string): JwtPayload {
+    return jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
   }
 
-  static verifyRefreshToken(token: string): TokenPayload {
-    return jwt.verify(token, env.JWT_REFRESH_SECRET) as TokenPayload;
+  verifyRefreshToken(token: string): JwtPayload {
+    return jwt.verify(token, env.JWT_REFRESH_SECRET) as JwtPayload;
   }
 }

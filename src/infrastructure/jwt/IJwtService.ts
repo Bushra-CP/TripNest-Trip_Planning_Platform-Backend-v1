@@ -1,0 +1,16 @@
+import type { UserRole } from "../../enums/user-role.enum.js";
+
+export interface JwtPayload {
+  userId: string;
+  role: UserRole;
+}
+
+export interface IJwtService {
+  generateAccessToken(payload: JwtPayload): string;
+
+  generateRefreshToken(payload: JwtPayload): string;
+
+  verifyAccessToken(token: string): JwtPayload;
+
+  verifyRefreshToken(token: string): JwtPayload;
+}

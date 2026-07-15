@@ -12,6 +12,8 @@ export const env = {
   JWT_REFRESH_EXPIRY: process.env.JWT_REFRESH_EXPIRY ?? "7d",
   BCRYPT_SALT: Number(process.env.BCRYPT_SALT ?? 10),
   CLIENT_URL: process.env.CLIENT_URL,
+  MAIL_USERNAME: process.env.MAIL_USERNAME,
+  MAIL_PASSWORD: process.env.MAIL_PASSWORD,
 };
 
 // `.env` vs `config/env.ts`

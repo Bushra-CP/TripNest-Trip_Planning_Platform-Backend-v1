@@ -1,9 +1,11 @@
-export interface VerifyRegistrationResponseDto {
+import type { UserRole } from "../../../../enums/user-role.enum.js";
+
+export interface AuthResponseDto {
   user: {
     id: string;
-    name: string;
+    fullName: string;
     email: string;
-    role: string;
+    role: UserRole;
   };
 
   accessToken: string;

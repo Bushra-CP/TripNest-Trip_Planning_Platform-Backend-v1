@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-import type { IUser } from "../interfaces/model interfaces/IUser.js";
 import { UserRole } from "../../../enums/user-role.enum.js";
 import { AuthProvider } from "../../../enums/auth-provider.enum.js";
+import type { IUser } from "../../traveler/register/interfaces/IUser.js";
 
 const userSchema = new Schema<IUser>(
   {
