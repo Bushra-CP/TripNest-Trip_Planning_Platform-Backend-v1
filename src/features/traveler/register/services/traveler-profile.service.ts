@@ -17,10 +17,10 @@ import { AuthProvider } from "../../../../enums/auth-provider.enum.js";
 import { UserRole } from "../../../../enums/user-role.enum.js";
 import { AuthMapper } from "../mapper/auth.mapper.js";
 import type { VerifyRegistrationRequestDto } from "../dtos/verify-registration-request.dto.js";
-import type { AuthResponseDto } from "../dtos/verify-registration-response.dto.js";
 import type { ResendOtpRequestDto } from "../dtos/resend-otp-request.dto.js";
 import type { ResendOtpResponseDto } from "../dtos/resend-otp-response.dto.js";
 import type { ITravelerProfileService } from "../interfaces/ITravelerProfileService.js";
+import type { IAuthResult } from "../../../auth/interfaces/IAuthResult.js";
 
 injectable();
 export class TravelerProfileService implements ITravelerProfileService {
@@ -54,8 +54,8 @@ export class TravelerProfileService implements ITravelerProfileService {
   async register(payload: RegisterRequestDto): Promise<RegisterResponseDto> {
     const { fullName, email, password, phone } = payload;
 
-    console.log(payload)
-    console.log(password)
+    console.log(payload);
+    console.log(password);
 
     //check whether email already exists
     const existingUser = await this.userRepository.findByEmail(email);
@@ -136,7 +136,7 @@ export class TravelerProfileService implements ITravelerProfileService {
   //TO MAKE isVerified TRUE AFTER OTP VERIFICATION
   async verifyRegistration(
     payload: VerifyRegistrationRequestDto,
-  ): Promise<AuthResponseDto> {
+  ): Promise<IAuthResult> {
     const { userId, otp } = payload;
 
     //find user
@@ -197,11 +197,18 @@ export class TravelerProfileService implements ITravelerProfileService {
       role: updatedUser.role,
     });
 
+    //generate refresh token
+    const refreshToken = this.jwtService.generateRefreshToken({
+      userId: updatedUser._id.toString(),
+      role: updatedUser.role,
+    });
+
     //return response
     return AuthMapper.toAuthResponse(
       updatedUser,
       travelerProfile,
       accessToken,
+      refreshToken,
       MESSAGES.REGISTRATION_COMPLETED_SUCCESSFULLY,
     );
   }

@@ -9,4 +9,8 @@ export const MESSAGES = {
   USER_CANNOT_VERIFIED: "Unable to verify user.",
   REGISTRATION_COMPLETED_SUCCESSFULLY: "Registration completed successfully.",
   OTP_RESENT: "A new OTP has been sent to your registered email address.",
+  INVALID_EMAIL: "Invalid email or password",
+  VERIFY_EMAIL: "Please verify your email before logging in.",
+  ACCOUNT_DEACTIVATED: "Your account has been deactivated.",
+  REFRESH_TOKEN_MISSING: "Refresh token missing",
 };

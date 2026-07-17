@@ -18,9 +18,11 @@ export class UserRepository implements IUserRepository {
   }
 
   async create(user: Partial<IUser>, session?: ClientSession): Promise<IUser> {
-    const createdUser = await UserModel.create([user], { session });
+    const createdUser = new UserModel(user);
 
-    return createdUser[0];
+    await createdUser.save(session ? { session } : undefined);
+
+    return createdUser;
   }
 
   async update(id: string, user: Partial<IUser>): Promise<IUser | null> {

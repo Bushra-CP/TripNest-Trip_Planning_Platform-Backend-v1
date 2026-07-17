@@ -6,6 +6,8 @@ import type { RegisterRequestDto } from "../dtos/register-request.dto.js";
 import { STATUS_CODES } from "../../../../shared/constants/status.codes.js";
 import type { VerifyRegistrationRequestDto } from "../dtos/verify-registration-request.dto.js";
 import type { ResendOtpRequestDto } from "../dtos/resend-otp-request.dto.js";
+import { refreshTokenCookieOptions } from "../../../../config/cookie.config.js";
+import type { AuthResponseDto } from "../dtos/verify-registration-response.dto.js";
 
 @injectable()
 export class TravelerProfileController {
@@ -21,7 +23,7 @@ export class TravelerProfileController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      console.log(req.body);
+      // console.log(req.body);
 
       const payload = req.body as RegisterRequestDto;
 
@@ -48,9 +50,21 @@ export class TravelerProfileController {
       const response =
         await this.travelerProfileService.verifyRegistration(payload);
 
+      const data: AuthResponseDto = {
+        user: response.user,
+        accessToken: response.accessToken,
+        message: response.message,
+      };
+
+      res.cookie(
+        "refreshToken",
+        response.refreshToken,
+        refreshTokenCookieOptions,
+      );
+
       res.status(STATUS_CODES.OK).json({
         success: true,
-        data: response,
+        data,
       });
     } catch (error) {
       next(error);

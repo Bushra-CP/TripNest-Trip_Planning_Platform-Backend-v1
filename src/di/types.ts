@@ -2,10 +2,10 @@ export const TYPES = {
   /* ==============================
    * AUTH
    * ============================== */
-  //   AuthRepository: Symbol.for("AuthRepository"),
-  //   AuthService: Symbol.for("AuthService"),
-  //   AuthController: Symbol.for("AuthController"),
-  //   AuthRoutes: Symbol.for("AuthRoutes"),
+  AuthRepository: Symbol.for("AuthRepository"),
+  AuthService: Symbol.for("AuthService"),
+  AuthController: Symbol.for("AuthController"),
+  AuthRoutes: Symbol.for("AuthRoutes"),
 
   /* ==============================
    * REGISTER

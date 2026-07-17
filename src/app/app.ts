@@ -5,6 +5,8 @@ import { notFoundMiddleware } from "../shared/middleware/notfound.middleware.js"
 import { errorMiddleware } from "../shared/middleware/error.middleware.js";
 import { container } from "../di/index.js";
 import type { TravelerProfileRoutes } from "../features/traveler/register/routes/traveler-profile.routes.js";
+import type { AuthRoutes } from "../features/auth/routes/auth.routes.js";
+
 import { TYPES } from "../di/types.js";
 
 const app = express();
@@ -12,6 +14,8 @@ const app = express();
 const travelerProfileRoutes = container.get<TravelerProfileRoutes>(
   TYPES.TravelerProfileRoutes,
 );
+
+const authRoute = container.get<AuthRoutes>(TYPES.AuthRoutes);
 
 app.use(
   cors({
@@ -22,7 +26,8 @@ app.use(
 
 app.use(express.json());
 
-app.use("/TripNest", travelerProfileRoutes.router);
+app.use("/", travelerProfileRoutes.router);
+app.use("/", authRoute.router);
 
 // Route not found
 app.use(notFoundMiddleware);
