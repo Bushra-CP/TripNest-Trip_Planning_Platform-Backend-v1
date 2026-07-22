@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import type { IOtpService } from "./integrations interfaces/IOtpService.js";
+import { IOtpService } from "./IOtpService";
 
 @injectable()
 export class OtpService implements IOtpService {

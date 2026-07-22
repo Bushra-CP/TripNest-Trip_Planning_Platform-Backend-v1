@@ -1,6 +1,6 @@
 import { injectable } from "inversify";
-import type { IDatabaseService } from "./IDatabaseService.js";
-import type { ClientSession } from "mongoose";
+import { IDatabaseService } from "./IDatabaseService.js";
+import { ClientSession } from "mongoose";
 import mongoose from "mongoose";
 
 @injectable()

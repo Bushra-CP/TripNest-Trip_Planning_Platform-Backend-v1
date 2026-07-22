@@ -1,10 +1,8 @@
-import type { Container } from "inversify";
-import type { IOtpRepository } from "../../features/traveler/otp/interfaces/IOtpRepository.js";
+import { Container } from "inversify";
+import { IOtpRepository } from "../../interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
 import { TYPES } from "../types.js";
-import { OtpRepository } from "../../features/traveler/otp/repository/otpRepository.js";
+import { OtpRepository } from "../../repositories/user(traveler)/otp/otpRepository.js";
 
 export function registerOTP(container: Container): void {
-  container
-    .bind<IOtpRepository>(TYPES.OtpRepository)
-    .to(OtpRepository);
+  container.bind<IOtpRepository>(TYPES.OtpRepository).to(OtpRepository);
 }
