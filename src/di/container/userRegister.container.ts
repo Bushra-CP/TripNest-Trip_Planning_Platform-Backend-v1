@@ -1,14 +1,14 @@
 import { Container } from "inversify";
 
 import { TYPES } from "../types.js";
-import type { IUserRepository } from "../../features/traveler/register/interfaces/IUserRepository.js";
-import { UserRepository } from "../../features/traveler/register/repositories/userRepository.js";
-import type { ITravelerProfileRepository } from "../../features/traveler/register/interfaces/ITravelerProfileRepository.js";
-import { TravelerProfileRepository } from "../../features/traveler/register/repositories/travelerProfileRepository.js";
-import type { ITravelerProfileService } from "../../features/traveler/register/interfaces/ITravelerProfileService.js";
-import { TravelerProfileService } from "../../features/traveler/register/services/traveler-profile.service.js";
-import { TravelerProfileController } from "../../features/traveler/register/controller/traveler-profile.controller.js";
-import { TravelerProfileRoutes } from "../../features/traveler/register/routes/traveler-profile.routes.js";
+import { IUserRepository } from "../../interfaces/IRepository/user(traveler)/register/IUserRepository.js";
+import { UserRepository } from "../../repositories/user(traveler)/register/userRepository.js";
+import { ITravelerProfileRepository } from "../../interfaces/IRepository/user(traveler)/register/ITravelerProfileRepository.js";
+import { TravelerProfileRepository } from "../../repositories/user(traveler)/register/travelerProfileRepository.js";
+import { ITravelerProfileService } from "../../interfaces/IServices/user(traveler)/ITravelerProfileService.js";
+import { TravelerProfileController } from "../../controller/user(traveler)/register/traveler-profile.controller.js";
+import { TravelerProfileService } from "../../services/user(traveler)/register/traveler-profile.service.js";
+import { TravelerProfileRoutes } from "../../routes/user(traveler)/traveler-profile.routes.js";
 
 export function registerUserRegContainer(container: Container): void {
   container.bind<IUserRepository>(TYPES.UserRepository).to(UserRepository);
@@ -17,15 +17,11 @@ export function registerUserRegContainer(container: Container): void {
     .bind<ITravelerProfileRepository>(TYPES.TravelerProfileRepository)
     .to(TravelerProfileRepository);
 
-  container
-    .bind<ITravelerProfileService>(TYPES.TravelerProfileService)
-    .to(TravelerProfileService);
+  container.bind<ITravelerProfileService>(TYPES.TravelerProfileService).to(TravelerProfileService);
 
   container
     .bind<TravelerProfileController>(TYPES.TravelerProfileController)
     .to(TravelerProfileController);
 
-  container
-    .bind<TravelerProfileRoutes>(TYPES.TravelerProfileRoutes)
-    .to(TravelerProfileRoutes);
+  container.bind<TravelerProfileRoutes>(TYPES.TravelerProfileRoutes).to(TravelerProfileRoutes);
 }

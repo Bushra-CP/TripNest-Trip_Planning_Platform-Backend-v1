@@ -1,4 +1,4 @@
-import type { CookieOptions } from "express";
+import { CookieOptions } from "express";
 import { env } from "./env.js";
 
 export const refreshTokenCookieOptions: CookieOptions = {

@@ -1,8 +1,8 @@
-import app from "./app/app.js";
-import { connectDB } from "./config/db.js";
-import { env } from "./config/env.js";
+import app from "./app/app";
+import { connectDB } from "./config/db";
+import { env } from "./config/env";
 
-const startServer = async () => {
+const startServer = async (): Promise<void> => {
   try {
     await connectDB();
 
@@ -10,8 +10,8 @@ const startServer = async () => {
       console.log(`Server running on port ${env.PORT}`);
     });
   } catch (error) {
-    console.error("Server failed to start:", error);
-    process.exit(1);
+    console.error("Application startup failed:", error);
+    throw error;
   }
 };
 

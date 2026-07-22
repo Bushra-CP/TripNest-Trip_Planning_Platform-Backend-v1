@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import type { SignOptions } from "jsonwebtoken";
+import { SignOptions } from "jsonwebtoken";
 /*
 SignOptions is a TypeScript type from jsonwebtoken that defines the valid configuration options for jwt.sign(), 
 such as expiresIn, issuer, audience, and algorithm. It provides type safety and better IDE autocompletion 
@@ -8,7 +8,7 @@ when creating JWTs.
 import { injectable } from "inversify";
 
 import { env } from "../../config/env.js";
-import type { IJwtService, JwtPayload } from "./IJwtService.js";
+import { IJwtService, JwtPayload } from "./IJwtService.js";
 
 @injectable()
 export class JwtService implements IJwtService {

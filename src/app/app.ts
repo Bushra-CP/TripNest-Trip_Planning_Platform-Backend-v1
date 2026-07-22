@@ -4,16 +4,14 @@ import cors from "cors";
 import { notFoundMiddleware } from "../shared/middleware/notfound.middleware.js";
 import { errorMiddleware } from "../shared/middleware/error.middleware.js";
 import { container } from "../di/index.js";
-import type { TravelerProfileRoutes } from "../features/traveler/register/routes/traveler-profile.routes.js";
-import type { AuthRoutes } from "../features/auth/routes/auth.routes.js";
 
 import { TYPES } from "../di/types.js";
+import { TravelerProfileRoutes } from "../routes/user(traveler)/traveler-profile.routes.js";
+import { AuthRoutes } from "../routes/auth/auth.routes.js";
 
 const app = express();
 
-const travelerProfileRoutes = container.get<TravelerProfileRoutes>(
-  TYPES.TravelerProfileRoutes,
-);
+const travelerProfileRoutes = container.get<TravelerProfileRoutes>(TYPES.TravelerProfileRoutes);
 
 const authRoute = container.get<AuthRoutes>(TYPES.AuthRoutes);
 

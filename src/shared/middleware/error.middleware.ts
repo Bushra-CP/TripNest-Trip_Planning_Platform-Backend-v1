@@ -1,10 +1,12 @@
-import type { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import jwt from "jsonwebtoken";
 
 import { AppError } from "../errors/app.error.js";
-import { STATUS_CODES } from "../constants/status.codes.js"
+import { STATUS_CODES } from "../../enums/status.codes.enum.js";
 import { env } from "../../config/env.js";
+import { ResponseHandler } from "../http/responseHandler.js";
+import { ErrorMessages, Messages, ValidationMessages } from "../../enums/messages.enum.js";
 
 const { JsonWebTokenError, TokenExpiredError } = jwt;
 
@@ -13,78 +15,66 @@ export const errorMiddleware = (
   _req: Request,
   res: Response,
   _next: NextFunction,
-): Response => {
-  // Custom Application Error
+): void => {
+  /*-----------------------
+  Custom Application Error
+  ------------------------*/
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-    });
+    ResponseHandler.error(res, err.statusCode, err.message);
   }
 
-  // Zod Validation Error
+  /*-----------------------
+  Zod Validation Error
+  ------------------------*/
+
   if (err instanceof ZodError) {
-    return res.status(STATUS_CODES.BAD_REQUEST).json({
-      success: false,
-      message: "Validation failed",
-      errors: err.issues.map((issue) => ({
-        field: issue.path.join("."),
-        message: issue.message,
-      })),
-    });
+    ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ValidationMessages.VALIDATION_FAILDED);
   }
 
-  // Invalid JWT
+  /*-----------------------
+  Invalid JWT
+  ------------------------*/
   if (err instanceof JsonWebTokenError) {
-    return res.status(STATUS_CODES.UNAUTHORIZED).json({
-      success: false,
-      message: "Invalid token",
-    });
+    ResponseHandler.error(res, STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_TOKEN);
   }
 
-  // Expired JWT
+  /*-----------------------
+  Expired JWT
+  ------------------------*/
+
   if (err instanceof TokenExpiredError) {
-    return res.status(STATUS_CODES.UNAUTHORIZED).json({
-      success: false,
-      message: "Token expired. Please login again.",
-    });
+    ResponseHandler.error(res, STATUS_CODES.UNAUTHORIZED, Messages.TOKEN_EXPIRED);
   }
 
-  // Mongo Duplicate Key Error
-  if (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    err.code === 11000
-  ) {
+  /*-----------------------
+  Mongo Duplicate Key Error
+  ------------------------*/
+
+  if (typeof err === "object" && err !== null && "code" in err && err.code === 11000) {
     const field = Object.keys((err as any).keyPattern)[0];
 
-    return res.status(STATUS_CODES.CONFLICT).json({
-      success: false,
-      message: `${field} already exists.`,
-    });
+    ResponseHandler.error(res, STATUS_CODES.CONFLICT, `${field} already exists.`);
   }
 
-  // Mongoose Validation Error
-  if (
-    typeof err === "object" &&
-    err !== null &&
-    "name" in err &&
-    err.name === "ValidationError"
-  ) {
-    return res.status(STATUS_CODES.BAD_REQUEST).json({
-      success: false,
-      message: "Validation failed.",
-    });
+  /*-----------------------
+  Mongoose Validation Error
+  ------------------------*/
+
+  if (typeof err === "object" && err !== null && "name" in err && err.name === "ValidationError") {
+    ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ValidationMessages.VALIDATION_FAILDED);
   }
 
-  // Log unknown errors in development
+  /*-----------------------
+  Log unknown errors in development
+  ------------------------*/
+
   if (env.NODE_ENV === "development") {
     console.error(err);
   }
 
-  return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-    success: false,
-    message: "Internal Server Error",
-  });
+  ResponseHandler.error(
+    res,
+    STATUS_CODES.INTERNAL_SERVER_ERROR,
+    ErrorMessages.INTERNAL_SERVER_ERROR,
+  );
 };

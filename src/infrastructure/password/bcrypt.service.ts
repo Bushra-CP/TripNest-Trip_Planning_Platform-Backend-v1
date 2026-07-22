@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { injectable } from "inversify";
-import type { IPasswordService } from "./IPasswordService.js";
+import { IPasswordService } from "./IPasswordService.js";
 import { env } from "../../config/env.js";
 
 @injectable()
