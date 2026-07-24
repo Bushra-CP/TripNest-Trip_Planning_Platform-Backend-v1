@@ -10,6 +10,8 @@ import { JwtService } from "../../infrastructure/jwt/jwt.service.js";
 import { MailService } from "../../infrastructure/mail/email.service.js";
 import { OtpService } from "../../infrastructure/otp/otp.service.js";
 import { PasswordService } from "../../infrastructure/password/bcrypt.service.js";
+import { IGoogleService } from "@/infrastructure/google/IGoogleService";
+import { GoogleService } from "@/infrastructure/google/google.service";
 
 export function registerIntegrationsContainer(container: Container): void {
   container.bind<IJwtService>(TYPES.JwtService).to(JwtService).inSingletonScope();
@@ -19,4 +21,6 @@ export function registerIntegrationsContainer(container: Container): void {
   container.bind<IOtpService>(TYPES.OtpService).to(OtpService).inSingletonScope();
 
   container.bind<IPasswordService>(TYPES.PasswordService).to(PasswordService).inSingletonScope();
+
+  container.bind<IGoogleService>(TYPES.GoogleService).to(GoogleService);
 }

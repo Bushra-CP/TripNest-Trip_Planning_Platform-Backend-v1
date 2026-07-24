@@ -14,6 +14,7 @@ export const env = {
   CLIENT_URL: process.env.CLIENT_URL,
   MAIL_USERNAME: process.env.MAIL_USERNAME,
   MAIL_PASSWORD: process.env.MAIL_PASSWORD,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
 };
 
 // `.env` vs `config/env.ts`

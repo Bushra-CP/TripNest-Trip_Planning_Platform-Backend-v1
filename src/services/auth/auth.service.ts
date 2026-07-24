@@ -11,6 +11,13 @@ import { AuthMapper } from "../../mapper/auth.mapper.js";
 import { RefreshTokenResponseDto } from "../../dtos/auth/refresh-token-response.dto.js";
 import { IAuthService } from "../../interfaces/IServices/auth/IAuth.service.js";
 import { ErrorMessages, Messages, SuccessMessages } from "../../enums/messages.enum.js";
+import { IGoogleService } from "@/infrastructure/google/IGoogleService.js";
+import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto.js";
+import { AuthProvider } from "@/enums/auth-provider.enum.js";
+import { UserRole } from "@/enums/user-role.enum.js";
+import { IDatabaseService } from "@/infrastructure/database/IDatabaseService.js";
+import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/register/ITravelerProfileRepository.js";
+import { IUser } from "@/interfaces/IModel/IUser.js";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -18,11 +25,20 @@ export class AuthService implements IAuthService {
     @inject(TYPES.AuthRepository)
     private readonly authRepository: IAuthRepository,
 
+    @inject(TYPES.TravelerProfileRepository)
+    private readonly travelerProfileRepository: ITravelerProfileRepository,
+
     @inject(TYPES.JwtService)
     private readonly jwtService: IJwtService,
 
     @inject(TYPES.PasswordService)
     private readonly passwordService: IPasswordService,
+
+    @inject(TYPES.DatabaseService)
+    private readonly databaseService: IDatabaseService,
+
+    @inject(TYPES.GoogleService)
+    private readonly googleService: IGoogleService,
   ) {}
 
   /*-----------------------
@@ -75,7 +91,103 @@ export class AuthService implements IAuthService {
       getProfile,
       accessToken,
       refreshToken,
-      SuccessMessages.REGISTRATION_COMPLETED_SUCCESSFULLY,
+      SuccessMessages.LOGIN_SUCCESS,
+    );
+  }
+
+  /*-----------------------
+  google auth logic
+  ------------------------*/
+  async googleAuth(data: GoogleAuthRequestDTO): Promise<IAuthResult> {
+    ///////////get google user////////////
+
+    // console.log(`in service:${data.googleAcessToken}`);
+
+    const googleUser = await this.googleService.getUserInfo(data.googleAcessToken);
+
+    const { email, sub, name, picture } = googleUser;
+
+    ///////////check if user already exists////////////
+    const existingUser = await this.authRepository.findByEmail(email);
+
+    ///////////validation checks for existing user////////////
+    if (existingUser) {
+      if (existingUser.provider === AuthProvider.LOCAL) {
+        throw new AppError(STATUS_CODES.CONFLICT, ErrorMessages.GOOGLE_ACCOUNT_CONFLICT);
+      }
+
+      if (!existingUser.isActive) {
+        throw new AppError(
+          STATUS_CODES.FORBIDDEN,
+
+          Messages.ACCOUNT_DEACTIVATED,
+        );
+      }
+    }
+
+    ///////////if user not exists////////////
+    let user: IUser;
+
+    if (existingUser) {
+      user = existingUser;
+    } else {
+      user = await this.databaseService.executeTransaction(async (session) => {
+        const createdUser = await this.authRepository.create(
+          {
+            email,
+            provider: AuthProvider.GOOGLE,
+            providerId: sub,
+            role: UserRole.TRAVELER,
+            isVerified: true,
+            isActive: true,
+          },
+          session,
+        );
+
+        await this.travelerProfileRepository.create(
+          {
+            userId: createdUser._id,
+            fullName: name,
+            profileImage: picture,
+            rewardPoints: 0,
+            socialPresence: [],
+          },
+          session,
+        );
+
+        return createdUser;
+      });
+    }
+
+    ///////////get user profile////////////
+    const profile = await this.authRepository.getProfile(user._id.toString());
+
+    if (!profile) {
+      throw new AppError(
+        STATUS_CODES.NOT_FOUND,
+
+        ErrorMessages.PROFILE_NOT_FOUND,
+      );
+    }
+
+    //////////////generate access token//////////////////
+    const accessToken = this.jwtService.generateAccessToken({
+      userId: user._id.toString(),
+      role: user.role,
+    });
+
+    ///////////////generate refresh token//////////////////
+    const refreshToken = this.jwtService.generateRefreshToken({
+      userId: user._id.toString(),
+      role: user.role,
+    });
+
+    return AuthMapper.toAuthResponse(
+      user,
+      profile,
+      accessToken,
+      refreshToken,
+      SuccessMessages.LOGIN_SUCCESS,
     );
   }
 

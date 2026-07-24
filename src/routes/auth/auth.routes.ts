@@ -4,6 +4,7 @@ import { TYPES } from "../../di/types";
 import { AuthController } from "../../controller/auth/auth.controller";
 import { validate } from "../../shared/middleware/validate.middleware";
 import { loginSchema } from "../../validation/auth/login.schema";
+import { googleAuthSchema } from "@/validation/auth/google-auth.schema";
 
 @injectable()
 export class AuthRoutes {
@@ -23,6 +24,12 @@ export class AuthRoutes {
       "/login",
       validate(loginSchema),
       this.authController.login.bind(this.authController),
+    );
+
+    this.router.post(
+      "/google",
+      validate(googleAuthSchema),
+      this.authController.googleAuth.bind(this.authController),
     );
 
     this.router.post("/refresh-token", this.authController.refreshToken.bind(this.authController));

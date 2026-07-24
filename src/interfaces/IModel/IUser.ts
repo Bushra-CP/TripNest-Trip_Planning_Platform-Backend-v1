@@ -4,7 +4,7 @@ import { UserRole } from "../../enums/user-role.enum.js";
 
 export interface IUser extends Document {
   email: string;
-  password: string;
+  password?: string;
   provider: AuthProvider;
   providerId: string;
   role: UserRole;

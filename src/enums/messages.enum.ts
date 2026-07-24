@@ -8,6 +8,7 @@ export enum SuccessMessages {
   REGISTER_REQUEST_RESPONSE = "OTP sent successfully. Please verify your email.",
   REGISTRATION_COMPLETED_SUCCESSFULLY = "Registration completed successfully.",
   OTP_RESENT = "A new OTP has been sent to your registered email address.",
+  LOGIN_SUCCESS = "Login Successful",
 }
 
 export enum ErrorMessages {
@@ -22,6 +23,8 @@ export enum ErrorMessages {
   INVALID_EMAIL = "Invalid email or password",
   VERIFY_EMAIL = "Please verify your email before logging in.",
   INVALID_TOKEN = "Invalid token",
+  INVALID_GOOGLE_TOKEN = "Invalid Google access token",
+  GOOGLE_ACCOUNT_CONFLICT="Account exists that is not registered through Google. Please login with email/password."
 }
 
 export enum ValidationMessages {
@@ -37,4 +40,5 @@ export enum ValidationMessages {
   ENTER_VALID_PHONE = "Please enter a valid Indian mobile number",
   USERID_REQUIRED = "User ID is required",
   OTP_CONSTRAINT = "OTP must be exactly 6 digits",
+  GOOGLE_CREDENTIAL_REQUIRED = "Google credential is required",
 }
