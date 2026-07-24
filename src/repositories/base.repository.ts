@@ -42,7 +42,7 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
   async updateOne(filter: QueryFilter<T>, data: UpdateQuery<T>): Promise<T | null> {
     return this.model
       .findOneAndUpdate(filter, data, {
-        new: true,
+        returnDocument: "after",
       })
       .exec();
   }

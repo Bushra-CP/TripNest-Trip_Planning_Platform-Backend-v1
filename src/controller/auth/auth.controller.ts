@@ -6,6 +6,7 @@ import { refreshTokenCookieOptions } from "../../config/cookie.config.js";
 import { STATUS_CODES } from "../../enums/status.codes.enum.js";
 import { IAuthService } from "../../interfaces/IServices/auth/IAuth.service.js";
 import { AuthResponseDto } from "../../dtos/user(traveler)/register/verify-registration-response.dto.js";
+import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto.js";
 
 @injectable()
 export class AuthController {
@@ -14,6 +15,7 @@ export class AuthController {
     private readonly authService: IAuthService,
   ) {}
 
+  //////////LOGIN/////////
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       console.log(req.body);
@@ -39,6 +41,33 @@ export class AuthController {
     }
   }
 
+  //////////GOOGLE AUTH/////////
+  async googleAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const payload = req.body as GoogleAuthRequestDTO;
+
+      // console.log(payload);
+
+      const response = await this.authService.googleAuth(payload);
+
+      const data: AuthResponseDto = {
+        user: response.user,
+        accessToken: response.accessToken,
+        message: response.message,
+      };
+
+      res.cookie("refreshToken", response.refreshToken, refreshTokenCookieOptions);
+
+      res.status(STATUS_CODES.OK).json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //////////REFRESH TOKEN/////////
   async refreshToken(req: Request, res: Response) {
     const refreshToken = req.cookies.refreshToken;
 
@@ -54,6 +83,7 @@ export class AuthController {
     });
   }
 
+  //////////LOGOUT/////////
   async logout(req: Request, res: Response): Promise<void> {
     res.clearCookie("refreshToken", refreshTokenCookieOptions);
 

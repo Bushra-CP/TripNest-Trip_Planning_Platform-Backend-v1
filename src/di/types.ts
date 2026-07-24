@@ -28,6 +28,7 @@ export const TYPES = {
   MailService: Symbol.for("MailService"),
   OtpService: Symbol.for("OtpService"),
   PasswordService: Symbol.for("PasswordService"),
+  GoogleService: Symbol.for("GoogleService"),
 
   /* ==============================
    * DATABASE

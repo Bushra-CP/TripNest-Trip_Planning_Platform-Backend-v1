@@ -104,9 +104,6 @@ export class TravelerProfileService implements ITravelerProfileService {
     ///////////////hash otp//////////////////
     const hashedOtp = await this.passwordService.hash(otp);
 
-    ///////////////delete previous otp//////////////////
-    await this.otpRepository.deleteByUserId(createdUser._id.toString());
-
     ///////////////save otp and send otp mail//////////////////
     try {
       ///////////////save otp//////////////////
@@ -136,6 +133,8 @@ export class TravelerProfileService implements ITravelerProfileService {
   ------------------------*/
   async verifyRegistration(payload: VerifyRegistrationRequestDto): Promise<IAuthResult> {
     const { userId, otp } = payload;
+
+    // console.log(payload)
 
     ///////////////find user//////////////////
     const user = await this.userRepository.findById(userId);
@@ -172,7 +171,7 @@ export class TravelerProfileService implements ITravelerProfileService {
 
     ///////////////mark user verified//////////////////
     const updatedUser = await this.userRepository.updateOne(
-      { userId },
+      { _id: userId },
       {
         isVerified: true,
       },

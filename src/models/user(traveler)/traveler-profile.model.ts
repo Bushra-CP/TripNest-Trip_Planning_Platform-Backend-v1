@@ -17,7 +17,6 @@ export const travelerProfileSchema = new Schema<ITravelerProfile>(
 
     phone: {
       type: String,
-      required: true,
     },
 
     location: {
