@@ -14,6 +14,11 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
   }
 
   //////////////////////////////////////////////////
+  /**
+   * 
+   * @param id 
+   * @returns 
+   */
   async findById(id: string): Promise<T | null> {
     return this.model.findById(id).exec();
   }

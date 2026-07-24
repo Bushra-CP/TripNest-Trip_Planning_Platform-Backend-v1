@@ -21,4 +21,6 @@ export class AuthRepository extends BaseRepository<IUser> implements IAuthReposi
   async getProfile(userId: string): Promise<ITravelerProfile | null> {
     return TravelerProfileModel.findOne({ userId });
   }
+
+ 
 }

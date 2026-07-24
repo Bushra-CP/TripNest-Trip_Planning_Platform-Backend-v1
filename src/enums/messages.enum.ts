@@ -7,8 +7,12 @@ export enum Messages {
 export enum SuccessMessages {
   REGISTER_REQUEST_RESPONSE = "OTP sent successfully. Please verify your email.",
   REGISTRATION_COMPLETED_SUCCESSFULLY = "Registration completed successfully.",
+  OTP_SENT = "OTP sent successfully.",
+  OTP_VERIFIED = "OTP Verified",
   OTP_RESENT = "A new OTP has been sent to your registered email address.",
   LOGIN_SUCCESS = "Login Successful",
+  PASSWORD_RESET_SUCCESS = "Password reset Successful.",
+  LOGOUT_SUCCESS = "Logged out successfully.",
 }
 
 export enum ErrorMessages {
@@ -24,7 +28,9 @@ export enum ErrorMessages {
   VERIFY_EMAIL = "Please verify your email before logging in.",
   INVALID_TOKEN = "Invalid token",
   INVALID_GOOGLE_TOKEN = "Invalid Google access token",
-  GOOGLE_ACCOUNT_CONFLICT="Account exists that is not registered through Google. Please login with email/password."
+  GOOGLE_ACCOUNT_CONFLICT = "Account exists that is not registered through Google. Please login with email/password.",
+  USER_NOT_VERIFIED = "User is NOT verified.",
+  PASSWORD_UPDATE_FAILED = "Password update failed",
 }
 
 export enum ValidationMessages {
