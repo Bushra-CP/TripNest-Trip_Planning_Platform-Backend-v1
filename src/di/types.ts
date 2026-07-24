@@ -22,14 +22,6 @@ export const TYPES = {
   OtpRepository: Symbol.for("OtpRepository"),
 
   /* ==============================
-   * FORGOT PASSWORD
-   * ============================== */
-  // ForgotPasswordRepository: Symbol.for("ForgotPasswordRepository"),
-  ForgotPasswordService: Symbol.for("ForgotPasswordService"),
-  ForgotPasswordController: Symbol.for("ForgotPasswordController"),
-  ForgotPasswordRoutes: Symbol.for("ForgotPasswordRoutes"),
-
-  /* ==============================
    * SHARED SERVICES (INTEGRATIONS)
    * ============================== */
   JwtService: Symbol.for("JwtService"),

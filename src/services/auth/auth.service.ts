@@ -18,6 +18,12 @@ import { UserRole } from "@/enums/user-role.enum.js";
 import { IDatabaseService } from "@/infrastructure/database/IDatabaseService.js";
 import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/register/ITravelerProfileRepository.js";
 import { IUser } from "@/interfaces/IModel/IUser.js";
+import { ForgotPasswordDto } from "@/dtos/auth/forgot-password/forgot-password.dto.js";
+import { IOtpService } from "@/infrastructure/otp/IOtpService.js";
+import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
+import { IMailService } from "@/infrastructure/mail/IMailService.js";
+import { VerifyResetOtpDto } from "@/dtos/auth/forgot-password/verify-reset-otp.dto.js";
+import { ResetPasswordDto } from "@/dtos/auth/forgot-password/reset-password.dto.js";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -39,6 +45,15 @@ export class AuthService implements IAuthService {
 
     @inject(TYPES.GoogleService)
     private readonly googleService: IGoogleService,
+
+    @inject(TYPES.OtpService)
+    private readonly otpService: IOtpService,
+
+    @inject(TYPES.OtpRepository)
+    private readonly otpRepository: IOtpRepository,
+
+    @inject(TYPES.MailService)
+    private readonly mailService: IMailService,
   ) {}
 
   /*-----------------------
@@ -217,6 +232,171 @@ export class AuthService implements IAuthService {
     return {
       accessToken,
       refreshToken: newRefreshToken,
+    };
+  }
+
+  /*-----------------------
+  forgot password related logic
+  ------------------------*/
+
+  /**
+   * first stage of forgot password
+   * @param payload : email
+   * @returns a success 'otp sent to mail' success message
+   */
+
+  async forgotPassword(payload: ForgotPasswordDto): Promise<{ message: string }> {
+    const { email } = payload;
+
+    //////////////fetch user with mail//////////////////
+    const user = await this.authRepository.findByEmail(email);
+
+    if (!user) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    }
+
+    if (!user.isVerified) {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.USER_NOT_VERIFIED);
+    }
+
+    //////////////delete any existing otps//////////////////
+    await this.otpRepository.deleteByUserId(user._id.toString());
+
+    ////////generate new otp, hash, save it and send to email/////////
+    const otp = this.otpService.generateOtp();
+
+    const hashedOtp = await this.passwordService.hash(otp);
+
+    await this.otpRepository.create({
+      userId: user._id,
+      email: user.email,
+      otp: hashedOtp,
+      expiresAt: new Date(Date.now() + 60 * 1000),
+    });
+
+    await this.mailService.sendOtp(user.email, user.email, otp);
+
+    return {
+      message: SuccessMessages.OTP_SENT,
+    };
+  }
+
+  /**
+   * second stage of forgot password
+   * @param payload : email, otp
+   * @returns a success message and
+   *          a resetToken - that serve as a security constraint at time of resetting password
+   */
+
+  async verifyResetOtp(
+    payload: VerifyResetOtpDto,
+  ): Promise<{ message: string; resetToken: string }> {
+    const { email, otp } = payload;
+
+    //////////////fetch user with mail//////////////////
+    const user = await this.authRepository.findByEmail(email);
+
+    if (!user) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    }
+
+    //////////////fetch otp from db//////////////////
+    const otpRecord = await this.otpRepository.findByUserId(user._id.toString());
+
+    if (!otpRecord) {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
+    }
+
+    //////////////check if otp is valid and delete it from db//////////////////
+    const valid = await this.passwordService.compare(otp, otpRecord.otp);
+
+    if (!valid) {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_OTP);
+    }
+
+    await this.otpRepository.deleteByUserId(user._id.toString());
+
+    //////////////generate reset token//////////////////
+    const resetToken = this.jwtService.generateResetToken({
+      userId: user._id.toString(),
+      role: user.role,
+    });
+
+    return {
+      message: SuccessMessages.OTP_VERIFIED,
+      resetToken,
+    };
+  }
+
+  /**
+   * resend otp stage of forgot password
+   * @param payload : email, otp
+   * @returns a success message and
+   *          a resetToken - that serve as a security constraint at time of resetting password
+   */
+
+  async resendResetOtp(payload: ForgotPasswordDto): Promise<{ message: string }> {
+    //////////////fetch user with mail//////////////////
+    const user = await this.authRepository.findByEmail(payload.email);
+
+    if (!user) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    }
+
+    //////////////delete any existing otp from db//////////////////
+    await this.otpRepository.deleteByUserId(user._id.toString());
+
+    //////////////generate new otp, hash, save and send via mail//////////////////
+    const otp = this.otpService.generateOtp();
+
+    const hashedOtp = await this.passwordService.hash(otp);
+
+    await this.otpRepository.create({
+      userId: user._id,
+      email: user.email,
+      otp: hashedOtp,
+      expiresAt: new Date(Date.now() + 60 * 1000),
+    });
+
+    await this.mailService.sendOtp(user.email, user.email, otp);
+
+    return {
+      message: SuccessMessages.OTP_RESENT,
+    };
+  }
+
+  /**
+   * third stage of forgot password
+   * @param payload : reset token and new password
+   * @returns a success message - password reset
+   */
+
+  async resetPassword(payload: ResetPasswordDto): Promise<{ message: string }> {
+    ///get payload with resetToken. so we will get userId///
+    const tokenPayload = this.jwtService.verifyResetToken(payload.resetToken);
+
+    ///fetch user with userId///
+    const user = await this.authRepository.findById(tokenPayload.userId);
+
+    if (!user) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    }
+
+    const hashedPassword = await this.passwordService.hash(payload.password);
+
+    const updatedUser = await this.authRepository.updateOne(
+      { _id: user._id },
+      {
+        password: hashedPassword,
+      },
+    );
+
+    if (!updatedUser) {
+      throw new AppError(STATUS_CODES.INTERNAL_SERVER_ERROR, ErrorMessages.PASSWORD_UPDATE_FAILED);
+    }
+
+    return {
+      message: SuccessMessages.PASSWORD_RESET_SUCCESS,
     };
   }
 }

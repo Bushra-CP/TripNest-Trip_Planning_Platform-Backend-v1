@@ -5,6 +5,9 @@ import { AuthController } from "../../controller/auth/auth.controller";
 import { validate } from "../../shared/middleware/validate.middleware";
 import { loginSchema } from "../../validation/auth/login.schema";
 import { googleAuthSchema } from "@/validation/auth/google-auth.schema";
+import { forgotPasswordSchema } from "@/validation/user(traveler)/forgot-password/forgot-password.schema";
+import { verifyResetOtpSchema } from "@/validation/user(traveler)/forgot-password/verify-reset-otp.schema";
+import { resetPasswordSchema } from "@/validation/user(traveler)/forgot-password/reset-password.schema";
 
 @injectable()
 export class AuthRoutes {
@@ -35,5 +38,29 @@ export class AuthRoutes {
     this.router.post("/refresh-token", this.authController.refreshToken.bind(this.authController));
 
     this.router.post("/logout", this.authController.logout.bind(this.authController));
+
+    this.router.post(
+      "/forgot-password",
+      validate(forgotPasswordSchema),
+      this.authController.forgotPassword.bind(this.authController),
+    );
+
+    this.router.post(
+      "/verify-reset-otp",
+      validate(verifyResetOtpSchema),
+      this.authController.verifyResetOtp.bind(this.authController),
+    );
+
+    this.router.post(
+      "/resend-reset-otp",
+      validate(forgotPasswordSchema),
+      this.authController.resendResetOtp.bind(this.authController),
+    );
+
+    this.router.post(
+      "/reset-password",
+      validate(resetPasswordSchema),
+      this.authController.resetPassword.bind(this.authController),
+    );
   }
 }

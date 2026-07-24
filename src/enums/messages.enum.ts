@@ -12,6 +12,7 @@ export enum SuccessMessages {
   OTP_RESENT = "A new OTP has been sent to your registered email address.",
   LOGIN_SUCCESS = "Login Successful",
   PASSWORD_RESET_SUCCESS = "Password reset Successful.",
+  LOGOUT_SUCCESS = "Logged out successfully.",
 }
 
 export enum ErrorMessages {
