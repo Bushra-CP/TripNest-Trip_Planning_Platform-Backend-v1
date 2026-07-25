@@ -18,12 +18,13 @@ import { UserRole } from "@/enums/user-role.enum.js";
 import { IDatabaseService } from "@/infrastructure/database/IDatabaseService.js";
 import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/register/ITravelerProfileRepository.js";
 import { IUser } from "@/interfaces/IModel/IUser.js";
-import { ForgotPasswordDto } from "@/dtos/auth/forgot-password/forgot-password.dto.js";
+import { ForgotPasswordRequestDto } from "@/dtos/auth/forgot-password/forgot-password1.dto.js";
 import { IOtpService } from "@/infrastructure/otp/IOtpService.js";
 import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
 import { IMailService } from "@/infrastructure/mail/IMailService.js";
-import { VerifyResetOtpDto } from "@/dtos/auth/forgot-password/verify-reset-otp.dto.js";
-import { ResetPasswordDto } from "@/dtos/auth/forgot-password/reset-password.dto.js";
+import { VerifyResetPasswordRequestDto } from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
+import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto.js";
+import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/verify-reset-otp.response.dto.js";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -56,17 +57,18 @@ export class AuthService implements IAuthService {
     private readonly mailService: IMailService,
   ) {}
 
-  /*-----------------------
-  login logic
-  ------------------------*/
+  /* -------------------------
+   User Login
+-------------------------- */
   async login(data: LoginRequestDto): Promise<IAuthResult> {
-    ///////////////get user by email//////////////////
+    // Find the user
     const user = await this.authRepository.findByEmail(data.email);
 
     if (!user) {
       throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_EMAIL);
     }
 
+    // Validate account status
     if (!user.isVerified) {
       throw new AppError(STATUS_CODES.FORBIDDEN, ErrorMessages.VERIFY_EMAIL);
     }
@@ -75,27 +77,25 @@ export class AuthService implements IAuthService {
       throw new AppError(STATUS_CODES.FORBIDDEN, Messages.ACCOUNT_DEACTIVATED);
     }
 
-    ///////////////check password match//////////////////
+    // Verify credentials
     const passwordMatched = await this.passwordService.compare(data.password, user.password!);
 
     if (!passwordMatched) {
       throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_EMAIL);
     }
 
-    ///////////////get user profile//////////////////
+    // Load profile and generate tokens
     const getProfile = await this.authRepository.getProfile(user._id.toString());
 
     if (!getProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    ///////////////generate access token//////////////////
     const accessToken = this.jwtService.generateAccessToken({
       userId: user._id.toString(),
       role: user.role,
     });
 
-    ///////////////generate refresh token//////////////////
     const refreshToken = this.jwtService.generateRefreshToken({
       userId: user._id.toString(),
       role: user.role,
@@ -110,37 +110,30 @@ export class AuthService implements IAuthService {
     );
   }
 
-  /*-----------------------
-  google auth logic
-  ------------------------*/
+  /* -------------------------
+   Google Authentication
+-------------------------- */
   async googleAuth(data: GoogleAuthRequestDTO): Promise<IAuthResult> {
-    ///////////get google user////////////
-
-    // console.log(`in service:${data.googleAcessToken}`);
-
+    // Retrieve user information from Google
     const googleUser = await this.googleService.getUserInfo(data.googleAcessToken);
 
     const { email, sub, name, picture } = googleUser;
 
-    ///////////check if user already exists////////////
+    // Check for an existing account
     const existingUser = await this.authRepository.findByEmail(email);
 
-    ///////////validation checks for existing user////////////
+    // Validate the existing account
     if (existingUser) {
       if (existingUser.provider === AuthProvider.LOCAL) {
         throw new AppError(STATUS_CODES.CONFLICT, ErrorMessages.GOOGLE_ACCOUNT_CONFLICT);
       }
 
       if (!existingUser.isActive) {
-        throw new AppError(
-          STATUS_CODES.FORBIDDEN,
-
-          Messages.ACCOUNT_DEACTIVATED,
-        );
+        throw new AppError(STATUS_CODES.FORBIDDEN, Messages.ACCOUNT_DEACTIVATED);
       }
     }
 
-    ///////////if user not exists////////////
+    // Create a new Google account if one doesn't exist
     let user: IUser;
 
     if (existingUser) {
@@ -174,24 +167,18 @@ export class AuthService implements IAuthService {
       });
     }
 
-    ///////////get user profile////////////
+    // Load profile and generate tokens
     const profile = await this.authRepository.getProfile(user._id.toString());
 
     if (!profile) {
-      throw new AppError(
-        STATUS_CODES.NOT_FOUND,
-
-        ErrorMessages.PROFILE_NOT_FOUND,
-      );
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    //////////////generate access token//////////////////
     const accessToken = this.jwtService.generateAccessToken({
       userId: user._id.toString(),
       role: user.role,
     });
 
-    ///////////////generate refresh token//////////////////
     const refreshToken = this.jwtService.generateRefreshToken({
       userId: user._id.toString(),
       role: user.role,
@@ -206,19 +193,25 @@ export class AuthService implements IAuthService {
     );
   }
 
-  /*-----------------------
-  refresh token logic
-  ------------------------*/
+  /* -------------------------
+   Refresh Access Token
+-------------------------- */
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
-    if (!refreshToken)
+    // Ensure a refresh token is provided
+    if (!refreshToken) {
       throw new AppError(STATUS_CODES.UNAUTHORIZED, Messages.REFRESH_TOKEN_MISSING);
+    }
 
+    // Verify the refresh token and retrieve the user
     const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
     const user = await this.authRepository.findById(payload.userId);
 
-    if (!user) throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    if (!user) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    }
 
+    // Generate new access and refresh tokens
     const accessToken = this.jwtService.generateAccessToken({
       userId: user._id.toString(),
       role: user.role,
@@ -235,20 +228,19 @@ export class AuthService implements IAuthService {
     };
   }
 
-  /*-----------------------
-  forgot password related logic
-  ------------------------*/
+  /* -------------------------
+   Forgot Password
+-------------------------- */
 
   /**
-   * first stage of forgot password
-   * @param payload : email
-   * @returns a success 'otp sent to mail' success message
+   * Initiates the password reset process by sending an OTP to the user's email.
+   * @param payload User's email address.
+   * @returns Success message.
    */
-
-  async forgotPassword(payload: ForgotPasswordDto): Promise<{ message: string }> {
+  async forgotPassword(payload: ForgotPasswordRequestDto): Promise<{ message: string }> {
     const { email } = payload;
 
-    //////////////fetch user with mail//////////////////
+    // Find the user
     const user = await this.authRepository.findByEmail(email);
 
     if (!user) {
@@ -259,12 +251,11 @@ export class AuthService implements IAuthService {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.USER_NOT_VERIFIED);
     }
 
-    //////////////delete any existing otps//////////////////
+    // Remove any existing OTP
     await this.otpRepository.deleteByUserId(user._id.toString());
 
-    ////////generate new otp, hash, save it and send to email/////////
+    // Generate, store, and send a new OTP
     const otp = this.otpService.generateOtp();
-
     const hashedOtp = await this.passwordService.hash(otp);
 
     await this.otpRepository.create({
@@ -282,32 +273,30 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * second stage of forgot password
-   * @param payload : email, otp
-   * @returns a success message and
-   *          a resetToken - that serve as a security constraint at time of resetting password
+   * Verifies the OTP and issues a reset token for password reset.
+   * @param payload User's email and OTP.
+   * @returns Success message and reset token.
    */
-
   async verifyResetOtp(
-    payload: VerifyResetOtpDto,
+    payload: VerifyResetPasswordRequestDto,
   ): Promise<{ message: string; resetToken: string }> {
     const { email, otp } = payload;
 
-    //////////////fetch user with mail//////////////////
+    // Find the user
     const user = await this.authRepository.findByEmail(email);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
-    //////////////fetch otp from db//////////////////
+    // Retrieve the stored OTP
     const otpRecord = await this.otpRepository.findByUserId(user._id.toString());
 
     if (!otpRecord) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
     }
 
-    //////////////check if otp is valid and delete it from db//////////////////
+    // Validate the OTP and remove it
     const valid = await this.passwordService.compare(otp, otpRecord.otp);
 
     if (!valid) {
@@ -316,7 +305,7 @@ export class AuthService implements IAuthService {
 
     await this.otpRepository.deleteByUserId(user._id.toString());
 
-    //////////////generate reset token//////////////////
+    // Generate a reset token
     const resetToken = this.jwtService.generateResetToken({
       userId: user._id.toString(),
       role: user.role,
@@ -329,26 +318,23 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * resend otp stage of forgot password
-   * @param payload : email, otp
-   * @returns a success message and
-   *          a resetToken - that serve as a security constraint at time of resetting password
+   * Resends a new OTP for password reset.
+   * @param payload User's email address.
+   * @returns Success message.
    */
-
-  async resendResetOtp(payload: ForgotPasswordDto): Promise<{ message: string }> {
-    //////////////fetch user with mail//////////////////
+  async resendResetOtp(payload: ForgotPasswordResendOTPRequestDto): Promise<{ message: string }> {
+    // Find the user
     const user = await this.authRepository.findByEmail(payload.email);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
-    //////////////delete any existing otp from db//////////////////
+    // Remove the previous OTP
     await this.otpRepository.deleteByUserId(user._id.toString());
 
-    //////////////generate new otp, hash, save and send via mail//////////////////
+    // Generate, store, and send a new OTP
     const otp = this.otpService.generateOtp();
-
     const hashedOtp = await this.passwordService.hash(otp);
 
     await this.otpRepository.create({
@@ -366,22 +352,22 @@ export class AuthService implements IAuthService {
   }
 
   /**
-   * third stage of forgot password
-   * @param payload : reset token and new password
-   * @returns a success message - password reset
+   * Resets the user's password using a valid reset token.
+   * @param payload Reset token and new password.
+   * @returns Success message.
    */
-
-  async resetPassword(payload: ResetPasswordDto): Promise<{ message: string }> {
-    ///get payload with resetToken. so we will get userId///
+  async resetPassword(payload: ResetPasswordRequestDto): Promise<{ message: string }> {
+    // Verify the reset token
     const tokenPayload = this.jwtService.verifyResetToken(payload.resetToken);
 
-    ///fetch user with userId///
+    // Retrieve the user
     const user = await this.authRepository.findById(tokenPayload.userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
+    // Hash and update the new password
     const hashedPassword = await this.passwordService.hash(payload.password);
 
     const updatedUser = await this.authRepository.updateOne(
