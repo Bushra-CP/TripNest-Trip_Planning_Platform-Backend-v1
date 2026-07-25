@@ -7,12 +7,15 @@ import { STATUS_CODES } from "../../enums/status.codes.enum.js";
 import { IAuthService } from "../../interfaces/IServices/auth/IAuth.service.js";
 import { AuthResponseDto } from "../../dtos/user(traveler)/register/verify-registration-response.dto.js";
 import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto.js";
-import { ForgotPasswordDto } from "@/dtos/auth/forgot-password/forgot-password.dto.js";
+import { ForgotPasswordRequestDto } from "@/dtos/auth/forgot-password/forgot-password1.dto.js";
 import { ResponseHandler } from "@/shared/http/responseHandler.js";
 import { SuccessMessages } from "@/enums/messages.enum.js";
-import { VerifyResetOtpDto } from "@/dtos/auth/forgot-password/verify-reset-otp.dto.js";
-import { ResetPasswordDto } from "@/dtos/auth/forgot-password/reset-password.dto.js";
-import { VerifyResetOtpResponseDto } from "@/dtos/auth/forgot-password/verify-reset-otp.response.dto.js";
+import {
+  VerifyResetPasswordRequestDto,
+  VerifyResetPasswordResponseDto,
+} from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
+import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto.js";
+import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/verify-reset-otp.response.dto.js";
 
 @injectable()
 export class AuthController {
@@ -92,7 +95,7 @@ export class AuthController {
   ////////// FORGOT PASSWORD //////////
   async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const payload = req.body as ForgotPasswordDto;
+      const payload = req.body as ForgotPasswordRequestDto;
 
       const data = await this.authService.forgotPassword(payload);
 
@@ -105,11 +108,11 @@ export class AuthController {
   ////////// VERIFY RESET OTP //////////
   async verifyResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const payload = req.body as VerifyResetOtpDto;
+      const payload = req.body as VerifyResetPasswordRequestDto;
 
       const response = await this.authService.verifyResetOtp(payload);
 
-      const data: VerifyResetOtpResponseDto = {
+      const data: VerifyResetPasswordResponseDto = {
         message: response.message,
         resetToken: response.resetToken,
       };
@@ -123,7 +126,7 @@ export class AuthController {
   ////////// RESEND RESET OTP //////////
   async resendResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const payload = req.body as ForgotPasswordDto;
+      const payload = req.body as ForgotPasswordResendOTPRequestDto;
 
       const data = await this.authService.resendResetOtp(payload);
 
@@ -136,7 +139,7 @@ export class AuthController {
   ////////// RESET PASSWORD //////////
   async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const payload = req.body as ResetPasswordDto;
+      const payload = req.body as ResetPasswordRequestDto;
 
       const data = await this.authService.resetPassword(payload);
 

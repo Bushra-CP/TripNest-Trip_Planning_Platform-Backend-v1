@@ -6,7 +6,7 @@ import { validate } from "../../shared/middleware/validate.middleware";
 import { loginSchema } from "../../validation/auth/login.schema";
 import { googleAuthSchema } from "@/validation/auth/google-auth.schema";
 import { forgotPasswordSchema } from "@/validation/user(traveler)/forgot-password/forgot-password.schema";
-import { verifyResetOtpSchema } from "@/validation/user(traveler)/forgot-password/verify-reset-otp.schema";
+// import { verifyResetOtpSchema } from "@/validation/user(traveler)/forgot-password/verify-reset-otp.schema";
 import { resetPasswordSchema } from "@/validation/user(traveler)/forgot-password/reset-password.schema";
 
 @injectable()
@@ -47,7 +47,6 @@ export class AuthRoutes {
 
     this.router.post(
       "/verify-reset-otp",
-      validate(verifyResetOtpSchema),
       this.authController.verifyResetOtp.bind(this.authController),
     );
 
