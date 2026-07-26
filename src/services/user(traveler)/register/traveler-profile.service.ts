@@ -59,17 +59,17 @@ export class TravelerProfileService implements ITravelerProfileService {
     console.log(payload);
     console.log(password);
 
-    ///////////////check whether email already exists//////////////////
+    //check whether email already exists
     const existingUser = await this.userRepository.findByEmail(email);
 
     if (existingUser) {
       throw new AppError(STATUS_CODES.CONFLICT, ErrorMessages.EMAIL_CONFLICT_MESSSAGE);
     }
 
-    ///////////////hash password//////////////////
+    //hash password
     const hashedPassword = await this.passwordService.hash(password);
 
-    ///////////////execute transaction session to register user//////////////////
+    //execute transaction session to register user
     const createdUser = await this.databaseService.executeTransaction(async (session) => {
       const user = this.userRepository.create(
         {
@@ -98,32 +98,31 @@ export class TravelerProfileService implements ITravelerProfileService {
       return user;
     });
 
-    ///////////////generate otp//////////////////
+    //generate otp
     const otp = this.otpService.generateOtp();
 
-    ///////////////hash otp//////////////////
+    //hash otp
     const hashedOtp = await this.passwordService.hash(otp);
 
-    ///////////////save otp and send otp mail//////////////////
+    //save otp and send otp mail
     try {
-      ///////////////save otp//////////////////
+      //save otp
       await this.otpRepository.create({
         userId: createdUser._id,
         email: createdUser.email,
         otp: hashedOtp,
-        expiresAt: new Date(Date.now() + 60 * 1000),
       });
 
-      ///////////////send otp mail//////////////////
+      //send otp mail
       await this.mailService.sendOtp(createdUser.email, fullName, otp);
     } catch (error) {
-      ///////////////if sending the email fails, the OTP record is also removed//////////////////
+      //if sending the email fails, the OTP record is also removed
       await this.otpRepository.deleteByUserId(createdUser._id.toString());
 
       throw error;
     }
 
-    ///////////////return response//////////////////
+    //return response
     return AuthMapper.toRegisterResponse(createdUser);
   }
 
@@ -136,40 +135,49 @@ export class TravelerProfileService implements ITravelerProfileService {
 
     // console.log(payload)
 
-    ///////////////find user//////////////////
+    //find user
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
-    ///////////////if already verified//////////////////
+    //if already verified
     if (user.isVerified) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.USER_ALREADY_VERIFIED);
     }
 
-    ///////////////find traveler profile//////////////////
+    //find traveler profile
     const travelerProfile = await this.travelerProfileRepository.findByUserId(userId);
 
     if (!travelerProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    ///////////////find otp//////////////////
+    //find otp
     const otpRecord = await this.otpRepository.findByUserId(userId);
 
     if (!otpRecord) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
     }
 
-    ///////////////compare otp//////////////////
+    //check otp expiry
+    const isExpired = Date.now() - otpRecord.createdAt.getTime() > 60 * 1000;
+
+    if (isExpired) {
+      await this.otpRepository.deleteByUserId(userId);
+
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
+    }
+
+    //compare otp
     const isOtpValid = await this.passwordService.compare(otp, otpRecord.otp);
 
     if (!isOtpValid) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_OTP);
     }
 
-    ///////////////mark user verified//////////////////
+    //mark user verified
     const updatedUser = await this.userRepository.updateOne(
       { _id: userId },
       {
@@ -181,22 +189,22 @@ export class TravelerProfileService implements ITravelerProfileService {
       throw new AppError(STATUS_CODES.INTERNAL_SERVER_ERROR, ErrorMessages.USER_CANNOT_VERIFIED);
     }
 
-    ///////////////delete otp//////////////////
+    //delete otp
     await this.otpRepository.deleteByUserId(userId);
 
-    ///////////////generate access token//////////////////
+    //generate access token
     const accessToken = this.jwtService.generateAccessToken({
       userId: updatedUser._id.toString(),
       role: updatedUser.role,
     });
 
-    ///////////////genrate refresh token//////////////////
+    //generate refresh token
     const refreshToken = this.jwtService.generateRefreshToken({
       userId: updatedUser._id.toString(),
       role: updatedUser.role,
     });
 
-    ///////////////return response//////////////////
+    //return response
     return AuthMapper.toAuthResponse(
       updatedUser,
       travelerProfile,
@@ -212,46 +220,44 @@ export class TravelerProfileService implements ITravelerProfileService {
   async resendOtp(payload: ResendOtpRequestDto): Promise<ResendOtpResponseDto> {
     const { userId } = payload;
 
-    ///////////////find user//////////////////
+    //find user
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
-    ///////////////Already Verified//////////////////
+    //Already Verified
     if (user.isVerified) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.USER_ALREADY_VERIFIED);
     }
 
-    ///////////////Find Traveler Profile//////////////////
+    //Find Traveler Profile
     const travelerProfile = await this.travelerProfileRepository.findByUserId(userId);
 
     if (!travelerProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    ///////////////Remove Previous OTP//////////////////
+    //Remove Previous OTP
     await this.otpRepository.deleteByUserId(userId);
 
-    ///////////////Generate New OTP//////////////////
+    //Generate New OTP
     const otp = this.otpService.generateOtp();
 
-    ///////////////Hash OTP//////////////////
+    //Hash OTP
     const hashedOtp = await this.passwordService.hash(otp);
 
-    ///////////////Save OTP//////////////////
+    //Save OTP
     await this.otpRepository.create({
       userId: user._id,
 
       email: user.email,
 
       otp: hashedOtp,
-
-      expiresAt: new Date(Date.now() + 60 * 1000),
     });
 
-    ///////////////Send Email//////////////////
+    //Send Email
     await this.mailService.sendOtp(
       user.email,
 

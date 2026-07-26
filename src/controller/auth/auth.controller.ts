@@ -15,7 +15,7 @@ import {
   VerifyResetPasswordResponseDto,
 } from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
 import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto.js";
-import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/verify-reset-otp.response.dto.js";
+import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/resend-otp.js";
 
 @injectable()
 export class AuthController {
@@ -109,6 +109,8 @@ export class AuthController {
   async verifyResetOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const payload = req.body as VerifyResetPasswordRequestDto;
+
+      console.log(`/verify-reset-otp:${payload}`);
 
       const response = await this.authService.verifyResetOtp(payload);
 

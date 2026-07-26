@@ -6,4 +6,5 @@ export interface ForgotPasswordRequestDto {
 //response
 export interface ForgotPasswordResponseDto {
   message: string;
+  userId:string;
 }
