@@ -1,15 +1,9 @@
-import { Document, Types } from "mongoose";
+import { Types } from "mongoose";
 
-export interface IOtp extends Document {
+export interface IOtp {
   userId: Types.ObjectId;
-
   email: string;
-
   otp: string;
-
-  expiresAt: Date;
-
   createdAt: Date;
-
   updatedAt: Date;
 }

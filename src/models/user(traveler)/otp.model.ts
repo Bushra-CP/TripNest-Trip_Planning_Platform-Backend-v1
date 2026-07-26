@@ -19,18 +19,13 @@ export const OtpSchema = new Schema<IOtp>(
       type: String,
       required: true,
     },
-
-    expiresAt: {
-      type: Date,
-      required: true,
-      index: {
-        expires: 0,
-      },
-    },
   },
   {
     timestamps: true,
   },
 );
+
+// Automatically delete documents 60 seconds after createdAt
+OtpSchema.index({ createdAt: 1 }, { expireAfterSeconds: 60 });
 
 export const OtpModel = mongoose.model<IOtp>("Otp", OtpSchema);

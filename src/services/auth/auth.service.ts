@@ -18,13 +18,25 @@ import { UserRole } from "@/enums/user-role.enum.js";
 import { IDatabaseService } from "@/infrastructure/database/IDatabaseService.js";
 import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/register/ITravelerProfileRepository.js";
 import { IUser } from "@/interfaces/IModel/IUser.js";
-import { ForgotPasswordRequestDto } from "@/dtos/auth/forgot-password/forgot-password1.dto.js";
+import {
+  ForgotPasswordRequestDto,
+  ForgotPasswordResponseDto,
+} from "@/dtos/auth/forgot-password/forgot-password1.dto.js";
 import { IOtpService } from "@/infrastructure/otp/IOtpService.js";
 import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
 import { IMailService } from "@/infrastructure/mail/IMailService.js";
-import { VerifyResetPasswordRequestDto } from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
-import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto.js";
-import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/verify-reset-otp.response.dto.js";
+import {
+  VerifyResetPasswordRequestDto,
+  VerifyResetPasswordResponseDto,
+} from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
+import {
+  ResetPasswordRequestDto,
+  ResetPasswordResponseDto,
+} from "@/dtos/auth/forgot-password/reset-password3.dto.js";
+import {
+  ForgotPasswordResendOTPRequestDto,
+  ForgotPasswordResendOTPResponseDto,
+} from "@/dtos/auth/forgot-password/resend-otp.js";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -237,7 +249,7 @@ export class AuthService implements IAuthService {
    * @param payload User's email address.
    * @returns Success message.
    */
-  async forgotPassword(payload: ForgotPasswordRequestDto): Promise<{ message: string }> {
+  async forgotPassword(payload: ForgotPasswordRequestDto): Promise<ForgotPasswordResponseDto> {
     const { email } = payload;
 
     // Find the user
@@ -262,13 +274,13 @@ export class AuthService implements IAuthService {
       userId: user._id,
       email: user.email,
       otp: hashedOtp,
-      expiresAt: new Date(Date.now() + 60 * 1000),
     });
 
     await this.mailService.sendOtp(user.email, user.email, otp);
 
     return {
       message: SuccessMessages.OTP_SENT,
+      userId: user._id.toString(),
     };
   }
 
@@ -279,7 +291,7 @@ export class AuthService implements IAuthService {
    */
   async verifyResetOtp(
     payload: VerifyResetPasswordRequestDto,
-  ): Promise<{ message: string; resetToken: string }> {
+  ): Promise<VerifyResetPasswordResponseDto> {
     const { email, otp } = payload;
 
     // Find the user
@@ -293,6 +305,15 @@ export class AuthService implements IAuthService {
     const otpRecord = await this.otpRepository.findByUserId(user._id.toString());
 
     if (!otpRecord) {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
+    }
+
+    //check otp expiry
+    const isExpired = Date.now() - otpRecord.createdAt.getTime() > 60 * 1000;
+
+    if (isExpired) {
+      await this.otpRepository.deleteByUserId(user._id.toString());
+
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
     }
 
@@ -322,7 +343,9 @@ export class AuthService implements IAuthService {
    * @param payload User's email address.
    * @returns Success message.
    */
-  async resendResetOtp(payload: ForgotPasswordResendOTPRequestDto): Promise<{ message: string }> {
+  async resendResetOtp(
+    payload: ForgotPasswordResendOTPRequestDto,
+  ): Promise<ForgotPasswordResendOTPResponseDto> {
     // Find the user
     const user = await this.authRepository.findByEmail(payload.email);
 
@@ -341,7 +364,6 @@ export class AuthService implements IAuthService {
       userId: user._id,
       email: user.email,
       otp: hashedOtp,
-      expiresAt: new Date(Date.now() + 60 * 1000),
     });
 
     await this.mailService.sendOtp(user.email, user.email, otp);
@@ -356,7 +378,7 @@ export class AuthService implements IAuthService {
    * @param payload Reset token and new password.
    * @returns Success message.
    */
-  async resetPassword(payload: ResetPasswordRequestDto): Promise<{ message: string }> {
+  async resetPassword(payload: ResetPasswordRequestDto): Promise<ResetPasswordResponseDto> {
     // Verify the reset token
     const tokenPayload = this.jwtService.verifyResetToken(payload.resetToken);
 
