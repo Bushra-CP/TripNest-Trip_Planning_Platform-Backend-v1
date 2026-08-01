@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
-import { TYPES } from "../../../di/types";
-import { ITravelerProfileService } from "../../../interfaces/IServices/user(traveler)/ITravelerProfileService";
-import { RegisterRequestDto } from "../../../dtos/user(traveler)/register/register-request.dto";
-import { STATUS_CODES } from "../../../enums/status.codes.enum";
-import { VerifyRegistrationRequestDto } from "../../../dtos/user(traveler)/register/verify-registration-request.dto";
-import { ResendOtpRequestDto } from "../../../dtos/user(traveler)/register/resend-otp-request.dto";
-import { refreshTokenCookieOptions } from "../../../config/cookie.config";
-import { ResponseHandler } from "../../../shared/http/responseHandler";
-import { SuccessMessages } from "../../../enums/messages.enum";
-import { AuthResponseDto } from "../../../dtos/user(traveler)/register/verify-registration-response.dto";
+import { TYPES } from "../../di/types";
+import { ITravelerProfileService } from "../../interfaces/IServices/user(traveler)/ITravelerProfileService";
+import { RegisterRequestDto } from "../../dtos/user(traveler)/register/register-request.dto";
+import { STATUS_CODES } from "../../enums/status.codes.enum";
+import { VerifyRegistrationRequestDto } from "../../dtos/user(traveler)/register/verify-registration-request.dto";
+import { ResendOtpRequestDto } from "../../dtos/user(traveler)/register/resend-otp-request.dto";
+import { refreshTokenCookieOptions } from "../../config/cookie.config";
+import { ResponseHandler } from "../../shared/http/responseHandler";
+import { SuccessMessages } from "../../enums/messages.enum";
+import { AuthResponseDto } from "../../dtos/user(traveler)/register/verify-registration-response.dto";
+import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureRequestDto";
 
 @injectable()
 export class TravelerProfileController {
@@ -73,6 +74,24 @@ export class TravelerProfileController {
         success: true,
         data: response,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  //UPDATE PROFILE IMAGE
+  async updateProfileImage(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const payload: UpdateProfilePictureRequestDto = {
+        userId: req.user.userId,
+        profileImage: req.file!,
+      };
+
+      const response = await this.travelerProfileService.updateProfileImage(payload);
+
+      // console.log(response);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "", response);
     } catch (error) {
       next(error);
     }

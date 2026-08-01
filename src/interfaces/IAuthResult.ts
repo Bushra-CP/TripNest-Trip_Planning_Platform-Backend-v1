@@ -6,6 +6,7 @@ export interface IAuthResult {
     fullName: string;
     email: string;
     role: UserRole;
+    profileImage?: string;
   };
 
   accessToken: string;

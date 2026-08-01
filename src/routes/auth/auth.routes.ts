@@ -2,7 +2,7 @@ import { Router } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { AuthController } from "../../controller/auth/auth.controller";
-import { validate } from "../../shared/middleware/validate.middleware";
+import { validate } from "../../middleware/validate.middleware";
 import { loginSchema } from "../../validation/auth/login.schema";
 import { googleAuthSchema } from "@/validation/auth/google-auth.schema";
 import { forgotPasswordSchema } from "@/validation/user(traveler)/forgot-password/forgot-password.schema";

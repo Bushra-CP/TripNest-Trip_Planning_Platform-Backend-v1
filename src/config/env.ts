@@ -15,6 +15,12 @@ export const env = {
   MAIL_USERNAME: process.env.MAIL_USERNAME,
   MAIL_PASSWORD: process.env.MAIL_PASSWORD,
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY,
+  AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+  AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
+  AWS_REGION: process.env.AWS_REGION,
+  MAX_IMAGE_SIZE: Number(process.env.MAX_IMAGE_SIZE),
+  MAX_VIDEO_SIZE: Number(process.env.MAX_VIDEO_SIZE),
 };
 
 // `.env` vs `config/env.ts`

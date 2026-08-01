@@ -1,13 +1,14 @@
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
-import { notFoundMiddleware } from "../shared/middleware/notfound.middleware.js";
-import { errorMiddleware } from "../shared/middleware/error.middleware.js";
+import { notFoundMiddleware } from "../middleware/notfound.middleware.js";
+import { errorMiddleware } from "../middleware/error.middleware.js";
 import { container } from "../di/index.js";
 
 import { TYPES } from "../di/types.js";
 import { TravelerProfileRoutes } from "../routes/user(traveler)/traveler-profile.routes.js";
 import { AuthRoutes } from "../routes/auth/auth.routes.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.use(
     credentials: true,
   }),
 );
+
+app.use(cookieParser());
 
 app.use(express.json());
 

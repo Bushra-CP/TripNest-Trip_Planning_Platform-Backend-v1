@@ -17,6 +17,7 @@ export class AuthMapper {
         fullName: profile.fullName,
         email: user.email,
         role: user.role,
+        profileImage: profile.profileImageUrl || "",
       },
       accessToken,
       refreshToken,

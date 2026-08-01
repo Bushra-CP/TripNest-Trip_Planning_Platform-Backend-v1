@@ -1,11 +1,15 @@
 import { Router } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
-import { TravelerProfileController } from "../../controller/user(traveler)/register/traveler-profile.controller";
-import { validate } from "../../shared/middleware/validate.middleware";
+import { TravelerProfileController } from "../../controller/user(traveler)/traveler-profile.controller";
+import { validate } from "../../middleware/validate.middleware";
 import { registerSchema } from "../../validation/user(traveler)/register/register.schema";
 import { verifyRegistrationSchema } from "../../validation/user(traveler)/register/verify-registration.schema";
 import { resendOtpSchema } from "../../validation/user(traveler)/register/resend-otp.schema";
+import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware";
+import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
+import { UserRole } from "@/enums/user-role.enum";
+import { uploadProfileImage } from "@/middleware/multer/profile-upload";
 
 @injectable()
 export class TravelerProfileRoutes {
@@ -14,6 +18,12 @@ export class TravelerProfileRoutes {
   constructor(
     @inject(TYPES.TravelerProfileController)
     private readonly travelerProfileController: TravelerProfileController,
+
+    @inject(TYPES.AuthenticateMiddleware)
+    private readonly authenticateMiddleware: AuthenticateMiddleware,
+
+    @inject(TYPES.AuthorizeMiddleware)
+    private readonly authorizeMiddleware: AuthorizeMiddleware,
   ) {
     this.router = Router();
 
@@ -37,6 +47,14 @@ export class TravelerProfileRoutes {
       "/resend-otp",
       validate(resendOtpSchema),
       this.travelerProfileController.resendOtp.bind(this.travelerProfileController),
+    );
+
+    this.router.patch(
+      "/update-profile-image",
+      this.authenticateMiddleware.authenticate,
+      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      uploadProfileImage.single("profileImage"),
+      this.travelerProfileController.updateProfileImage.bind(this.travelerProfileController),
     );
   }
 }

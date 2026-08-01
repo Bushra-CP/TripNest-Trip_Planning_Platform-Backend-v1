@@ -2,11 +2,11 @@ import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import jwt from "jsonwebtoken";
 
-import { AppError } from "../errors/app.error.js";
-import { STATUS_CODES } from "../../enums/status.codes.enum.js";
-import { env } from "../../config/env.js";
-import { ResponseHandler } from "../http/responseHandler.js";
-import { ErrorMessages, Messages, ValidationMessages } from "../../enums/messages.enum.js";
+import { AppError } from "../shared/errors/app.error.js";
+import { STATUS_CODES } from "../enums/status.codes.enum.js";
+import { env } from "../config/env.js";
+import { ResponseHandler } from "../shared/http/responseHandler.js";
+import { ErrorMessages, Messages, ValidationMessages } from "../enums/messages.enum.js";
 
 const { JsonWebTokenError, TokenExpiredError } = jwt;
 

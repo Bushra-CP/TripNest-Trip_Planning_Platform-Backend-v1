@@ -1,8 +1,8 @@
 import { injectable } from "inversify";
 import { IOtpRepository } from "../../../interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
-import { IOtp } from "../../../interfaces/IModel/IOtp.js";
 import { OtpModel } from "../../../models/user(traveler)/otp.model.js";
 import { BaseRepository } from "../../base.repository.js";
+import { IOtp } from "@/interfaces/IModel/IOtp.js";
 
 @injectable()
 export class OtpRepository extends BaseRepository<IOtp> implements IOtpRepository {

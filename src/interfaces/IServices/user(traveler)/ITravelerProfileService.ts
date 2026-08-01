@@ -4,6 +4,8 @@ import { RegisterResponseDto } from "../../../dtos/user(traveler)/register/regis
 import { ResendOtpRequestDto } from "../../../dtos/user(traveler)/register/resend-otp-request.dto.js";
 import { ResendOtpResponseDto } from "../../../dtos/user(traveler)/register/resend-otp-response.dto.js";
 import { VerifyRegistrationRequestDto } from "../../../dtos/user(traveler)/register/verify-registration-request.dto.js";
+import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureRequestDto.js";
+import { UpdateProfilePictureResponseDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureResponseDto.js";
 
 export interface ITravelerProfileService {
   register(payload: RegisterRequestDto): Promise<RegisterResponseDto>;
@@ -11,4 +13,8 @@ export interface ITravelerProfileService {
   verifyRegistration(payload: VerifyRegistrationRequestDto): Promise<IAuthResult>;
 
   resendOtp(payload: ResendOtpRequestDto): Promise<ResendOtpResponseDto>;
+
+  updateProfileImage(
+    payload: UpdateProfilePictureRequestDto,
+  ): Promise<UpdateProfilePictureResponseDto>;
 }

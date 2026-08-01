@@ -12,6 +12,8 @@ import { OtpService } from "../../infrastructure/otp/otp.service.js";
 import { PasswordService } from "../../infrastructure/password/bcrypt.service.js";
 import { IGoogleService } from "@/infrastructure/google/IGoogleService";
 import { GoogleService } from "@/infrastructure/google/google.service";
+import { IS3Service } from "@/infrastructure/s3/IS3Service";
+import { S3Service } from "@/infrastructure/s3/s3.service";
 
 export function registerIntegrationsContainer(container: Container): void {
   container.bind<IJwtService>(TYPES.JwtService).to(JwtService).inSingletonScope();
@@ -23,4 +25,6 @@ export function registerIntegrationsContainer(container: Container): void {
   container.bind<IPasswordService>(TYPES.PasswordService).to(PasswordService).inSingletonScope();
 
   container.bind<IGoogleService>(TYPES.GoogleService).to(GoogleService);
+
+  container.bind<IS3Service>(TYPES.S3Service).to(S3Service);
 }
