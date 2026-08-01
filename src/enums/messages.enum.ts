@@ -13,6 +13,7 @@ export enum SuccessMessages {
   LOGIN_SUCCESS = "Login Successful",
   PASSWORD_RESET_SUCCESS = "Password reset Successful.",
   LOGOUT_SUCCESS = "Logged out successfully.",
+  PROFILE_UPDATED_SUCCESSFULLY = "Profile updated successfully",
 }
 
 export enum ErrorMessages {
@@ -31,6 +32,9 @@ export enum ErrorMessages {
   GOOGLE_ACCOUNT_CONFLICT = "Account exists that is not registered through Google. Please login with email/password.",
   USER_NOT_VERIFIED = "User is NOT verified.",
   PASSWORD_UPDATE_FAILED = "Password update failed",
+  PROFILE_UPDATE_FAILED = "Profile update failed",
+  UNAUTHORIZED = "Unautherized to access",
+  ACCESS_DENIED = "Access denied",
 }
 
 export enum ValidationMessages {

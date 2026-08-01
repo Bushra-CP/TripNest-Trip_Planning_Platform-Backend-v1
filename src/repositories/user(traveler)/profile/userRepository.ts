@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { IUserRepository } from "../../../interfaces/IRepository/user(traveler)/register/IUserRepository.js";
+import { IUserRepository } from "../../../interfaces/IRepository/user(traveler)/profile/IUserRepository.js";
 import { IUser } from "../../../interfaces/IModel/IUser.js";
 import { UserModel } from "../../../models/auth/user.model.js";
 import { BaseRepository } from "../../base.repository.js";

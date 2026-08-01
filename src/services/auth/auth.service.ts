@@ -16,7 +16,7 @@ import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto.js";
 import { AuthProvider } from "@/enums/auth-provider.enum.js";
 import { UserRole } from "@/enums/user-role.enum.js";
 import { IDatabaseService } from "@/infrastructure/database/IDatabaseService.js";
-import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/register/ITravelerProfileRepository.js";
+import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository.js";
 import { IUser } from "@/interfaces/IModel/IUser.js";
 import {
   ForgotPasswordRequestDto,
@@ -168,7 +168,7 @@ export class AuthService implements IAuthService {
           {
             userId: createdUser._id,
             fullName: name,
-            profileImage: picture,
+            profileImageUrl: picture,
             rewardPoints: 0,
             socialPresence: [],
           },

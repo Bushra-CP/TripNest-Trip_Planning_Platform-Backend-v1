@@ -1,5 +1,32 @@
 export const TYPES = {
   /* ==============================
+   * SHARED SERVICES (INTEGRATIONS)
+   * ============================== */
+  JwtService: Symbol.for("JwtService"),
+  MailService: Symbol.for("MailService"),
+  OtpService: Symbol.for("OtpService"),
+  PasswordService: Symbol.for("PasswordService"),
+  GoogleService: Symbol.for("GoogleService"),
+  S3Service: Symbol.for("S3Service"),
+
+  /* ==============================
+   * OTP
+   * ============================== */
+  OtpRepository: Symbol.for("OtpRepository"),
+
+  /* ==============================
+   * DATABASE
+   * ============================== */
+  DatabaseService: Symbol.for("DatabaseService"),
+
+  /* ==============================
+   * MIDDLEWARE
+   * ============================== */
+
+  AuthenticateMiddleware: Symbol.for("AuthenticateMiddleware"),
+  AuthorizeMiddleware: Symbol.for("AuthorizeMiddleware"),
+
+  /* ==============================
    * AUTH
    * ============================== */
   AuthRepository: Symbol.for("AuthRepository"),
@@ -8,30 +35,11 @@ export const TYPES = {
   AuthRoutes: Symbol.for("AuthRoutes"),
 
   /* ==============================
-   * REGISTER
+   * TRAVELER PROFILE/REGISTER
    * ============================== */
   UserRepository: Symbol.for("UserRepository"),
   TravelerProfileRepository: Symbol.for("TravelerProfileRepository"),
   TravelerProfileService: Symbol.for("TravelerProfileService"),
   TravelerProfileController: Symbol.for("TravelerProfileController"),
   TravelerProfileRoutes: Symbol.for("TravelerProfileRoutes"),
-
-  /* ==============================
-   * OTP
-   * ============================== */
-  OtpRepository: Symbol.for("OtpRepository"),
-
-  /* ==============================
-   * SHARED SERVICES (INTEGRATIONS)
-   * ============================== */
-  JwtService: Symbol.for("JwtService"),
-  MailService: Symbol.for("MailService"),
-  OtpService: Symbol.for("OtpService"),
-  PasswordService: Symbol.for("PasswordService"),
-  GoogleService: Symbol.for("GoogleService"),
-
-  /* ==============================
-   * DATABASE
-   * ============================== */
-  DatabaseService: Symbol.for("DatabaseService"),
 } as const;

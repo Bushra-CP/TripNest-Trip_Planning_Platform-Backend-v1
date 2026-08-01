@@ -1,5 +1,12 @@
 import { Response } from "express";
-import { ApiResponse } from "./apiResponse";
+
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  statusCode: number;
+  message?: string;
+  data?: T;
+  error?: string | null;
+}
 
 export class ResponseHandler {
   static success<T>(res: Response, statusCode: number, message?: string, data?: T): Response {

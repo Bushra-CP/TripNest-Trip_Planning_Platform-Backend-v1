@@ -8,7 +8,10 @@ export interface ITravelerProfile extends Document {
 
   location?: string;
   bio?: string;
-  profileImage?: string;
+
+  profileImageUrl?: string;
+
+  profileImageKey?: string;
 
   socialPresence: string[];
 

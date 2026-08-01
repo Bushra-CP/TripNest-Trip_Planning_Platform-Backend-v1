@@ -1,26 +1,30 @@
 import { inject, injectable } from "inversify";
-import { ITravelerProfileService } from "../../../interfaces/IServices/user(traveler)/ITravelerProfileService";
-import { TYPES } from "../../../di/types";
-import { IUserRepository } from "../../../interfaces/IRepository/user(traveler)/register/IUserRepository";
-import { ITravelerProfileRepository } from "../../../interfaces/IRepository/user(traveler)/register/ITravelerProfileRepository";
-import { IOtpRepository } from "../../../interfaces/IRepository/user(traveler)/otp/IOtpRepository";
-import { IOtpService } from "../../../infrastructure/otp/IOtpService";
-import { IPasswordService } from "../../../infrastructure/password/IPasswordService";
-import { IMailService } from "../../../infrastructure/mail/IMailService";
-import { IJwtService } from "../../../infrastructure/jwt/IJwtService";
-import { IDatabaseService } from "../../../infrastructure/database/IDatabaseService";
-import { RegisterRequestDto } from "../../../dtos/user(traveler)/register/register-request.dto";
-import { RegisterResponseDto } from "../../../dtos/user(traveler)/register/register-response.dto";
-import { AppError } from "../../../shared/errors/app.error";
-import { STATUS_CODES } from "../../../enums/status.codes.enum";
-import { ErrorMessages, SuccessMessages } from "../../../enums/messages.enum";
-import { AuthProvider } from "../../../enums/auth-provider.enum";
-import { UserRole } from "../../../enums/user-role.enum";
-import { AuthMapper } from "../../../mapper/auth.mapper";
-import { VerifyRegistrationRequestDto } from "../../../dtos/user(traveler)/register/verify-registration-request.dto";
-import { IAuthResult } from "../../../interfaces/IAuthResult";
-import { ResendOtpRequestDto } from "../../../dtos/user(traveler)/register/resend-otp-request.dto";
-import { ResendOtpResponseDto } from "../../../dtos/user(traveler)/register/resend-otp-response.dto";
+import { ITravelerProfileService } from "../../interfaces/IServices/user(traveler)/ITravelerProfileService";
+import { TYPES } from "../../di/types";
+import { IUserRepository } from "../../interfaces/IRepository/user(traveler)/profile/IUserRepository";
+import { ITravelerProfileRepository } from "../../interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository";
+import { IOtpRepository } from "../../interfaces/IRepository/user(traveler)/otp/IOtpRepository";
+import { IOtpService } from "../../infrastructure/otp/IOtpService";
+import { IPasswordService } from "../../infrastructure/password/IPasswordService";
+import { IMailService } from "../../infrastructure/mail/IMailService";
+import { IJwtService } from "../../infrastructure/jwt/IJwtService";
+import { IDatabaseService } from "../../infrastructure/database/IDatabaseService";
+import { RegisterRequestDto } from "../../dtos/user(traveler)/register/register-request.dto";
+import { RegisterResponseDto } from "../../dtos/user(traveler)/register/register-response.dto";
+import { AppError } from "../../shared/errors/app.error";
+import { STATUS_CODES } from "../../enums/status.codes.enum";
+import { ErrorMessages, SuccessMessages } from "../../enums/messages.enum";
+import { AuthProvider } from "../../enums/auth-provider.enum";
+import { UserRole } from "../../enums/user-role.enum";
+import { AuthMapper } from "../../mapper/auth.mapper";
+import { VerifyRegistrationRequestDto } from "../../dtos/user(traveler)/register/verify-registration-request.dto";
+import { IAuthResult } from "../../interfaces/IAuthResult";
+import { ResendOtpRequestDto } from "../../dtos/user(traveler)/register/resend-otp-request.dto";
+import { ResendOtpResponseDto } from "../../dtos/user(traveler)/register/resend-otp-response.dto";
+import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureRequestDto";
+import { UpdateProfilePictureResponseDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureResponseDto";
+import { IS3Service } from "@/infrastructure/s3/IS3Service";
+import { MediaFolder } from "@/enums/media.enums";
 
 injectable();
 export class TravelerProfileService implements ITravelerProfileService {
@@ -48,6 +52,9 @@ export class TravelerProfileService implements ITravelerProfileService {
 
     @inject(TYPES.DatabaseService)
     private readonly databaseService: IDatabaseService,
+
+    @inject(TYPES.S3Service)
+    private readonly s3Service: IS3Service,
   ) {}
 
   /*-----------------------
@@ -91,6 +98,8 @@ export class TravelerProfileService implements ITravelerProfileService {
           phone,
           rewardPoints: 0,
           socialPresence: [],
+          profileImageUrl: "",
+          profileImageKey: "",
         },
         session,
       );
@@ -268,6 +277,61 @@ export class TravelerProfileService implements ITravelerProfileService {
 
     return {
       message: SuccessMessages.OTP_RESENT,
+    };
+  }
+
+  /*-----------------------
+  Update profile image
+  ------------------------*/
+  async updateProfileImage(
+    payload: UpdateProfilePictureRequestDto,
+  ): Promise<UpdateProfilePictureResponseDto> {
+    const { userId, profileImage } = payload;
+
+    const travelerProfile = await this.travelerProfileRepository.findByUserId(userId);
+
+    if (!travelerProfile) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
+    }
+
+    let profileImageUrl = travelerProfile.profileImageUrl;
+
+    let profileImageKey = travelerProfile.profileImageKey;
+
+    if (profileImage) {
+      const uploadedImage = await this.s3Service.uploadFile(
+        profileImage,
+        MediaFolder.PROFILE_IMAGES,
+      );
+
+      if (travelerProfile.profileImageKey) {
+        await this.s3Service.deleteFile(travelerProfile.profileImageKey);
+      }
+
+      profileImageUrl = uploadedImage.url;
+
+      profileImageKey = uploadedImage.key;
+    }
+
+    const updatedProfile = await this.travelerProfileRepository.updateOne(
+      { userId },
+      {
+        profileImageUrl,
+        profileImageKey,
+      },
+    );
+
+    if (!updatedProfile) {
+      throw new AppError(
+        STATUS_CODES.INTERNAL_SERVER_ERROR,
+
+        ErrorMessages.PROFILE_UPDATE_FAILED,
+      );
+    }
+
+    return {
+      message: SuccessMessages.PROFILE_UPDATED_SUCCESSFULLY,
+      profileImage: updatedProfile.profileImageUrl!,
     };
   }
 }

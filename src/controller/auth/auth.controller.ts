@@ -72,7 +72,13 @@ export class AuthController {
 
   //////////REFRESH TOKEN/////////
   async refreshToken(req: Request, res: Response) {
+    console.log("came here in cotroller");
+
+    console.log(req.cookies);
+
     const refreshToken = req.cookies.refreshToken;
+
+    console.log(`refresh token:${refreshToken}`);
 
     const result = await this.authService.refreshToken(refreshToken);
 

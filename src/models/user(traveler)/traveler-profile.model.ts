@@ -29,7 +29,12 @@ export const travelerProfileSchema = new Schema<ITravelerProfile>(
       default: "",
     },
 
-    profileImage: {
+    profileImageUrl: {
+      type: String,
+      default: "",
+    },
+
+    profileImageKey: {
       type: String,
       default: "",
     },
