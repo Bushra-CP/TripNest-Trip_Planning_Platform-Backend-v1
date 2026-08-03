@@ -15,10 +15,6 @@ export class AuthenticateMiddleware {
 
   authenticate = (req: Request, res: Response, next: NextFunction): void => {
     try {
-      console.log("entered to authenticate");
-
-      console.log(req.headers.authorization);
-
       const authHeader = req.headers.authorization;
       const token = authHeader && authHeader.split(" ")[1];
 

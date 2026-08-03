@@ -13,8 +13,6 @@ export class AuthorizeMiddleware {
     (...allowedRoles: UserRole[]) =>
     (req: Request, _res: Response, next: NextFunction): void => {
       try {
-        console.log("entered to authorize");
-
         if (!req.user) {
           throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.UNAUTHORIZED);
         }
