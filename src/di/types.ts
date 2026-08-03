@@ -20,6 +20,11 @@ export const TYPES = {
   DatabaseService: Symbol.for("DatabaseService"),
 
   /* ==============================
+   * LOGGER
+   * ============================== */
+  Logger: Symbol.for("Logger"),
+
+  /* ==============================
    * MIDDLEWARE
    * ============================== */
 

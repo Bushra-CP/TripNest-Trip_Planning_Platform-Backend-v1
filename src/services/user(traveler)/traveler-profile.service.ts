@@ -25,6 +25,15 @@ import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/Up
 import { UpdateProfilePictureResponseDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureResponseDto";
 import { IS3Service } from "@/infrastructure/s3/IS3Service";
 import { MediaFolder } from "@/enums/media.enums";
+import {
+  TravelerProfilePayload,
+  TravelerProfileResponseDto,
+} from "@/dtos/user(traveler)/profile/TravelerProfileResponseDto";
+import { ProfileMapper } from "@/mapper/profile.mapper";
+import {
+  UpdateTravelerProfileRequestDto,
+  UpdateTravelerProfileResponseDto,
+} from "@/dtos/user(traveler)/profile/UpdateTravelerProfileRequestDto";
 
 injectable();
 export class TravelerProfileService implements ITravelerProfileService {
@@ -333,5 +342,61 @@ export class TravelerProfileService implements ITravelerProfileService {
       message: SuccessMessages.PROFILE_UPDATED_SUCCESSFULLY,
       profileImage: updatedProfile.profileImageUrl!,
     };
+  }
+
+  /*-----------------------
+  GET USER PROFILE
+  ------------------------*/
+  async getProfile(payload: TravelerProfilePayload): Promise<TravelerProfileResponseDto> {
+    const userId = payload.userId;
+
+    const profile = await this.travelerProfileRepository.findByUserId(userId);
+
+    if (!profile) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
+    }
+
+    const message = "";
+
+    return ProfileMapper.toProfileResponse(profile, message);
+  }
+
+  /*-----------------------
+  UPDATE PROFILE
+  ------------------------*/
+  async updateProfile(
+    payload: UpdateTravelerProfileRequestDto,
+  ): Promise<UpdateTravelerProfileResponseDto> {
+    const userId = payload.userId;
+
+    const profile = await this.travelerProfileRepository.findByUserId(userId);
+
+    if (!profile) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
+    }
+
+    const socialPresence = payload.socialPresence.map((item) => ({
+      url: item.url,
+    }));
+
+    profile.fullName = payload.fullName;
+    profile.phone = payload.phone;
+    profile.country = payload.country;
+    profile.state = payload.state;
+    profile.city = payload.city;
+    profile.bio = payload.bio;
+    profile.socialPresence = socialPresence;
+
+    const updatedProfile = await this.travelerProfileRepository.updateOne({ userId }, profile);
+
+    if (!updatedProfile) {
+      throw new AppError(
+        STATUS_CODES.INTERNAL_SERVER_ERROR,
+
+        ErrorMessages.PROFILE_UPDATE_FAILED,
+      );
+    }
+
+    return { message: SuccessMessages.PROFILE_UPDATED_SUCCESSFULLY };
   }
 }

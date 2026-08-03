@@ -19,7 +19,17 @@ export const travelerProfileSchema = new Schema<ITravelerProfile>(
       type: String,
     },
 
-    location: {
+    country: {
+      type: String,
+      default: "",
+    },
+
+    state: {
+      type: String,
+      default: "",
+    },
+
+    city: {
       type: String,
       default: "",
     },
@@ -40,7 +50,16 @@ export const travelerProfileSchema = new Schema<ITravelerProfile>(
     },
 
     socialPresence: {
-      type: [String],
+      type: [
+        {
+          url: {
+            type: String,
+            trim: true,
+            required: true,
+          },
+        },
+      ],
+
       default: [],
     },
 

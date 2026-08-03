@@ -6,6 +6,14 @@ import { ResendOtpResponseDto } from "../../../dtos/user(traveler)/register/rese
 import { VerifyRegistrationRequestDto } from "../../../dtos/user(traveler)/register/verify-registration-request.dto.js";
 import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureRequestDto.js";
 import { UpdateProfilePictureResponseDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureResponseDto.js";
+import {
+  TravelerProfilePayload,
+  TravelerProfileResponseDto,
+} from "@/dtos/user(traveler)/profile/TravelerProfileResponseDto.js";
+import {
+  UpdateTravelerProfileRequestDto,
+  UpdateTravelerProfileResponseDto,
+} from "@/dtos/user(traveler)/profile/UpdateTravelerProfileRequestDto.js";
 
 export interface ITravelerProfileService {
   register(payload: RegisterRequestDto): Promise<RegisterResponseDto>;
@@ -17,4 +25,10 @@ export interface ITravelerProfileService {
   updateProfileImage(
     payload: UpdateProfilePictureRequestDto,
   ): Promise<UpdateProfilePictureResponseDto>;
+
+  getProfile(payload: TravelerProfilePayload): Promise<TravelerProfileResponseDto>;
+
+  updateProfile(
+    payload: UpdateTravelerProfileRequestDto,
+  ): Promise<UpdateTravelerProfileResponseDto>;
 }

@@ -3,13 +3,14 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { TravelerProfileController } from "../../controller/user(traveler)/traveler-profile.controller";
 import { validate } from "../../middleware/validate.middleware";
-import { registerSchema } from "../../validation/user(traveler)/register/register.schema";
-import { verifyRegistrationSchema } from "../../validation/user(traveler)/register/verify-registration.schema";
-import { resendOtpSchema } from "../../validation/user(traveler)/register/resend-otp.schema";
+import { registerSchema } from "../../validation/user(traveler)/profile/register.schema";
+import { verifyRegistrationSchema } from "../../validation/user(traveler)/profile/verify-registration.schema";
+import { resendOtpSchema } from "../../validation/user(traveler)/profile/resend-otp.schema";
 import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware";
 import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
 import { UserRole } from "@/enums/user-role.enum";
 import { uploadProfileImage } from "@/middleware/multer/profile-upload";
+import { updateTravelerProfileSchema } from "@/validation/user(traveler)/profile/update-profile.schema";
 
 @injectable()
 export class TravelerProfileRoutes {
@@ -55,6 +56,21 @@ export class TravelerProfileRoutes {
       this.authorizeMiddleware.authorize(UserRole.TRAVELER),
       uploadProfileImage.single("profileImage"),
       this.travelerProfileController.updateProfileImage.bind(this.travelerProfileController),
+    );
+
+    this.router.get(
+      "/get-profile",
+      this.authenticateMiddleware.authenticate,
+      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this.travelerProfileController.getProfile.bind(this.travelerProfileController),
+    );
+
+    this.router.patch(
+      "/update-profile",
+      this.authenticateMiddleware.authenticate,
+      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      validate(updateTravelerProfileSchema),
+      this.travelerProfileController.updateProfile.bind(this.travelerProfileController),
     );
   }
 }
