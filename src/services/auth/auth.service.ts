@@ -37,6 +37,10 @@ import {
   ForgotPasswordResendOTPRequestDto,
   ForgotPasswordResendOTPResponseDto,
 } from "@/dtos/auth/forgot-password/resend-otp.js";
+import {
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+} from "@/dtos/auth/change-email-password/change-password.dto.js";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -391,6 +395,44 @@ export class AuthService implements IAuthService {
 
     // Hash and update the new password
     const hashedPassword = await this.passwordService.hash(payload.password);
+
+    const updatedUser = await this.authRepository.updateOne(
+      { _id: user._id },
+      {
+        password: hashedPassword,
+      },
+    );
+
+    if (!updatedUser) {
+      throw new AppError(STATUS_CODES.INTERNAL_SERVER_ERROR, ErrorMessages.PASSWORD_UPDATE_FAILED);
+    }
+
+    return {
+      message: SuccessMessages.PASSWORD_RESET_SUCCESS,
+    };
+  }
+
+  /* -------------------------
+   Change Password
+-------------------------- */
+  async changePassword(payload: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+    const { userId, currentPassword, newPassword } = payload;
+
+    const user = await this.authRepository.findById(userId);
+
+    if (!user) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    }
+
+    // Verify credentials
+    const passwordMatched = await this.passwordService.compare(currentPassword, user.password!);
+
+    if (!passwordMatched) {
+      throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_EMAIL);
+    }
+
+    // Hash and update the new password
+    const hashedPassword = await this.passwordService.hash(newPassword);
 
     const updatedUser = await this.authRepository.updateOne(
       { _id: user._id },
