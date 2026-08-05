@@ -16,6 +16,7 @@ import {
 } from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
 import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto.js";
 import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/resend-otp.js";
+import { ChangePasswordRequest } from "@/dtos/auth/change-email-password/change-password.dto.js";
 
 @injectable()
 export class AuthController {
@@ -144,6 +145,23 @@ export class AuthController {
       const payload = req.body as ResetPasswordRequestDto;
 
       const data = await this.authService.resetPassword(payload);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "", data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  ////////// RESET PASSWORD //////////
+  async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user.userId;
+
+      const { currentPassword, newPassword } = req.body;
+
+      const payload: ChangePasswordRequest = { userId, currentPassword, newPassword };
+
+      const data = await this.authService.changePassword(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {

@@ -18,6 +18,10 @@ import {
   ForgotPasswordResendOTPRequestDto,
   ForgotPasswordResendOTPResponseDto,
 } from "@/dtos/auth/forgot-password/resend-otp.js";
+import {
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+} from "@/dtos/auth/change-email-password/change-password.dto.js";
 
 export interface IAuthService {
   login(data: LoginRequestDto): Promise<IAuthResult>;
@@ -35,4 +39,6 @@ export interface IAuthService {
   ): Promise<ForgotPasswordResendOTPResponseDto>;
 
   resetPassword(data: ResetPasswordRequestDto): Promise<ResetPasswordResponseDto>;
+
+  changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse>;
 }

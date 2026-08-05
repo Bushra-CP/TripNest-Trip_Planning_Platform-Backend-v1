@@ -6,8 +6,11 @@ import { validate } from "../../middleware/validate.middleware";
 import { loginSchema } from "../../validation/auth/login.schema";
 import { googleAuthSchema } from "@/validation/auth/google-auth.schema";
 import { forgotPasswordSchema } from "@/validation/user(traveler)/forgot-password/forgot-password.schema";
-// import { verifyResetOtpSchema } from "@/validation/user(traveler)/forgot-password/verify-reset-otp.schema";
 import { resetPasswordSchema } from "@/validation/user(traveler)/forgot-password/reset-password.schema";
+import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware";
+import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
+import { UserRole } from "@/enums/user-role.enum";
+import { changePasswordSchema } from "@/validation/auth/change-password.schema";
 
 @injectable()
 export class AuthRoutes {
@@ -16,6 +19,12 @@ export class AuthRoutes {
   constructor(
     @inject(TYPES.AuthController)
     private readonly authController: AuthController,
+
+    @inject(TYPES.AuthenticateMiddleware)
+    private readonly authenticateMiddleware: AuthenticateMiddleware,
+
+    @inject(TYPES.AuthorizeMiddleware)
+    private readonly authorizeMiddleware: AuthorizeMiddleware,
   ) {
     this.router = Router();
 
@@ -60,6 +69,14 @@ export class AuthRoutes {
       "/reset-password",
       validate(resetPasswordSchema),
       this.authController.resetPassword.bind(this.authController),
+    );
+
+    this.router.patch(
+      "/change-password",
+      this.authenticateMiddleware.authenticate,
+      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      validate(changePasswordSchema),
+      this.authController.changePassword.bind(this.authController),
     );
   }
 }
