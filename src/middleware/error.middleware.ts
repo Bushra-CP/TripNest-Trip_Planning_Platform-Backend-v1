@@ -94,6 +94,8 @@ export class ErrorMiddleware {
     /*-----------------------
     Fallback Error
   ------------------------*/
+    console.log(err);
+
     ResponseHandler.error(
       res,
       STATUS_CODES.INTERNAL_SERVER_ERROR,

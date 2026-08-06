@@ -72,8 +72,8 @@ export class TravelerProfileService implements ITravelerProfileService {
   async register(payload: RegisterRequestDto): Promise<RegisterResponseDto> {
     const { fullName, email, password, phone } = payload;
 
-    console.log(payload);
-    console.log(password);
+    // console.log(payload);
+    // console.log(password);
 
     //check whether email already exists
     const existingUser = await this.userRepository.findByEmail(email);
