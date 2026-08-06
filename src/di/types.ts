@@ -28,6 +28,7 @@ export const TYPES = {
    * MIDDLEWARE
    * ============================== */
 
+  ErrorMiddleware: Symbol.for("ErrorMiddleware"),
   AuthenticateMiddleware: Symbol.for("AuthenticateMiddleware"),
   AuthorizeMiddleware: Symbol.for("AuthorizeMiddleware"),
 

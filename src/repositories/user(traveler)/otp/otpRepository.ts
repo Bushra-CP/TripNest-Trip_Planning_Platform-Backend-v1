@@ -17,4 +17,8 @@ export class OtpRepository extends BaseRepository<IOtp> implements IOtpRepositor
   async deleteByUserId(userId: string): Promise<boolean> {
     return this.deleteOne({ userId });
   }
+
+  async findByEmail(email: string): Promise<IOtp | null> {
+    return this.findOne({ email });
+  }
 }

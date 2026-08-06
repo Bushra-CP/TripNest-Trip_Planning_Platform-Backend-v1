@@ -17,6 +17,9 @@ import {
 import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto.js";
 import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/resend-otp.js";
 import { ChangePasswordRequest } from "@/dtos/auth/change-email-password/change-password.dto.js";
+import { ChangeEmailRequest } from "@/dtos/auth/change-email-password/change-email.dto.js";
+import { VerifyChangeEmailOtpRequestDto } from "@/dtos/auth/change-email-password/verify-change-email-otp.dto.js";
+import { ResendChangeEmailOtpRequestDto } from "@/dtos/auth/change-email-password/resend-change-email-otp.dto.js";
 
 @injectable()
 export class AuthController {
@@ -28,7 +31,7 @@ export class AuthController {
   //////////LOGIN/////////
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log(req.body);
+      // console.log(req.body);
 
       const payload = req.body as LoginRequestDto;
 
@@ -152,7 +155,7 @@ export class AuthController {
     }
   }
 
-  ////////// RESET PASSWORD //////////
+  ////////// CHANGE PASSWORD //////////
   async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user.userId;
@@ -162,6 +165,52 @@ export class AuthController {
       const payload: ChangePasswordRequest = { userId, currentPassword, newPassword };
 
       const data = await this.authService.changePassword(payload);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "", data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  ////////// CHANGE EMAIL //////////
+  async changeEmail(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user.userId;
+
+      const { currentEmail, newEmail, currentPassword } = req.body;
+
+      const payload: ChangeEmailRequest = { userId, currentEmail, newEmail, currentPassword };
+
+      const data = await this.authService.changeEmail(payload);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "", data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  ////////// VERIFY CHANGE EMAIL OTP //////////
+  async verifyChangeEmailOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const payload = req.body as VerifyChangeEmailOtpRequestDto;
+
+      const data = await this.authService.verifyChangeEmailOtp(payload);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "", data);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  ////////// RESEND CHANGE EMAIL OTP //////////
+  async resendChangeEmailOtp(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { email } = req.body;
+      const userId = req.user.userId;
+
+      const payload: ResendChangeEmailOtpRequestDto = { userId, email };
+
+      const data = await this.authService.resendChangeEmailOtp(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
