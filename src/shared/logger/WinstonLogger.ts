@@ -5,6 +5,7 @@ import winston from "winston";
 import { ILogger } from "./ILogger.js";
 
 import { errorFilter, warnFilter, infoFilter, debugFilter } from "./logFilters.js";
+import { injectable } from "inversify";
 
 const logDirectory = path.join(process.cwd(), "logs");
 
@@ -57,6 +58,7 @@ const logger = winston.createLogger({
   ],
 });
 
+@injectable()
 export class WinstonLogger implements ILogger {
   info(message: string): void {
     logger.info(message);

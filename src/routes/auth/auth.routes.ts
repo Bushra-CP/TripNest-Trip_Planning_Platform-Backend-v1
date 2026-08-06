@@ -11,6 +11,7 @@ import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware";
 import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
 import { UserRole } from "@/enums/user-role.enum";
 import { changePasswordSchema } from "@/validation/auth/change-password.schema";
+import { changeEmailSchema } from "@/validation/auth/change-email.schema";
 
 @injectable()
 export class AuthRoutes {
@@ -77,6 +78,28 @@ export class AuthRoutes {
       this.authorizeMiddleware.authorize(UserRole.TRAVELER),
       validate(changePasswordSchema),
       this.authController.changePassword.bind(this.authController),
+    );
+
+    this.router.post(
+      "/change-email",
+      this.authenticateMiddleware.authenticate,
+      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      validate(changeEmailSchema),
+      this.authController.changeEmail.bind(this.authController),
+    );
+
+    this.router.post(
+      "/verify-change-email-otp",
+      this.authenticateMiddleware.authenticate,
+      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this.authController.verifyChangeEmailOtp.bind(this.authController),
+    );
+
+    this.router.post(
+      "/resend-change-email-otp",
+      this.authenticateMiddleware.authenticate,
+      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this.authController.resendChangeEmailOtp.bind(this.authController),
     );
   }
 }

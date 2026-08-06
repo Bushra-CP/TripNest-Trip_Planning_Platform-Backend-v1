@@ -14,6 +14,7 @@ export enum SuccessMessages {
   PASSWORD_RESET_SUCCESS = "Password reset Successful.",
   LOGOUT_SUCCESS = "Logged out successfully.",
   PROFILE_UPDATED_SUCCESSFULLY = "Profile updated successfully",
+  EMAIL_UPDATED_SUCCESSFULLY = "Email updated successfully",
 }
 
 export enum ErrorMessages {
@@ -35,6 +36,8 @@ export enum ErrorMessages {
   PROFILE_UPDATE_FAILED = "Profile update failed",
   UNAUTHORIZED = "Unautherized to access",
   ACCESS_DENIED = "Access denied",
+  PASSWORD_NOT_MATCHING = "Password is not matching",
+  EMAIL_UPDATE_FAILED = "Email update failed",
 }
 
 export enum ValidationMessages {
@@ -51,4 +54,5 @@ export enum ValidationMessages {
   USERID_REQUIRED = "User ID is required",
   OTP_CONSTRAINT = "OTP must be exactly 6 digits",
   GOOGLE_CREDENTIAL_REQUIRED = "Google credential is required",
+  EMAILS_SHOULD_BE_DIFFERENT = "New email must be different.",
 }

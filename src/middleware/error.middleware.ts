@@ -7,74 +7,97 @@ import { STATUS_CODES } from "../enums/status.codes.enum.js";
 import { env } from "../config/env.js";
 import { ResponseHandler } from "../shared/http/responseHandler.js";
 import { ErrorMessages, Messages, ValidationMessages } from "../enums/messages.enum.js";
+import { inject, injectable } from "inversify";
+import { TYPES } from "@/di/types.js";
+import { ILogger } from "@/shared/logger/ILogger.js";
 
 const { JsonWebTokenError, TokenExpiredError } = jwt;
 
-export const errorMiddleware = (
-  err: unknown,
-  _req: Request,
-  res: Response,
-  _next: NextFunction,
-): void => {
-  /*-----------------------
-  Custom Application Error
+@injectable()
+export class ErrorMiddleware {
+  constructor(@inject(TYPES.Logger) private readonly logger: ILogger) {}
+
+  handle(err: unknown, _req: Request, res: Response, next: NextFunction): void {
+    // Prevent sending another response if one has already been sent
+    if (res.headersSent) {
+      return next(err);
+    }
+
+    /*-----------------------
+    Custom Application Error
   ------------------------*/
-  if (err instanceof AppError) {
-    ResponseHandler.error(res, err.statusCode, err.message);
-  }
+    if (err instanceof AppError) {
+      ResponseHandler.error(res, err.statusCode, err.message);
+      return;
+    }
 
-  /*-----------------------
-  Zod Validation Error
+    /*-----------------------
+    Zod Validation Error
   ------------------------*/
+    if (err instanceof ZodError) {
+      ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ValidationMessages.VALIDATION_FAILDED);
+      return;
+    }
 
-  if (err instanceof ZodError) {
-    ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ValidationMessages.VALIDATION_FAILDED);
-  }
-
-  /*-----------------------
-  Invalid JWT
+    /*-----------------------
+    Invalid JWT
   ------------------------*/
-  if (err instanceof JsonWebTokenError) {
-    ResponseHandler.error(res, STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_TOKEN);
-  }
+    if (err instanceof JsonWebTokenError) {
+      ResponseHandler.error(res, STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_TOKEN);
+      return;
+    }
 
-  /*-----------------------
-  Expired JWT
+    /*-----------------------
+    Expired JWT
   ------------------------*/
+    if (err instanceof TokenExpiredError) {
+      ResponseHandler.error(res, STATUS_CODES.UNAUTHORIZED, Messages.TOKEN_EXPIRED);
+      return;
+    }
 
-  if (err instanceof TokenExpiredError) {
-    ResponseHandler.error(res, STATUS_CODES.UNAUTHORIZED, Messages.TOKEN_EXPIRED);
-  }
-
-  /*-----------------------
-  Mongo Duplicate Key Error
+    /*-----------------------
+    Mongo Duplicate Key Error
   ------------------------*/
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      err.code === 11000 &&
+      "keyPattern" in err
+    ) {
+      const field = Object.keys(err.keyPattern as Record<string, unknown>)[0];
 
-  if (typeof err === "object" && err !== null && "code" in err && err.code === 11000) {
-    const field = Object.keys((err as any).keyPattern)[0];
+      ResponseHandler.error(res, STATUS_CODES.CONFLICT, `${field} already exists.`);
+      return;
+    }
 
-    ResponseHandler.error(res, STATUS_CODES.CONFLICT, `${field} already exists.`);
-  }
-
-  /*-----------------------
-  Mongoose Validation Error
+    /*-----------------------
+    Mongoose Validation Error
   ------------------------*/
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "name" in err &&
+      err.name === "ValidationError"
+    ) {
+      ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ValidationMessages.VALIDATION_FAILDED);
+      return;
+    }
 
-  if (typeof err === "object" && err !== null && "name" in err && err.name === "ValidationError") {
-    ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ValidationMessages.VALIDATION_FAILDED);
-  }
-
-  /*-----------------------
-  Log unknown errors in development
+    /*-----------------------
+    Log Unknown Errors
   ------------------------*/
+    if (env.NODE_ENV === "development") {
+      this.logger.error(String(err));
+    }
 
-  if (env.NODE_ENV === "development") {
-    console.error(err);
+    /*-----------------------
+    Fallback Error
+  ------------------------*/
+    ResponseHandler.error(
+      res,
+      STATUS_CODES.INTERNAL_SERVER_ERROR,
+      ErrorMessages.INTERNAL_SERVER_ERROR,
+    );
   }
-
-  ResponseHandler.error(
-    res,
-    STATUS_CODES.INTERNAL_SERVER_ERROR,
-    ErrorMessages.INTERNAL_SERVER_ERROR,
-  );
-};
+}

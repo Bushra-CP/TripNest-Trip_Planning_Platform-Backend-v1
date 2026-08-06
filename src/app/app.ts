@@ -2,7 +2,7 @@ import "reflect-metadata";
 import express from "express";
 import cors from "cors";
 import { notFoundMiddleware } from "../middleware/notfound.middleware.js";
-import { errorMiddleware } from "../middleware/error.middleware.js";
+import { ErrorMiddleware } from "../middleware/error.middleware.js";
 import { container } from "../di/index.js";
 
 import { TYPES } from "../di/types.js";
@@ -15,6 +15,8 @@ const app = express();
 const travelerProfileRoutes = container.get<TravelerProfileRoutes>(TYPES.TravelerProfileRoutes);
 
 const authRoute = container.get<AuthRoutes>(TYPES.AuthRoutes);
+
+const errorMiddleware = container.get<ErrorMiddleware>(TYPES.ErrorMiddleware);
 
 app.use(
   cors({
@@ -34,6 +36,6 @@ app.use("/", authRoute.router);
 app.use(notFoundMiddleware);
 
 // Error handler
-app.use(errorMiddleware);
+app.use(errorMiddleware.handle.bind(errorMiddleware));
 
 export default app;

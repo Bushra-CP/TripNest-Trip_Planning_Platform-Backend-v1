@@ -41,6 +41,18 @@ import {
   ChangePasswordRequest,
   ChangePasswordResponse,
 } from "@/dtos/auth/change-email-password/change-password.dto.js";
+import {
+  ChangeEmailRequest,
+  ChangeEmailResponse,
+} from "@/dtos/auth/change-email-password/change-email.dto.js";
+import {
+  VerifyChangeEmailOtpRequestDto,
+  VerifyChangeEmailOtpResponseDto,
+} from "@/dtos/auth/change-email-password/verify-change-email-otp.dto.js";
+import {
+  ResendChangeEmailOtpRequestDto,
+  ResendChangeEmailOtpResponseDto,
+} from "@/dtos/auth/change-email-password/resend-change-email-otp.dto.js";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -428,7 +440,7 @@ export class AuthService implements IAuthService {
     const passwordMatched = await this.passwordService.compare(currentPassword, user.password!);
 
     if (!passwordMatched) {
-      throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_EMAIL);
+      throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.PASSWORD_NOT_MATCHING);
     }
 
     // Hash and update the new password
@@ -447,6 +459,164 @@ export class AuthService implements IAuthService {
 
     return {
       message: SuccessMessages.PASSWORD_RESET_SUCCESS,
+    };
+  }
+
+  /* -------------------------
+   Change Email
+   Sends an OTP to verify a new email address.
+-------------------------- */
+  async changeEmail(payload: ChangeEmailRequest): Promise<ChangeEmailResponse> {
+    const { userId, currentEmail, newEmail, currentPassword } = payload;
+
+    const user = await this.authRepository.findByEmail(currentEmail);
+
+    // console.log(user);
+
+    if (!user) {
+      throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.USER_NOT_FOUND);
+    }
+
+    // Verify password
+    const passwordMatched = await this.passwordService.compare(currentPassword, user.password!);
+
+    if (!passwordMatched) {
+      throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.PASSWORD_NOT_MATCHING);
+    }
+
+    //check whether email already exists
+    const existingUser = await this.authRepository.findByEmail(newEmail);
+
+    if (existingUser) {
+      throw new AppError(STATUS_CODES.CONFLICT, ErrorMessages.EMAIL_CONFLICT_MESSSAGE);
+    }
+
+    // Remove any existing OTP
+    await this.otpRepository.deleteByUserId(userId);
+
+    // Generate, store, and send a new OTP
+    const otp = this.otpService.generateOtp();
+    const hashedOtp = await this.passwordService.hash(otp);
+
+    await this.otpRepository.create({
+      userId: user._id,
+      email: newEmail,
+      otp: hashedOtp,
+    });
+
+    const profile = await this.travelerProfileRepository.findByUserId(userId);
+
+    if (!profile) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
+    }
+    await this.mailService.sendOtp(newEmail, profile?.fullName, otp);
+
+    return {
+      message: SuccessMessages.OTP_SENT,
+      userId,
+      email: newEmail,
+    };
+  }
+
+  /* -------------------------
+   Verify Change Email OTP
+   Verifies the OTP and updates the user's email.
+-------------------------- */
+  async verifyChangeEmailOtp(
+    payload: VerifyChangeEmailOtpRequestDto,
+  ): Promise<VerifyChangeEmailOtpResponseDto> {
+    const { email, otp } = payload;
+
+    // Retrieve the stored OTP
+    const otpRecord = await this.otpRepository.findByEmail(email);
+
+    // console.log(otpRecord);
+
+    if (!otpRecord) {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
+    }
+
+    // Check expiry
+    const isExpired = Date.now() - otpRecord.createdAt.getTime() > 60 * 1000;
+
+    if (isExpired) {
+      await this.otpRepository.deleteByUserId(otpRecord.userId.toString());
+
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
+    }
+
+    // Verify OTP
+    const valid = await this.passwordService.compare(otp, otpRecord.otp);
+
+    if (!valid) {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_OTP);
+    }
+
+    // Update email
+    const updatedUser = await this.authRepository.updateOne(
+      {
+        _id: otpRecord.userId,
+      },
+      {
+        email,
+      },
+    );
+
+    if (!updatedUser) {
+      throw new AppError(STATUS_CODES.INTERNAL_SERVER_ERROR, ErrorMessages.EMAIL_UPDATE_FAILED);
+    }
+
+    // Remove OTP
+    await this.otpRepository.deleteByUserId(otpRecord.userId.toString());
+
+    return {
+      email,
+      message: SuccessMessages.EMAIL_UPDATED_SUCCESSFULLY,
+    };
+  }
+
+  /* -------------------------
+   Resend Change Email OTP
+   Sends an OTP to verify a new email address.
+-------------------------- */
+  async resendChangeEmailOtp(
+    payload: ResendChangeEmailOtpRequestDto,
+  ): Promise<ResendChangeEmailOtpResponseDto> {
+    const { userId, email } = payload;
+
+    //find user
+    const user = await this.authRepository.findById(userId);
+
+    if (!user) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
+    }
+
+    //Remove Previous OTP
+    await this.otpRepository.deleteByUserId(user._id.toString());
+
+    //Generate New OTP
+    const otp = this.otpService.generateOtp();
+
+    //Hash OTP
+    const hashedOtp = await this.passwordService.hash(otp);
+
+    await this.otpRepository.create({
+      userId: user._id,
+      email,
+      otp: hashedOtp,
+    });
+
+    //Find Traveler Profile
+    const profile = await this.travelerProfileRepository.findByUserId(user._id.toString());
+
+    if (!profile) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
+    }
+
+    await this.mailService.sendOtp(email, profile!.fullName, otp);
+
+    return {
+      message: SuccessMessages.OTP_RESENT,
     };
   }
 }

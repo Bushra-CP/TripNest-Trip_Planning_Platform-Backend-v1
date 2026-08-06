@@ -22,6 +22,18 @@ import {
   ChangePasswordRequest,
   ChangePasswordResponse,
 } from "@/dtos/auth/change-email-password/change-password.dto.js";
+import {
+  ChangeEmailRequest,
+  ChangeEmailResponse,
+} from "@/dtos/auth/change-email-password/change-email.dto.js";
+import {
+  VerifyChangeEmailOtpRequestDto,
+  VerifyChangeEmailOtpResponseDto,
+} from "@/dtos/auth/change-email-password/verify-change-email-otp.dto.js";
+import {
+  ResendChangeEmailOtpRequestDto,
+  ResendChangeEmailOtpResponseDto,
+} from "@/dtos/auth/change-email-password/resend-change-email-otp.dto.js";
 
 export interface IAuthService {
   login(data: LoginRequestDto): Promise<IAuthResult>;
@@ -41,4 +53,14 @@ export interface IAuthService {
   resetPassword(data: ResetPasswordRequestDto): Promise<ResetPasswordResponseDto>;
 
   changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse>;
+
+  changeEmail(data: ChangeEmailRequest): Promise<ChangeEmailResponse>;
+
+  verifyChangeEmailOtp(
+    payload: VerifyChangeEmailOtpRequestDto,
+  ): Promise<VerifyChangeEmailOtpResponseDto>;
+
+  resendChangeEmailOtp(
+    payload: ResendChangeEmailOtpRequestDto,
+  ): Promise<ResendChangeEmailOtpResponseDto>;
 }
