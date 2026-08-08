@@ -2,7 +2,7 @@ import { TravelerProfileResponseDto } from "@/dtos/user(traveler)/profile/Travel
 import { ITravelerProfile } from "@/interfaces/IModel/ITravelerPofile";
 
 export class ProfileMapper {
-  static toProfileResponse(profile: ITravelerProfile, message: string): TravelerProfileResponseDto {
+  static toProfileResponse(profile: ITravelerProfile): TravelerProfileResponseDto {
     return {
       fullName: profile.fullName,
 
@@ -19,8 +19,6 @@ export class ProfileMapper {
       socialPresence: profile.socialPresence,
 
       referenceId: profile.referenceId!,
-
-      message,
     };
   }
 }

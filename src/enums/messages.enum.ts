@@ -15,6 +15,8 @@ export enum SuccessMessages {
   LOGOUT_SUCCESS = "Logged out successfully.",
   PROFILE_UPDATED_SUCCESSFULLY = "Profile updated successfully",
   EMAIL_UPDATED_SUCCESSFULLY = "Email updated successfully",
+  USERS_FETCHED = "Fetched all users",
+  USER_STATUS_UPDATED = "User status updated successfully.",
 }
 
 export enum ErrorMessages {
@@ -38,6 +40,7 @@ export enum ErrorMessages {
   ACCESS_DENIED = "Access denied",
   PASSWORD_NOT_MATCHING = "Password is not matching",
   EMAIL_UPDATE_FAILED = "Email update failed",
+  ACCOUNT_BLOCKED = "Your account has been blocked by the admin",
 }
 
 export enum ValidationMessages {

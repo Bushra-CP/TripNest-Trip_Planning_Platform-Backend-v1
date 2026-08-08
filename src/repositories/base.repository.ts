@@ -15,9 +15,9 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
 
   //////////////////////////////////////////////////
   /**
-   * 
-   * @param id 
-   * @returns 
+   *
+   * @param id
+   * @returns
    */
   async findById(id: string): Promise<T | null> {
     return this.model.findById(id).exec();
@@ -37,7 +37,7 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
   async updateById(id: string, data: UpdateQuery<T>): Promise<T | null> {
     return this.model
       .findByIdAndUpdate(id, data, {
-        new: true,
+        returnDocument: "after",
       })
       .exec();
   }

@@ -48,4 +48,12 @@ export const TYPES = {
   TravelerProfileService: Symbol.for("TravelerProfileService"),
   TravelerProfileController: Symbol.for("TravelerProfileController"),
   TravelerProfileRoutes: Symbol.for("TravelerProfileRoutes"),
+
+  /* ==============================
+   * ADMIN/USER MANAGEMENT
+   * ============================== */
+  UserManagementRepository: Symbol.for("UserManagementRepository"),
+  UserManagementService: Symbol.for("UserManagementService"),
+  UserManagementController: Symbol.for("UserManagementController"),
+  UserManagementRoutes: Symbol.for("UserManagementRoutes"),
 } as const;
