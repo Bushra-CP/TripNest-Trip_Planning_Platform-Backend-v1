@@ -23,7 +23,6 @@ import {
   ForgotPasswordResponseDto,
 } from "@/dtos/auth/forgot-password/forgot-password1.dto.js";
 import { IOtpService } from "@/infrastructure/otp/IOtpService.js";
-import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
 import { IMailService } from "@/infrastructure/mail/IMailService.js";
 import {
   VerifyResetPasswordRequestDto,
@@ -53,6 +52,7 @@ import {
   ResendChangeEmailOtpRequestDto,
   ResendChangeEmailOtpResponseDto,
 } from "@/dtos/auth/change-email-password/resend-change-email-otp.dto.js";
+import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -102,7 +102,7 @@ export class AuthService implements IAuthService {
     }
 
     if (!user.isActive) {
-      throw new AppError(STATUS_CODES.FORBIDDEN, Messages.ACCOUNT_DEACTIVATED);
+      throw new AppError(STATUS_CODES.FORBIDDEN, ErrorMessages.ACCOUNT_BLOCKED);
     }
 
     // Verify credentials

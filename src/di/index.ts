@@ -6,6 +6,7 @@ import { registerDatabase } from "./container/database.container.js";
 import { authContainer } from "./container/auth.container.js";
 import { registerMiddleware } from "./container/middleware.container.js";
 import { registerLogger } from "./container/logger.container.js";
+import { registerUserManagementContainer } from "./container/user-management.container.js";
 
 const container = new Container();
 
@@ -22,5 +23,7 @@ registerDatabase(container);
 registerMiddleware(container);
 
 registerLogger(container);
+
+registerUserManagementContainer(container);
 
 export { container };
