@@ -1,12 +1,12 @@
 import { Container } from "inversify";
-import { registerIntegrationsContainer } from "./container/integrations.container.js";
-import { registerUserRegContainer } from "./container/userRegister.container.js";
-import { registerOTP } from "./container/otp.container.js";
-import { registerDatabase } from "./container/database.container.js";
-import { authContainer } from "./container/auth.container.js";
-import { registerMiddleware } from "./container/middleware.container.js";
-import { registerLogger } from "./container/logger.container.js";
-import { registerUserManagementContainer } from "./container/user-management.container.js";
+import { registerIntegrationsContainer } from "./container/integrations.container";
+import { registerUserRegContainer } from "./container/userRegister.container";
+import { registerOTP } from "./container/otp.container";
+import { registerDatabase } from "./container/database.container";
+import { authContainer } from "./container/auth.container";
+import { registerMiddleware } from "./container/middleware.container";
+import { registerLogger } from "./container/logger.container";
+import { registerUserManagementContainer } from "./container/user-management.container";
 
 const container = new Container();
 

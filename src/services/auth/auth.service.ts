@@ -1,58 +1,58 @@
 import { inject, injectable } from "inversify";
-import { TYPES } from "../../di/types.js";
-import { IAuthRepository } from "../../interfaces/IRepository/auth/IAuth.repository.js";
-import { IJwtService } from "../../infrastructure/jwt/IJwtService.js";
-import { LoginRequestDto } from "../../dtos/auth/login-request.dto.js";
-import { IAuthResult } from "../../interfaces/IAuthResult.js";
-import { AppError } from "../../shared/errors/app.error.js";
-import { STATUS_CODES } from "../../enums/status.codes.enum.js";
-import { IPasswordService } from "../../infrastructure/password/IPasswordService.js";
-import { AuthMapper } from "../../mapper/auth.mapper.js";
-import { RefreshTokenResponseDto } from "../../dtos/auth/refresh-token-response.dto.js";
-import { IAuthService } from "../../interfaces/IServices/auth/IAuth.service.js";
-import { ErrorMessages, Messages, SuccessMessages } from "../../enums/messages.enum.js";
-import { IGoogleService } from "@/infrastructure/google/IGoogleService.js";
-import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto.js";
-import { AuthProvider } from "@/enums/auth-provider.enum.js";
-import { UserRole } from "@/enums/user-role.enum.js";
-import { IDatabaseService } from "@/infrastructure/database/IDatabaseService.js";
-import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository.js";
-import { IUser } from "@/interfaces/IModel/IUser.js";
+import { TYPES } from "../../di/types";
+import { IAuthRepository } from "../../interfaces/IRepository/auth/IAuth.repository";
+import { IJwtService } from "../../infrastructure/jwt/IJwtService";
+import { LoginRequestDto } from "../../dtos/auth/login-request.dto";
+import { IAuthResult } from "../../interfaces/IAuthResult";
+import { AppError } from "../../shared/errors/app.error";
+import { STATUS_CODES } from "../../enums/status.codes.enum";
+import { IPasswordService } from "../../infrastructure/password/IPasswordService";
+import { AuthMapper } from "../../mapper/auth.mapper";
+import { RefreshTokenResponseDto } from "../../dtos/auth/refresh-token-response.dto";
+import { IAuthService } from "../../interfaces/IServices/auth/IAuth.service";
+import { ErrorMessages, Messages, SuccessMessages } from "../../enums/messages.enum";
+import { IGoogleService } from "@/infrastructure/google/IGoogleService";
+import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto";
+import { AuthProvider } from "@/enums/auth-provider.enum";
+import { UserRole } from "@/enums/user-role.enum";
+import { IDatabaseService } from "@/infrastructure/database/IDatabaseService";
+import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository";
+import { IUser } from "@/interfaces/IModel/IUser";
 import {
   ForgotPasswordRequestDto,
   ForgotPasswordResponseDto,
-} from "@/dtos/auth/forgot-password/forgot-password1.dto.js";
-import { IOtpService } from "@/infrastructure/otp/IOtpService.js";
-import { IMailService } from "@/infrastructure/mail/IMailService.js";
+} from "@/dtos/auth/forgot-password/forgot-password1.dto";
+import { IOtpService } from "@/infrastructure/otp/IOtpService";
+import { IMailService } from "@/infrastructure/mail/IMailService";
 import {
   VerifyResetPasswordRequestDto,
   VerifyResetPasswordResponseDto,
-} from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
+} from "@/dtos/auth/forgot-password/verify-reset-password2.dto";
 import {
   ResetPasswordRequestDto,
   ResetPasswordResponseDto,
-} from "@/dtos/auth/forgot-password/reset-password3.dto.js";
+} from "@/dtos/auth/forgot-password/reset-password3.dto";
 import {
   ForgotPasswordResendOTPRequestDto,
   ForgotPasswordResendOTPResponseDto,
-} from "@/dtos/auth/forgot-password/resend-otp.js";
+} from "@/dtos/auth/forgot-password/resend-otp";
 import {
   ChangePasswordRequest,
   ChangePasswordResponse,
-} from "@/dtos/auth/change-email-password/change-password.dto.js";
+} from "@/dtos/auth/change-email-password/change-password.dto";
 import {
   ChangeEmailRequest,
   ChangeEmailResponse,
-} from "@/dtos/auth/change-email-password/change-email.dto.js";
+} from "@/dtos/auth/change-email-password/change-email.dto";
 import {
   VerifyChangeEmailOtpRequestDto,
   VerifyChangeEmailOtpResponseDto,
-} from "@/dtos/auth/change-email-password/verify-change-email-otp.dto.js";
+} from "@/dtos/auth/change-email-password/verify-change-email-otp.dto";
 import {
   ResendChangeEmailOtpRequestDto,
   ResendChangeEmailOtpResponseDto,
-} from "@/dtos/auth/change-email-password/resend-change-email-otp.dto.js";
-import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtpRepository.js";
+} from "@/dtos/auth/change-email-password/resend-change-email-otp.dto";
+import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtpRepository";
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -93,7 +93,7 @@ export class AuthService implements IAuthService {
     const user = await this.authRepository.findByEmail(data.email);
 
     if (!user) {
-      throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_EMAIL);
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
     // Validate account status
@@ -226,6 +226,7 @@ export class AuthService implements IAuthService {
 -------------------------- */
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
     // Ensure a refresh token is provided
+
     if (!refreshToken) {
       throw new AppError(STATUS_CODES.UNAUTHORIZED, Messages.REFRESH_TOKEN_MISSING);
     }

@@ -29,6 +29,8 @@ export interface ITravelerProfile extends Document {
 
   rewardPoints: number;
 
+  blockedAt: Date;
+
   createdAt: Date;
 
   updatedAt: Date;

@@ -356,9 +356,7 @@ export class TravelerProfileService implements ITravelerProfileService {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    const message = "";
-
-    return ProfileMapper.toProfileResponse(profile, message);
+    return ProfileMapper.toProfileResponse(profile);
   }
 
   /*-----------------------

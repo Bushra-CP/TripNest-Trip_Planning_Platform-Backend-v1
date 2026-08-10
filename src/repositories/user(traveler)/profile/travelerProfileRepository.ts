@@ -1,8 +1,8 @@
 import { injectable } from "inversify";
-import { ITravelerProfileRepository } from "../../../interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository.js";
-import { ITravelerProfile } from "../../../interfaces/IModel/ITravelerPofile.js";
-import { TravelerProfileModel } from "../../../models/user(traveler)/traveler-profile.model.js";
-import { BaseRepository } from "../../base.repository.js";
+import { ITravelerProfileRepository } from "../../../interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository";
+import { ITravelerProfile } from "../../../interfaces/IModel/ITravelerPofile";
+import { TravelerProfileModel } from "../../../models/user(traveler)/traveler-profile.model";
+import { BaseRepository } from "../../base.repository";
 
 @injectable()
 export class TravelerProfileRepository

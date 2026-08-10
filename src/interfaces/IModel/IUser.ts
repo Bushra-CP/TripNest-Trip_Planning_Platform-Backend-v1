@@ -1,6 +1,6 @@
 import { Document } from "mongoose";
-import { AuthProvider } from "../../enums/auth-provider.enum.js";
-import { UserRole } from "../../enums/user-role.enum.js";
+import { AuthProvider } from "../../enums/auth-provider.enum";
+import { UserRole } from "../../enums/user-role.enum";
 
 export interface IUser extends Document {
   email: string;

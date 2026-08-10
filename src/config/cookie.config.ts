@@ -1,5 +1,5 @@
 import { CookieOptions } from "express";
-import { env } from "./env.js";
+import { env } from "./env";
 
 export const refreshTokenCookieOptions: CookieOptions = {
   httpOnly: true,

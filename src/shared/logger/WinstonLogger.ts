@@ -2,9 +2,9 @@ import fs from "fs";
 import path from "path";
 import winston from "winston";
 
-import { ILogger } from "./ILogger.js";
+import { ILogger } from "./ILogger";
 
-import { errorFilter, warnFilter, infoFilter, debugFilter } from "./logFilters.js";
+import { errorFilter, warnFilter, infoFilter, debugFilter } from "./logFilters";
 import { injectable } from "inversify";
 
 const logDirectory = path.join(process.cwd(), "logs");

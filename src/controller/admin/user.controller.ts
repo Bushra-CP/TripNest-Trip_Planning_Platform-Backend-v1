@@ -1,16 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
-// import { TYPES } from "../../di/types";
-// import { ITravelerProfileService } from "../../interfaces/IServices/user(traveler)/ITravelerProfileService";
-// import { RegisterRequestDto } from "../../dtos/user(traveler)/register/register-request.dto";
 import { STATUS_CODES } from "../../enums/status.codes.enum";
 import { SuccessMessages } from "@/enums/messages.enum";
 import { GetUsersRequestDto, UserStatus } from "@/dtos/admin/user-management/users.dto";
 import { TYPES } from "@/di/types";
 import { IUserManagementService } from "@/interfaces/IServices/admin/IUserManagementService";
 import { ResponseHandler } from "@/shared/http/responseHandler";
-// import { ResponseHandler } from "../../shared/http/responseHandler";
-// import { SuccessMessages } from "../../enums/messages.enum";
 
 @injectable()
 export class UserManagementController {

@@ -1,8 +1,7 @@
 import { injectable } from "inversify";
 import nodemailer from "nodemailer";
-import { IMailService } from "./IMailService.js";
-import { env } from "../../config/env.js";
-
+import { IMailService } from "./IMailService";
+import { env } from "../../config/env";
 
 @injectable()
 export class MailService implements IMailService {

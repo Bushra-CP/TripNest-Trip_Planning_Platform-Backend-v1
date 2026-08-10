@@ -1,5 +1,5 @@
 import mongoose, { Schema, Types } from "mongoose";
-import { IOtp } from "../../interfaces/IModel/IOtp.js";
+import { IOtp } from "../../interfaces/IModel/IOtp";
 
 export const OtpSchema = new Schema<IOtp>(
   {
