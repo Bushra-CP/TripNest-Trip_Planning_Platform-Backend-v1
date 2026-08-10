@@ -29,8 +29,9 @@ export class UserManagementService implements IUserManagementService {
     private readonly userManagementRepository: IAdminUserRepository,
   ) {}
 
-  /////////////////////////////////////////////////////
-
+  /*-----------------------
+  GET USERS
+  ------------------------*/
   async getUsers(query: GetUsersRequestDto): Promise<GetUsersResponseDto> {
     const result = await this.userManagementRepository.getUsers(query);
 
@@ -49,6 +50,22 @@ export class UserManagementService implements IUserManagementService {
     };
   }
 
+  /*-----------------------
+  GET USER USING ID
+  ------------------------*/
+  async getUserDetails(userId: string): Promise<UserProfile> {
+    const userProfile = await this.travelerProfileRepository.findByUserId(userId);
+
+    if (!userProfile) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
+    }
+
+    return UserProfileMapper.toUserProfileDto(userProfile);
+  }
+
+  /*-----------------------
+  UPDATE USER STATUS 
+  ------------------------*/
   async updateUserStatus(payload: UpdateUserStatusDto): Promise<UpdateUserStatusDto> {
     const user = await this.authRepository.updateById(payload.userId, {
       isActive: payload.isActive,
@@ -62,15 +79,5 @@ export class UserManagementService implements IUserManagementService {
       userId: user._id.toString(),
       isActive: user.isActive,
     };
-  }
-
-  async getUserDetails(userId: string): Promise<UserProfile> {
-    const userProfile = await this.travelerProfileRepository.findByUserId(userId);
-
-    if (!userProfile) {
-      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
-    }
-
-    return UserProfileMapper.toUserProfileDto(userProfile);
   }
 }

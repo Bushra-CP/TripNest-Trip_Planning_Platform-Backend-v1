@@ -35,7 +35,7 @@ export class UserManagementController {
   }
 
   /*-----------------------
-  GET USERS USING ID
+  GET USER USING ID
   ------------------------*/
   async getUserDetails(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
