@@ -1,8 +1,8 @@
 import { injectable } from "inversify";
-import { IUserRepository } from "../../../interfaces/IRepository/user(traveler)/profile/IUserRepository.js";
-import { IUser } from "../../../interfaces/IModel/IUser.js";
-import { UserModel } from "../../../models/auth/user.model.js";
-import { BaseRepository } from "../../base.repository.js";
+import { IUserRepository } from "../../../interfaces/IRepository/user(traveler)/profile/IUserRepository";
+import { IUser } from "../../../interfaces/IModel/IUser";
+import { UserModel } from "../../../models/auth/user.model";
+import { BaseRepository } from "../../base.repository";
 
 @injectable()
 export class UserRepository extends BaseRepository<IUser> implements IUserRepository {

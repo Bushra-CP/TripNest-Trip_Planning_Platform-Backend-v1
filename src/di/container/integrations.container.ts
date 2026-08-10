@@ -2,14 +2,14 @@ import { Container } from "inversify";
 
 import { TYPES } from "../types";
 
-import { IPasswordService } from "../../infrastructure/password/IPasswordService.js";
-import { IOtpService } from "../../infrastructure/otp/IOtpService.js";
-import { IJwtService } from "../../infrastructure/jwt/IJwtService.js";
-import { IMailService } from "../../infrastructure/mail/IMailService.js";
-import { JwtService } from "../../infrastructure/jwt/jwt.service.js";
-import { MailService } from "../../infrastructure/mail/email.service.js";
-import { OtpService } from "../../infrastructure/otp/otp.service.js";
-import { PasswordService } from "../../infrastructure/password/bcrypt.service.js";
+import { IPasswordService } from "../../infrastructure/password/IPasswordService";
+import { IOtpService } from "../../infrastructure/otp/IOtpService";
+import { IJwtService } from "../../infrastructure/jwt/IJwtService";
+import { IMailService } from "../../infrastructure/mail/IMailService";
+import { JwtService } from "../../infrastructure/jwt/jwt.service";
+import { MailService } from "../../infrastructure/mail/email.service";
+import { OtpService } from "../../infrastructure/otp/otp.service";
+import { PasswordService } from "../../infrastructure/password/bcrypt.service";
 import { IGoogleService } from "@/infrastructure/google/IGoogleService";
 import { GoogleService } from "@/infrastructure/google/google.service";
 import { IS3Service } from "@/infrastructure/s3/IS3Service";

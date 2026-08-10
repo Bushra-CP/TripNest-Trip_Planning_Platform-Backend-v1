@@ -1,5 +1,5 @@
-import { IOtp } from "../../../IModel/IOtp.js";
-import { IBaseRepository } from "../../IBaseRepository.js";
+import { IOtp } from "../../../IModel/IOtp";
+import { IBaseRepository } from "../../IBaseRepository";
 
 export interface IOtpRepository extends IBaseRepository<IOtp> {
   findByUserId(userId: string): Promise<IOtp | null>;

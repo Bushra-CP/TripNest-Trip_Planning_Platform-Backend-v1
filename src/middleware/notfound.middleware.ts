@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { STATUS_CODES } from "../enums/status.codes.enum.js";
+import { STATUS_CODES } from "../enums/status.codes.enum";
 
 export const notFoundMiddleware = (req: Request, res: Response): Response => {
   return res.status(STATUS_CODES.NOT_FOUND).json({

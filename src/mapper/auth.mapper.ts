@@ -1,7 +1,7 @@
-import { IAuthResult } from "../interfaces/IAuthResult.js";
-import { RegisterResponseDto } from "../dtos/user(traveler)/register/register-response.dto.js";
-import { ITravelerProfile } from "../interfaces/IModel/ITravelerPofile.js";
-import { IUser } from "../interfaces/IModel/IUser.js";
+import { IAuthResult } from "../interfaces/IAuthResult";
+import { RegisterResponseDto } from "../dtos/user(traveler)/register/register-response.dto";
+import { ITravelerProfile } from "../interfaces/IModel/ITravelerPofile";
+import { IUser } from "../interfaces/IModel/IUser";
 
 export class AuthMapper {
   static toAuthResponse(

@@ -1,16 +1,16 @@
 import "reflect-metadata";
 import express from "express";
 import cors from "cors";
-import { notFoundMiddleware } from "../middleware/notfound.middleware.js";
-import { ErrorMiddleware } from "../middleware/error.middleware.js";
-import { container } from "../di/index.js";
+import { notFoundMiddleware } from "../middleware/notfound.middleware";
+import { ErrorMiddleware } from "../middleware/error.middleware";
+import { container } from "../di/index";
 
-import { TYPES } from "../di/types.js";
-import { TravelerProfileRoutes } from "../routes/user(traveler)/traveler-profile.routes.js";
-import { AuthRoutes } from "../routes/auth/auth.routes.js";
+import { TYPES } from "../di/types";
+import { TravelerProfileRoutes } from "../routes/user(traveler)/traveler-profile.routes";
+import { AuthRoutes } from "../routes/auth/auth.routes";
 import cookieParser from "cookie-parser";
-import { UserManagementRoutes } from "@/routes/admin/admin.routes.js";
-import { env } from "@/config/env.js";
+import { UserManagementRoutes } from "@/routes/admin/admin.routes";
+import { env } from "@/config/env";
 
 const app = express();
 

@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { injectable } from "inversify";
-import { IPasswordService } from "./IPasswordService.js";
-import { env } from "../../config/env.js";
+import { IPasswordService } from "./IPasswordService";
+import { env } from "../../config/env";
 
 @injectable()
 export class PasswordService implements IPasswordService {
@@ -13,10 +13,7 @@ export class PasswordService implements IPasswordService {
   }
 
   //compare passwords
-  async compare(
-    plainPassword: string,
-    hashedPassword: string,
-  ): Promise<boolean> {
+  async compare(plainPassword: string, hashedPassword: string): Promise<boolean> {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 }

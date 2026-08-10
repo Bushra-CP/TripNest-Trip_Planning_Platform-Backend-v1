@@ -2,14 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import jwt from "jsonwebtoken";
 
-import { AppError } from "../shared/errors/app.error.js";
-import { STATUS_CODES } from "../enums/status.codes.enum.js";
-import { env } from "../config/env.js";
-import { ResponseHandler } from "../shared/http/responseHandler.js";
-import { ErrorMessages, Messages, ValidationMessages } from "../enums/messages.enum.js";
+import { AppError } from "../shared/errors/app.error";
+import { STATUS_CODES } from "../enums/status.codes.enum";
+import { env } from "../config/env";
+import { ResponseHandler } from "../shared/http/responseHandler";
+import { ErrorMessages, Messages, ValidationMessages } from "../enums/messages.enum";
 import { inject, injectable } from "inversify";
-import { TYPES } from "@/di/types.js";
-import { ILogger } from "@/shared/logger/ILogger.js";
+import { TYPES } from "@/di/types";
+import { ILogger } from "@/shared/logger/ILogger";
 
 const { JsonWebTokenError, TokenExpiredError } = jwt;
 

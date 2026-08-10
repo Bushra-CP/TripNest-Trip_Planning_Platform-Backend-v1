@@ -1,8 +1,8 @@
 import { Container } from "inversify";
-import { TYPES } from "../types.js";
-import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware.js";
-import { AuthorizeMiddleware } from "@/middleware/authorize.middleware.js";
-import { ErrorMiddleware } from "@/middleware/error.middleware.js";
+import { TYPES } from "../types";
+import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware";
+import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
+import { ErrorMiddleware } from "@/middleware/error.middleware";
 
 export function registerMiddleware(container: Container): void {
   container.bind<ErrorMiddleware>(TYPES.ErrorMiddleware).to(ErrorMiddleware);

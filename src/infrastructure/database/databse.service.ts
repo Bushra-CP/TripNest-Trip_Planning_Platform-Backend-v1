@@ -1,13 +1,11 @@
 import { injectable } from "inversify";
-import { IDatabaseService } from "./IDatabaseService.js";
+import { IDatabaseService } from "./IDatabaseService";
 import { ClientSession } from "mongoose";
 import mongoose from "mongoose";
 
 @injectable()
 export class DatabaseService implements IDatabaseService {
-  async executeTransaction<T>(
-    operation: (session: ClientSession) => Promise<T>,
-  ): Promise<T> {
+  async executeTransaction<T>(operation: (session: ClientSession) => Promise<T>): Promise<T> {
     const session = await mongoose.startSession();
 
     try {

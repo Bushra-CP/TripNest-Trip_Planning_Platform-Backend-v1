@@ -1,5 +1,5 @@
 import mongoose, { Schema, Types } from "mongoose";
-import { ITravelerProfile } from "../../interfaces/IModel/ITravelerPofile.js";
+import { ITravelerProfile } from "../../interfaces/IModel/ITravelerPofile";
 
 export const travelerProfileSchema = new Schema<ITravelerProfile>(
   {
@@ -73,6 +73,10 @@ export const travelerProfileSchema = new Schema<ITravelerProfile>(
       type: Number,
       default: 0,
       min: 0,
+    },
+
+    blockedAt: {
+      type: Date,
     },
   },
   {

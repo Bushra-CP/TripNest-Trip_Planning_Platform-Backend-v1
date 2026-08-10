@@ -1,25 +1,25 @@
 import { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
-import { TYPES } from "../../di/types.js";
-import { LoginRequestDto } from "../../dtos/auth/login-request.dto.js";
-import { refreshTokenCookieOptions } from "../../config/cookie.config.js";
-import { STATUS_CODES } from "../../enums/status.codes.enum.js";
-import { IAuthService } from "../../interfaces/IServices/auth/IAuth.service.js";
-import { AuthResponseDto } from "../../dtos/user(traveler)/register/verify-registration-response.dto.js";
-import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto.js";
-import { ForgotPasswordRequestDto } from "@/dtos/auth/forgot-password/forgot-password1.dto.js";
-import { ResponseHandler } from "@/shared/http/responseHandler.js";
-import { SuccessMessages } from "@/enums/messages.enum.js";
+import { TYPES } from "../../di/types";
+import { LoginRequestDto } from "../../dtos/auth/login-request.dto";
+import { refreshTokenCookieOptions } from "../../config/cookie.config";
+import { STATUS_CODES } from "../../enums/status.codes.enum";
+import { IAuthService } from "../../interfaces/IServices/auth/IAuth.service";
+import { AuthResponseDto } from "../../dtos/user(traveler)/register/verify-registration-response.dto";
+import { GoogleAuthRequestDTO } from "@/dtos/auth/google-auth.dto";
+import { ForgotPasswordRequestDto } from "@/dtos/auth/forgot-password/forgot-password1.dto";
+import { ResponseHandler } from "@/shared/http/responseHandler";
+import { SuccessMessages } from "@/enums/messages.enum";
 import {
   VerifyResetPasswordRequestDto,
   VerifyResetPasswordResponseDto,
-} from "@/dtos/auth/forgot-password/verify-reset-password2.dto.js";
-import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto.js";
-import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/resend-otp.js";
-import { ChangePasswordRequest } from "@/dtos/auth/change-email-password/change-password.dto.js";
-import { ChangeEmailRequest } from "@/dtos/auth/change-email-password/change-email.dto.js";
-import { VerifyChangeEmailOtpRequestDto } from "@/dtos/auth/change-email-password/verify-change-email-otp.dto.js";
-import { ResendChangeEmailOtpRequestDto } from "@/dtos/auth/change-email-password/resend-change-email-otp.dto.js";
+} from "@/dtos/auth/forgot-password/verify-reset-password2.dto";
+import { ResetPasswordRequestDto } from "@/dtos/auth/forgot-password/reset-password3.dto";
+import { ForgotPasswordResendOTPRequestDto } from "@/dtos/auth/forgot-password/resend-otp";
+import { ChangePasswordRequest } from "@/dtos/auth/change-email-password/change-password.dto";
+import { ChangeEmailRequest } from "@/dtos/auth/change-email-password/change-email.dto";
+import { VerifyChangeEmailOtpRequestDto } from "@/dtos/auth/change-email-password/verify-change-email-otp.dto";
+import { ResendChangeEmailOtpRequestDto } from "@/dtos/auth/change-email-password/resend-change-email-otp.dto";
 
 @injectable()
 export class AuthController {
