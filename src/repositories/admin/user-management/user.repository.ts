@@ -33,29 +33,25 @@ export class AdminUserRepository extends BaseRepository<IUser> implements IAdmin
     super(UserModel);
   }
 
-  ///////////////////////////////////////////////////////
-
+  /*-----------------------
+  GET USERS
+  ------------------------*/
   async getUsers(query: GetUsersRequestDto): Promise<PaginatedUsers> {
     const { page, limit, search, status } = query;
 
     const skip = (page - 1) * limit;
 
-    /**
-     * User Match
-     */
-
+    //MATCH USER ROLE - TRAVELER
     const userMatch: Record<string, unknown> = {
       role: UserRole.TRAVELER,
     };
 
+    //FILTER BY STATUS
     if (status) {
       userMatch.isActive = status === UserStatus.ACTIVE;
     }
 
-    /**
-     * Aggregation Pipeline
-     */
-
+    //AGGREGATION PIPELINE
     const pipeline: PipelineStage[] = [
       {
         $match: userMatch,
@@ -77,10 +73,7 @@ export class AdminUserRepository extends BaseRepository<IUser> implements IAdmin
         },
       },
 
-      /**
-       * Search
-       */
-
+      //SEARCH
       ...(search
         ? [
             {
@@ -110,20 +103,14 @@ export class AdminUserRepository extends BaseRepository<IUser> implements IAdmin
           ]
         : []),
 
-      /**
-       * Latest Users First
-       */
-
+      //LATEST USERS FIRST
       {
         $sort: {
           createdAt: -1,
         },
       },
 
-      /**
-       * Select only required fields
-       */
-
+      //SELECT ONLY REQUIRED FIELDS
       {
         $project: {
           _id: 0,
@@ -146,10 +133,7 @@ export class AdminUserRepository extends BaseRepository<IUser> implements IAdmin
         },
       },
 
-      /**
-       * Pagination
-       */
-
+      //PAGINATION
       {
         $facet: {
           users: [
@@ -190,19 +174,5 @@ export class AdminUserRepository extends BaseRepository<IUser> implements IAdmin
 
       totalPages,
     };
-  }
-
-  ///////////////////////////////////////////////////////
-
-  async updateUserStatus(userId: string, isActive: boolean): Promise<IUser> {
-    const user = await this.updateById(userId, {
-      isActive,
-    });
-
-    if (!user) {
-      throw new Error("User not found.");
-    }
-
-    return user;
   }
 }
