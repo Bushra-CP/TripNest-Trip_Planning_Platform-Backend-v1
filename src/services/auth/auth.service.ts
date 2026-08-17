@@ -58,31 +58,31 @@ import { IOtpRepository } from "@/interfaces/IRepository/user(traveler)/otp/IOtp
 export class AuthService implements IAuthService {
   constructor(
     @inject(TYPES.AuthRepository)
-    private readonly authRepository: IAuthRepository,
+    private readonly _authRepository: IAuthRepository,
 
     @inject(TYPES.TravelerProfileRepository)
-    private readonly travelerProfileRepository: ITravelerProfileRepository,
+    private readonly _travelerProfileRepository: ITravelerProfileRepository,
 
     @inject(TYPES.JwtService)
-    private readonly jwtService: IJwtService,
+    private readonly _jwtService: IJwtService,
 
     @inject(TYPES.PasswordService)
-    private readonly passwordService: IPasswordService,
+    private readonly _passwordService: IPasswordService,
 
     @inject(TYPES.DatabaseService)
-    private readonly databaseService: IDatabaseService,
+    private readonly _databaseService: IDatabaseService,
 
     @inject(TYPES.GoogleService)
-    private readonly googleService: IGoogleService,
+    private readonly _googleService: IGoogleService,
 
     @inject(TYPES.OtpService)
-    private readonly otpService: IOtpService,
+    private readonly _otpService: IOtpService,
 
     @inject(TYPES.OtpRepository)
-    private readonly otpRepository: IOtpRepository,
+    private readonly _otpRepository: IOtpRepository,
 
     @inject(TYPES.MailService)
-    private readonly mailService: IMailService,
+    private readonly _mailService: IMailService,
   ) {}
 
   /* -------------------------
@@ -90,7 +90,7 @@ export class AuthService implements IAuthService {
 -------------------------- */
   async login(data: LoginRequestDto): Promise<IAuthResult> {
     // Find the user
-    const user = await this.authRepository.findByEmail(data.email);
+    const user = await this._authRepository.findByEmail(data.email);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
@@ -106,25 +106,25 @@ export class AuthService implements IAuthService {
     }
 
     // Verify credentials
-    const passwordMatched = await this.passwordService.compare(data.password, user.password!);
+    const passwordMatched = await this._passwordService.compare(data.password, user.password!);
 
     if (!passwordMatched) {
       throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.INVALID_EMAIL);
     }
 
     // Load profile and generate tokens
-    const getProfile = await this.authRepository.getProfile(user._id.toString());
+    const getProfile = await this._authRepository.getProfile(user._id.toString());
 
     if (!getProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    const accessToken = this.jwtService.generateAccessToken({
+    const accessToken = this._jwtService.generateAccessToken({
       userId: user._id.toString(),
       role: user.role,
     });
 
-    const refreshToken = this.jwtService.generateRefreshToken({
+    const refreshToken = this._jwtService.generateRefreshToken({
       userId: user._id.toString(),
       role: user.role,
     });
@@ -143,12 +143,12 @@ export class AuthService implements IAuthService {
 -------------------------- */
   async googleAuth(data: GoogleAuthRequestDTO): Promise<IAuthResult> {
     // Retrieve user information from Google
-    const googleUser = await this.googleService.getUserInfo(data.googleAcessToken);
+    const googleUser = await this._googleService.getUserInfo(data.googleAcessToken);
 
     const { email, sub, name, picture } = googleUser;
 
     // Check for an existing account
-    const existingUser = await this.authRepository.findByEmail(email);
+    const existingUser = await this._authRepository.findByEmail(email);
 
     // Validate the existing account
     if (existingUser) {
@@ -167,8 +167,8 @@ export class AuthService implements IAuthService {
     if (existingUser) {
       user = existingUser;
     } else {
-      user = await this.databaseService.executeTransaction(async (session) => {
-        const createdUser = await this.authRepository.create(
+      user = await this._databaseService.executeTransaction(async (session) => {
+        const createdUser = await this._authRepository.create(
           {
             email,
             provider: AuthProvider.GOOGLE,
@@ -180,7 +180,7 @@ export class AuthService implements IAuthService {
           session,
         );
 
-        await this.travelerProfileRepository.create(
+        await this._travelerProfileRepository.create(
           {
             userId: createdUser._id,
             fullName: name,
@@ -196,18 +196,18 @@ export class AuthService implements IAuthService {
     }
 
     // Load profile and generate tokens
-    const profile = await this.authRepository.getProfile(user._id.toString());
+    const profile = await this._authRepository.getProfile(user._id.toString());
 
     if (!profile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    const accessToken = this.jwtService.generateAccessToken({
+    const accessToken = this._jwtService.generateAccessToken({
       userId: user._id.toString(),
       role: user.role,
     });
 
-    const refreshToken = this.jwtService.generateRefreshToken({
+    const refreshToken = this._jwtService.generateRefreshToken({
       userId: user._id.toString(),
       role: user.role,
     });
@@ -232,21 +232,21 @@ export class AuthService implements IAuthService {
     }
 
     // Verify the refresh token and retrieve the user
-    const payload = this.jwtService.verifyRefreshToken(refreshToken);
+    const payload = this._jwtService.verifyRefreshToken(refreshToken);
 
-    const user = await this.authRepository.findById(payload.userId);
+    const user = await this._authRepository.findById(payload.userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
     // Generate new access and refresh tokens
-    const accessToken = this.jwtService.generateAccessToken({
+    const accessToken = this._jwtService.generateAccessToken({
       userId: user._id.toString(),
       role: user.role,
     });
 
-    const newRefreshToken = this.jwtService.generateRefreshToken({
+    const newRefreshToken = this._jwtService.generateRefreshToken({
       userId: user._id.toString(),
       role: user.role,
     });
@@ -270,7 +270,7 @@ export class AuthService implements IAuthService {
     const { email } = payload;
 
     // Find the user
-    const user = await this.authRepository.findByEmail(email);
+    const user = await this._authRepository.findByEmail(email);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
@@ -281,19 +281,19 @@ export class AuthService implements IAuthService {
     }
 
     // Remove any existing OTP
-    await this.otpRepository.deleteByUserId(user._id.toString());
+    await this._otpRepository.deleteByUserId(user._id.toString());
 
     // Generate, store, and send a new OTP
-    const otp = this.otpService.generateOtp();
-    const hashedOtp = await this.passwordService.hash(otp);
+    const otp = this._otpService.generateOtp();
+    const hashedOtp = await this._passwordService.hash(otp);
 
-    await this.otpRepository.create({
+    await this._otpRepository.create({
       userId: user._id,
       email: user.email,
       otp: hashedOtp,
     });
 
-    await this.mailService.sendOtp(user.email, user.email, otp);
+    await this._mailService.sendOtp(user.email, user.email, otp);
 
     return {
       message: SuccessMessages.OTP_SENT,
@@ -312,14 +312,14 @@ export class AuthService implements IAuthService {
     const { email, otp } = payload;
 
     // Find the user
-    const user = await this.authRepository.findByEmail(email);
+    const user = await this._authRepository.findByEmail(email);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
     // Retrieve the stored OTP
-    const otpRecord = await this.otpRepository.findByUserId(user._id.toString());
+    const otpRecord = await this._otpRepository.findByUserId(user._id.toString());
 
     if (!otpRecord) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
@@ -329,22 +329,22 @@ export class AuthService implements IAuthService {
     const isExpired = Date.now() - otpRecord.createdAt.getTime() > 60 * 1000;
 
     if (isExpired) {
-      await this.otpRepository.deleteByUserId(user._id.toString());
+      await this._otpRepository.deleteByUserId(user._id.toString());
 
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
     }
 
     // Validate the OTP and remove it
-    const valid = await this.passwordService.compare(otp, otpRecord.otp);
+    const valid = await this._passwordService.compare(otp, otpRecord.otp);
 
     if (!valid) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_OTP);
     }
 
-    await this.otpRepository.deleteByUserId(user._id.toString());
+    await this._otpRepository.deleteByUserId(user._id.toString());
 
     // Generate a reset token
-    const resetToken = this.jwtService.generateResetToken({
+    const resetToken = this._jwtService.generateResetToken({
       userId: user._id.toString(),
       role: user.role,
     });
@@ -364,26 +364,26 @@ export class AuthService implements IAuthService {
     payload: ForgotPasswordResendOTPRequestDto,
   ): Promise<ForgotPasswordResendOTPResponseDto> {
     // Find the user
-    const user = await this.authRepository.findByEmail(payload.email);
+    const user = await this._authRepository.findByEmail(payload.email);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
     // Remove the previous OTP
-    await this.otpRepository.deleteByUserId(user._id.toString());
+    await this._otpRepository.deleteByUserId(user._id.toString());
 
     // Generate, store, and send a new OTP
-    const otp = this.otpService.generateOtp();
-    const hashedOtp = await this.passwordService.hash(otp);
+    const otp = this._otpService.generateOtp();
+    const hashedOtp = await this._passwordService.hash(otp);
 
-    await this.otpRepository.create({
+    await this._otpRepository.create({
       userId: user._id,
       email: user.email,
       otp: hashedOtp,
     });
 
-    await this.mailService.sendOtp(user.email, user.email, otp);
+    await this._mailService.sendOtp(user.email, user.email, otp);
 
     return {
       message: SuccessMessages.OTP_RESENT,
@@ -397,19 +397,19 @@ export class AuthService implements IAuthService {
    */
   async resetPassword(payload: ResetPasswordRequestDto): Promise<ResetPasswordResponseDto> {
     // Verify the reset token
-    const tokenPayload = this.jwtService.verifyResetToken(payload.resetToken);
+    const tokenPayload = this._jwtService.verifyResetToken(payload.resetToken);
 
     // Retrieve the user
-    const user = await this.authRepository.findById(tokenPayload.userId);
+    const user = await this._authRepository.findById(tokenPayload.userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
     // Hash and update the new password
-    const hashedPassword = await this.passwordService.hash(payload.password);
+    const hashedPassword = await this._passwordService.hash(payload.password);
 
-    const updatedUser = await this.authRepository.updateOne(
+    const updatedUser = await this._authRepository.updateOne(
       { _id: user._id },
       {
         password: hashedPassword,
@@ -431,23 +431,23 @@ export class AuthService implements IAuthService {
   async changePassword(payload: ChangePasswordRequest): Promise<ChangePasswordResponse> {
     const { userId, currentPassword, newPassword } = payload;
 
-    const user = await this.authRepository.findById(userId);
+    const user = await this._authRepository.findById(userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
     // Verify credentials
-    const passwordMatched = await this.passwordService.compare(currentPassword, user.password!);
+    const passwordMatched = await this._passwordService.compare(currentPassword, user.password!);
 
     if (!passwordMatched) {
       throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.PASSWORD_NOT_MATCHING);
     }
 
     // Hash and update the new password
-    const hashedPassword = await this.passwordService.hash(newPassword);
+    const hashedPassword = await this._passwordService.hash(newPassword);
 
-    const updatedUser = await this.authRepository.updateOne(
+    const updatedUser = await this._authRepository.updateOne(
       { _id: user._id },
       {
         password: hashedPassword,
@@ -470,7 +470,7 @@ export class AuthService implements IAuthService {
   async changeEmail(payload: ChangeEmailRequest): Promise<ChangeEmailResponse> {
     const { userId, currentEmail, newEmail, currentPassword } = payload;
 
-    const user = await this.authRepository.findByEmail(currentEmail);
+    const user = await this._authRepository.findByEmail(currentEmail);
 
     // console.log(user);
 
@@ -479,38 +479,38 @@ export class AuthService implements IAuthService {
     }
 
     // Verify password
-    const passwordMatched = await this.passwordService.compare(currentPassword, user.password!);
+    const passwordMatched = await this._passwordService.compare(currentPassword, user.password!);
 
     if (!passwordMatched) {
       throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.PASSWORD_NOT_MATCHING);
     }
 
     //check whether email already exists
-    const existingUser = await this.authRepository.findByEmail(newEmail);
+    const existingUser = await this._authRepository.findByEmail(newEmail);
 
     if (existingUser) {
       throw new AppError(STATUS_CODES.CONFLICT, ErrorMessages.EMAIL_CONFLICT_MESSSAGE);
     }
 
     // Remove any existing OTP
-    await this.otpRepository.deleteByUserId(userId);
+    await this._otpRepository.deleteByUserId(userId);
 
     // Generate, store, and send a new OTP
-    const otp = this.otpService.generateOtp();
-    const hashedOtp = await this.passwordService.hash(otp);
+    const otp = this._otpService.generateOtp();
+    const hashedOtp = await this._passwordService.hash(otp);
 
-    await this.otpRepository.create({
+    await this._otpRepository.create({
       userId: user._id,
       email: newEmail,
       otp: hashedOtp,
     });
 
-    const profile = await this.travelerProfileRepository.findByUserId(userId);
+    const profile = await this._travelerProfileRepository.findByUserId(userId);
 
     if (!profile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
-    await this.mailService.sendOtp(newEmail, profile?.fullName, otp);
+    await this._mailService.sendOtp(newEmail, profile?.fullName, otp);
 
     return {
       message: SuccessMessages.OTP_SENT,
@@ -529,7 +529,7 @@ export class AuthService implements IAuthService {
     const { email, otp } = payload;
 
     // Retrieve the stored OTP
-    const otpRecord = await this.otpRepository.findByEmail(email);
+    const otpRecord = await this._otpRepository.findByEmail(email);
 
     // console.log(otpRecord);
 
@@ -541,20 +541,20 @@ export class AuthService implements IAuthService {
     const isExpired = Date.now() - otpRecord.createdAt.getTime() > 60 * 1000;
 
     if (isExpired) {
-      await this.otpRepository.deleteByUserId(otpRecord.userId.toString());
+      await this._otpRepository.deleteByUserId(otpRecord.userId.toString());
 
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
     }
 
     // Verify OTP
-    const valid = await this.passwordService.compare(otp, otpRecord.otp);
+    const valid = await this._passwordService.compare(otp, otpRecord.otp);
 
     if (!valid) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_OTP);
     }
 
     // Update email
-    const updatedUser = await this.authRepository.updateOne(
+    const updatedUser = await this._authRepository.updateOne(
       {
         _id: otpRecord.userId,
       },
@@ -568,7 +568,7 @@ export class AuthService implements IAuthService {
     }
 
     // Remove OTP
-    await this.otpRepository.deleteByUserId(otpRecord.userId.toString());
+    await this._otpRepository.deleteByUserId(otpRecord.userId.toString());
 
     return {
       email,
@@ -586,35 +586,35 @@ export class AuthService implements IAuthService {
     const { userId, email } = payload;
 
     //find user
-    const user = await this.authRepository.findById(userId);
+    const user = await this._authRepository.findById(userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
     //Remove Previous OTP
-    await this.otpRepository.deleteByUserId(user._id.toString());
+    await this._otpRepository.deleteByUserId(user._id.toString());
 
     //Generate New OTP
-    const otp = this.otpService.generateOtp();
+    const otp = this._otpService.generateOtp();
 
     //Hash OTP
-    const hashedOtp = await this.passwordService.hash(otp);
+    const hashedOtp = await this._passwordService.hash(otp);
 
-    await this.otpRepository.create({
+    await this._otpRepository.create({
       userId: user._id,
       email,
       otp: hashedOtp,
     });
 
     //Find Traveler Profile
-    const profile = await this.travelerProfileRepository.findByUserId(user._id.toString());
+    const profile = await this._travelerProfileRepository.findByUserId(user._id.toString());
 
     if (!profile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    await this.mailService.sendOtp(email, profile!.fullName, otp);
+    await this._mailService.sendOtp(email, profile!.fullName, otp);
 
     return {
       message: SuccessMessages.OTP_RESENT,

@@ -19,13 +19,13 @@ export class AuthRoutes {
 
   constructor(
     @inject(TYPES.AuthController)
-    private readonly authController: AuthController,
+    private readonly _authController: AuthController,
 
     @inject(TYPES.AuthenticateMiddleware)
-    private readonly authenticateMiddleware: AuthenticateMiddleware,
+    private readonly _authenticateMiddleware: AuthenticateMiddleware,
 
     @inject(TYPES.AuthorizeMiddleware)
-    private readonly authorizeMiddleware: AuthorizeMiddleware,
+    private readonly _authorizeMiddleware: AuthorizeMiddleware,
   ) {
     this.router = Router();
 
@@ -36,70 +36,73 @@ export class AuthRoutes {
     this.router.post(
       "/login",
       validate(loginSchema),
-      this.authController.login.bind(this.authController),
+      this._authController.login.bind(this._authController),
     );
 
     this.router.post(
       "/google",
       validate(googleAuthSchema),
-      this.authController.googleAuth.bind(this.authController),
+      this._authController.googleAuth.bind(this._authController),
     );
 
-    this.router.post("/refresh-token", this.authController.refreshToken.bind(this.authController));
+    this.router.post(
+      "/refresh-token",
+      this._authController.refreshToken.bind(this._authController),
+    );
 
-    this.router.post("/logout", this.authController.logout.bind(this.authController));
+    this.router.post("/logout", this._authController.logout.bind(this._authController));
 
     this.router.post(
       "/forgot-password",
       validate(forgotPasswordSchema),
-      this.authController.forgotPassword.bind(this.authController),
+      this._authController.forgotPassword.bind(this._authController),
     );
 
     this.router.post(
       "/verify-reset-otp",
-      this.authController.verifyResetOtp.bind(this.authController),
+      this._authController.verifyResetOtp.bind(this._authController),
     );
 
     this.router.post(
       "/resend-reset-otp",
       validate(forgotPasswordSchema),
-      this.authController.resendResetOtp.bind(this.authController),
+      this._authController.resendResetOtp.bind(this._authController),
     );
 
     this.router.post(
       "/reset-password",
       validate(resetPasswordSchema),
-      this.authController.resetPassword.bind(this.authController),
+      this._authController.resetPassword.bind(this._authController),
     );
 
     this.router.patch(
       "/change-password",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       validate(changePasswordSchema),
-      this.authController.changePassword.bind(this.authController),
+      this._authController.changePassword.bind(this._authController),
     );
 
     this.router.post(
       "/change-email",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       validate(changeEmailSchema),
-      this.authController.changeEmail.bind(this.authController),
+      this._authController.changeEmail.bind(this._authController),
     );
 
     this.router.post(
       "/verify-change-email-otp",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
-      this.authController.verifyChangeEmailOtp.bind(this.authController),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._authController.verifyChangeEmailOtp.bind(this._authController),
     );
 
     this.router.post(
       "/resend-change-email-otp",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
-      this.authController.resendChangeEmailOtp.bind(this.authController),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._authController.resendChangeEmailOtp.bind(this._authController),
     );
   }
 }

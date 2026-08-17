@@ -20,20 +20,20 @@ import { UserProfileMapper } from "@/mapper/user-profile.mapper";
 export class UserManagementService implements IUserManagementService {
   constructor(
     @inject(TYPES.AuthRepository)
-    private readonly authRepository: IAuthRepository,
+    private readonly _authRepository: IAuthRepository,
 
     @inject(TYPES.TravelerProfileRepository)
-    private readonly travelerProfileRepository: ITravelerProfileRepository,
+    private readonly _travelerProfileRepository: ITravelerProfileRepository,
 
     @inject(TYPES.UserManagementRepository)
-    private readonly userManagementRepository: IAdminUserRepository,
+    private readonly _userManagementRepository: IAdminUserRepository,
   ) {}
 
   /*-----------------------
   GET USERS
   ------------------------*/
   async getUsers(query: GetUsersRequestDto): Promise<GetUsersResponseDto> {
-    const result = await this.userManagementRepository.getUsers(query);
+    const result = await this._userManagementRepository.getUsers(query);
 
     return {
       data: result.users.map(UserMapper.toUserResponse),
@@ -54,7 +54,7 @@ export class UserManagementService implements IUserManagementService {
   GET USER USING ID
   ------------------------*/
   async getUserDetails(userId: string): Promise<UserProfile> {
-    const userProfile = await this.travelerProfileRepository.findByUserId(userId);
+    const userProfile = await this._travelerProfileRepository.findByUserId(userId);
 
     if (!userProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
@@ -67,7 +67,7 @@ export class UserManagementService implements IUserManagementService {
   UPDATE USER STATUS 
   ------------------------*/
   async updateUserStatus(payload: UpdateUserStatusDto): Promise<UpdateUserStatusDto> {
-    const user = await this.authRepository.updateById(payload.userId, {
+    const user = await this._authRepository.updateById(payload.userId, {
       isActive: payload.isActive,
     });
 

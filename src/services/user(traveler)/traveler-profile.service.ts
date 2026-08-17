@@ -39,31 +39,31 @@ injectable();
 export class TravelerProfileService implements ITravelerProfileService {
   constructor(
     @inject(TYPES.UserRepository)
-    private readonly userRepository: IUserRepository,
+    private readonly _userRepository: IUserRepository,
 
     @inject(TYPES.TravelerProfileRepository)
-    private readonly travelerProfileRepository: ITravelerProfileRepository,
+    private readonly _travelerProfileRepository: ITravelerProfileRepository,
 
     @inject(TYPES.OtpRepository)
-    private readonly otpRepository: IOtpRepository,
+    private readonly _otpRepository: IOtpRepository,
 
     @inject(TYPES.OtpService)
-    private readonly otpService: IOtpService,
+    private readonly _otpService: IOtpService,
 
     @inject(TYPES.PasswordService)
-    private readonly passwordService: IPasswordService,
+    private readonly _passwordService: IPasswordService,
 
     @inject(TYPES.MailService)
-    private readonly mailService: IMailService,
+    private readonly _mailService: IMailService,
 
     @inject(TYPES.JwtService)
-    private readonly jwtService: IJwtService,
+    private readonly _jwtService: IJwtService,
 
     @inject(TYPES.DatabaseService)
-    private readonly databaseService: IDatabaseService,
+    private readonly _databaseService: IDatabaseService,
 
     @inject(TYPES.S3Service)
-    private readonly s3Service: IS3Service,
+    private readonly _s3Service: IS3Service,
   ) {}
 
   /*-----------------------
@@ -76,18 +76,18 @@ export class TravelerProfileService implements ITravelerProfileService {
     // console.log(password);
 
     //check whether email already exists
-    const existingUser = await this.userRepository.findByEmail(email);
+    const existingUser = await this._userRepository.findByEmail(email);
 
     if (existingUser) {
       throw new AppError(STATUS_CODES.CONFLICT, ErrorMessages.EMAIL_CONFLICT_MESSSAGE);
     }
 
     //hash password
-    const hashedPassword = await this.passwordService.hash(password);
+    const hashedPassword = await this._passwordService.hash(password);
 
     //execute transaction session to register user
-    const createdUser = await this.databaseService.executeTransaction(async (session) => {
-      const user = this.userRepository.create(
+    const createdUser = await this._databaseService.executeTransaction(async (session) => {
+      const user = this._userRepository.create(
         {
           email,
           password: hashedPassword,
@@ -100,7 +100,7 @@ export class TravelerProfileService implements ITravelerProfileService {
         session,
       );
 
-      await this.travelerProfileRepository.create(
+      await this._travelerProfileRepository.create(
         {
           userId: (await user)._id,
           fullName,
@@ -117,25 +117,25 @@ export class TravelerProfileService implements ITravelerProfileService {
     });
 
     //generate otp
-    const otp = this.otpService.generateOtp();
+    const otp = this._otpService.generateOtp();
 
     //hash otp
-    const hashedOtp = await this.passwordService.hash(otp);
+    const hashedOtp = await this._passwordService.hash(otp);
 
     //save otp and send otp mail
     try {
       //save otp
-      await this.otpRepository.create({
+      await this._otpRepository.create({
         userId: createdUser._id,
         email: createdUser.email,
         otp: hashedOtp,
       });
 
       //send otp mail
-      await this.mailService.sendOtp(createdUser.email, fullName, otp);
+      await this._mailService.sendOtp(createdUser.email, fullName, otp);
     } catch (error) {
       //if sending the email fails, the OTP record is also removed
-      await this.otpRepository.deleteByUserId(createdUser._id.toString());
+      await this._otpRepository.deleteByUserId(createdUser._id.toString());
 
       throw error;
     }
@@ -154,7 +154,7 @@ export class TravelerProfileService implements ITravelerProfileService {
     // console.log(payload)
 
     //find user
-    const user = await this.userRepository.findById(userId);
+    const user = await this._userRepository.findById(userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
@@ -166,14 +166,14 @@ export class TravelerProfileService implements ITravelerProfileService {
     }
 
     //find traveler profile
-    const travelerProfile = await this.travelerProfileRepository.findByUserId(userId);
+    const travelerProfile = await this._travelerProfileRepository.findByUserId(userId);
 
     if (!travelerProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
     //find otp
-    const otpRecord = await this.otpRepository.findByUserId(userId);
+    const otpRecord = await this._otpRepository.findByUserId(userId);
 
     if (!otpRecord) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
@@ -183,20 +183,20 @@ export class TravelerProfileService implements ITravelerProfileService {
     const isExpired = Date.now() - otpRecord.createdAt.getTime() > 60 * 1000;
 
     if (isExpired) {
-      await this.otpRepository.deleteByUserId(userId);
+      await this._otpRepository.deleteByUserId(userId);
 
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.OTP_EXPIRED);
     }
 
     //compare otp
-    const isOtpValid = await this.passwordService.compare(otp, otpRecord.otp);
+    const isOtpValid = await this._passwordService.compare(otp, otpRecord.otp);
 
     if (!isOtpValid) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_OTP);
     }
 
     //mark user verified
-    const updatedUser = await this.userRepository.updateOne(
+    const updatedUser = await this._userRepository.updateOne(
       { _id: userId },
       {
         isVerified: true,
@@ -208,16 +208,16 @@ export class TravelerProfileService implements ITravelerProfileService {
     }
 
     //delete otp
-    await this.otpRepository.deleteByUserId(userId);
+    await this._otpRepository.deleteByUserId(userId);
 
     //generate access token
-    const accessToken = this.jwtService.generateAccessToken({
+    const accessToken = this._jwtService.generateAccessToken({
       userId: updatedUser._id.toString(),
       role: updatedUser.role,
     });
 
     //generate refresh token
-    const refreshToken = this.jwtService.generateRefreshToken({
+    const refreshToken = this._jwtService.generateRefreshToken({
       userId: updatedUser._id.toString(),
       role: updatedUser.role,
     });
@@ -239,7 +239,7 @@ export class TravelerProfileService implements ITravelerProfileService {
     const { userId } = payload;
 
     //find user
-    const user = await this.userRepository.findById(userId);
+    const user = await this._userRepository.findById(userId);
 
     if (!user) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
@@ -251,23 +251,23 @@ export class TravelerProfileService implements ITravelerProfileService {
     }
 
     //Find Traveler Profile
-    const travelerProfile = await this.travelerProfileRepository.findByUserId(userId);
+    const travelerProfile = await this._travelerProfileRepository.findByUserId(userId);
 
     if (!travelerProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
     //Remove Previous OTP
-    await this.otpRepository.deleteByUserId(userId);
+    await this._otpRepository.deleteByUserId(userId);
 
     //Generate New OTP
-    const otp = this.otpService.generateOtp();
+    const otp = this._otpService.generateOtp();
 
     //Hash OTP
-    const hashedOtp = await this.passwordService.hash(otp);
+    const hashedOtp = await this._passwordService.hash(otp);
 
     //Save OTP
-    await this.otpRepository.create({
+    await this._otpRepository.create({
       userId: user._id,
 
       email: user.email,
@@ -276,7 +276,7 @@ export class TravelerProfileService implements ITravelerProfileService {
     });
 
     //Send Email
-    await this.mailService.sendOtp(
+    await this._mailService.sendOtp(
       user.email,
 
       travelerProfile.fullName,
@@ -297,7 +297,7 @@ export class TravelerProfileService implements ITravelerProfileService {
   ): Promise<UpdateProfilePictureResponseDto> {
     const { userId, profileImage } = payload;
 
-    const travelerProfile = await this.travelerProfileRepository.findByUserId(userId);
+    const travelerProfile = await this._travelerProfileRepository.findByUserId(userId);
 
     if (!travelerProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
@@ -308,13 +308,13 @@ export class TravelerProfileService implements ITravelerProfileService {
     let profileImageKey = travelerProfile.profileImageKey;
 
     if (profileImage) {
-      const uploadedImage = await this.s3Service.uploadFile(
+      const uploadedImage = await this._s3Service.uploadFile(
         profileImage,
         MediaFolder.PROFILE_IMAGES,
       );
 
       if (travelerProfile.profileImageKey) {
-        await this.s3Service.deleteFile(travelerProfile.profileImageKey);
+        await this._s3Service.deleteFile(travelerProfile.profileImageKey);
       }
 
       profileImageUrl = uploadedImage.url;
@@ -322,7 +322,7 @@ export class TravelerProfileService implements ITravelerProfileService {
       profileImageKey = uploadedImage.key;
     }
 
-    const updatedProfile = await this.travelerProfileRepository.updateOne(
+    const updatedProfile = await this._travelerProfileRepository.updateOne(
       { userId },
       {
         profileImageUrl,
@@ -350,7 +350,7 @@ export class TravelerProfileService implements ITravelerProfileService {
   async getProfile(payload: TravelerProfilePayload): Promise<TravelerProfileResponseDto> {
     const userId = payload.userId;
 
-    const profile = await this.travelerProfileRepository.findByUserId(userId);
+    const profile = await this._travelerProfileRepository.findByUserId(userId);
 
     if (!profile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
@@ -367,7 +367,7 @@ export class TravelerProfileService implements ITravelerProfileService {
   ): Promise<UpdateTravelerProfileResponseDto> {
     const userId = payload.userId;
 
-    const profile = await this.travelerProfileRepository.findByUserId(userId);
+    const profile = await this._travelerProfileRepository.findByUserId(userId);
 
     if (!profile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
@@ -385,7 +385,7 @@ export class TravelerProfileService implements ITravelerProfileService {
     profile.bio = payload.bio;
     profile.socialPresence = socialPresence;
 
-    const updatedProfile = await this.travelerProfileRepository.updateOne({ userId }, profile);
+    const updatedProfile = await this._travelerProfileRepository.updateOne({ userId }, profile);
 
     if (!updatedProfile) {
       throw new AppError(

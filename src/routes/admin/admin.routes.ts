@@ -14,13 +14,13 @@ export class UserManagementRoutes {
 
   constructor(
     @inject(TYPES.UserManagementController)
-    private readonly userManagementController: UserManagementController,
+    private readonly _userManagementController: UserManagementController,
 
     @inject(TYPES.AuthenticateMiddleware)
-    private readonly authenticateMiddleware: AuthenticateMiddleware,
+    private readonly _authenticateMiddleware: AuthenticateMiddleware,
 
     @inject(TYPES.AuthorizeMiddleware)
-    private readonly authorizeMiddleware: AuthorizeMiddleware,
+    private readonly _authorizeMiddleware: AuthorizeMiddleware,
   ) {
     this.router = Router();
 
@@ -30,24 +30,24 @@ export class UserManagementRoutes {
   private initializeRoutes(): void {
     this.router.get(
       "/users",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.ADMIN),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.ADMIN),
       validate(getUsersSchema),
-      this.userManagementController.getUsers.bind(this.userManagementController),
+      this._userManagementController.getUsers.bind(this._userManagementController),
     );
 
     this.router.patch(
       "/user/:id",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.ADMIN),
-      this.userManagementController.updateUserStatus.bind(this.userManagementController),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.ADMIN),
+      this._userManagementController.updateUserStatus.bind(this._userManagementController),
     );
 
     this.router.get(
       "/user/:id",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.ADMIN),
-      this.userManagementController.getUserDetails.bind(this.userManagementController),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.ADMIN),
+      this._userManagementController.getUserDetails.bind(this._userManagementController),
     );
   }
 }
