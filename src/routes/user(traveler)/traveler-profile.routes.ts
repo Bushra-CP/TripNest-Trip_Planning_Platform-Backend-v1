@@ -18,13 +18,13 @@ export class TravelerProfileRoutes {
 
   constructor(
     @inject(TYPES.TravelerProfileController)
-    private readonly travelerProfileController: TravelerProfileController,
+    private readonly _travelerProfileController: TravelerProfileController,
 
     @inject(TYPES.AuthenticateMiddleware)
-    private readonly authenticateMiddleware: AuthenticateMiddleware,
+    private readonly _authenticateMiddleware: AuthenticateMiddleware,
 
     @inject(TYPES.AuthorizeMiddleware)
-    private readonly authorizeMiddleware: AuthorizeMiddleware,
+    private readonly _authorizeMiddleware: AuthorizeMiddleware,
   ) {
     this.router = Router();
 
@@ -35,42 +35,42 @@ export class TravelerProfileRoutes {
     this.router.post(
       "/register",
       validate(registerSchema),
-      this.travelerProfileController.register.bind(this.travelerProfileController),
+      this._travelerProfileController.register.bind(this._travelerProfileController),
     );
 
     this.router.post(
       "/verify-registration",
       validate(verifyRegistrationSchema),
-      this.travelerProfileController.verifyRegistration.bind(this.travelerProfileController),
+      this._travelerProfileController.verifyRegistration.bind(this._travelerProfileController),
     );
 
     this.router.post(
       "/resend-otp",
       validate(resendOtpSchema),
-      this.travelerProfileController.resendOtp.bind(this.travelerProfileController),
+      this._travelerProfileController.resendOtp.bind(this._travelerProfileController),
     );
 
     this.router.patch(
       "/update-profile-image",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       uploadProfileImage.single("profileImage"),
-      this.travelerProfileController.updateProfileImage.bind(this.travelerProfileController),
+      this._travelerProfileController.updateProfileImage.bind(this._travelerProfileController),
     );
 
     this.router.get(
       "/get-profile",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
-      this.travelerProfileController.getProfile.bind(this.travelerProfileController),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._travelerProfileController.getProfile.bind(this._travelerProfileController),
     );
 
     this.router.patch(
       "/update-profile",
-      this.authenticateMiddleware.authenticate,
-      this.authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       validate(updateTravelerProfileSchema),
-      this.travelerProfileController.updateProfile.bind(this.travelerProfileController),
+      this._travelerProfileController.updateProfile.bind(this._travelerProfileController),
     );
   }
 }

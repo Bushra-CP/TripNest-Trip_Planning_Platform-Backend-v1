@@ -11,7 +11,7 @@ import { ResponseHandler } from "@/shared/http/responseHandler";
 export class UserManagementController {
   constructor(
     @inject(TYPES.UserManagementService)
-    private readonly userManagementService: IUserManagementService,
+    private readonly _userManagementService: IUserManagementService,
   ) {}
 
   /*-----------------------
@@ -26,7 +26,7 @@ export class UserManagementController {
         status: req.query.status as UserStatus | undefined,
       };
 
-      const data = await this.userManagementService.getUsers(query);
+      const data = await this._userManagementService.getUsers(query);
 
       ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.USERS_FETCHED, data);
     } catch (error) {
@@ -39,7 +39,7 @@ export class UserManagementController {
   ------------------------*/
   async getUserDetails(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const data = await this.userManagementService.getUserDetails(req.params.id as string);
+      const data = await this._userManagementService.getUserDetails(req.params.id as string);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
@@ -52,7 +52,7 @@ export class UserManagementController {
   ------------------------*/
   async updateUserStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const data = await this.userManagementService.updateUserStatus({
+      const data = await this._userManagementService.updateUserStatus({
         userId: req.params.id as string,
         isActive: req.body.isActive,
       });

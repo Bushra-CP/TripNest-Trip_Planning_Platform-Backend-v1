@@ -25,7 +25,7 @@ import { ResendChangeEmailOtpRequestDto } from "@/dtos/auth/change-email-passwor
 export class AuthController {
   constructor(
     @inject(TYPES.AuthService)
-    private readonly authService: IAuthService,
+    private readonly _authService: IAuthService,
   ) {}
 
   //////////LOGIN/////////
@@ -35,7 +35,7 @@ export class AuthController {
 
       const payload = req.body as LoginRequestDto;
 
-      const response = await this.authService.login(payload);
+      const response = await this._authService.login(payload);
 
       const data: AuthResponseDto = {
         user: response.user,
@@ -58,7 +58,7 @@ export class AuthController {
 
       // console.log(payload);
 
-      const response = await this.authService.googleAuth(payload);
+      const response = await this._authService.googleAuth(payload);
 
       const data: AuthResponseDto = {
         user: response.user,
@@ -78,7 +78,7 @@ export class AuthController {
   async refreshToken(req: Request, res: Response) {
     const refreshToken = req.cookies.refreshToken;
 
-    const result = await this.authService.refreshToken(refreshToken);
+    const result = await this._authService.refreshToken(refreshToken);
 
     res.cookie("refreshToken", result.refreshToken, refreshTokenCookieOptions);
 
@@ -101,7 +101,7 @@ export class AuthController {
     try {
       const payload = req.body as ForgotPasswordRequestDto;
 
-      const data = await this.authService.forgotPassword(payload);
+      const data = await this._authService.forgotPassword(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
@@ -116,7 +116,7 @@ export class AuthController {
 
       console.log(`/verify-reset-otp:${payload}`);
 
-      const response = await this.authService.verifyResetOtp(payload);
+      const response = await this._authService.verifyResetOtp(payload);
 
       const data: VerifyResetPasswordResponseDto = {
         message: response.message,
@@ -134,7 +134,7 @@ export class AuthController {
     try {
       const payload = req.body as ForgotPasswordResendOTPRequestDto;
 
-      const data = await this.authService.resendResetOtp(payload);
+      const data = await this._authService.resendResetOtp(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
@@ -147,7 +147,7 @@ export class AuthController {
     try {
       const payload = req.body as ResetPasswordRequestDto;
 
-      const data = await this.authService.resetPassword(payload);
+      const data = await this._authService.resetPassword(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
@@ -164,7 +164,7 @@ export class AuthController {
 
       const payload: ChangePasswordRequest = { userId, currentPassword, newPassword };
 
-      const data = await this.authService.changePassword(payload);
+      const data = await this._authService.changePassword(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
@@ -181,7 +181,7 @@ export class AuthController {
 
       const payload: ChangeEmailRequest = { userId, currentEmail, newEmail, currentPassword };
 
-      const data = await this.authService.changeEmail(payload);
+      const data = await this._authService.changeEmail(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
@@ -194,7 +194,7 @@ export class AuthController {
     try {
       const payload = req.body as VerifyChangeEmailOtpRequestDto;
 
-      const data = await this.authService.verifyChangeEmailOtp(payload);
+      const data = await this._authService.verifyChangeEmailOtp(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {
@@ -210,7 +210,7 @@ export class AuthController {
 
       const payload: ResendChangeEmailOtpRequestDto = { userId, email };
 
-      const data = await this.authService.resendChangeEmailOtp(payload);
+      const data = await this._authService.resendChangeEmailOtp(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", data);
     } catch (error) {

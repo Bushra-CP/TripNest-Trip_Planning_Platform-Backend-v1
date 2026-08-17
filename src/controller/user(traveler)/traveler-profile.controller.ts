@@ -18,7 +18,7 @@ import { UpdateTravelerProfileRequestDto } from "@/dtos/user(traveler)/profile/U
 export class TravelerProfileController {
   constructor(
     @inject(TYPES.TravelerProfileService)
-    private readonly travelerProfileService: ITravelerProfileService,
+    private readonly _travelerProfileService: ITravelerProfileService,
   ) {}
 
   /*-----------------------
@@ -30,7 +30,7 @@ export class TravelerProfileController {
 
       const payload = req.body as RegisterRequestDto;
 
-      const response = await this.travelerProfileService.register(payload);
+      const response = await this._travelerProfileService.register(payload);
 
       ResponseHandler.success(
         res,
@@ -50,7 +50,7 @@ export class TravelerProfileController {
     try {
       const payload = req.body as VerifyRegistrationRequestDto;
 
-      const response = await this.travelerProfileService.verifyRegistration(payload);
+      const response = await this._travelerProfileService.verifyRegistration(payload);
 
       const data: AuthResponseDto = {
         user: response.user,
@@ -76,7 +76,7 @@ export class TravelerProfileController {
     try {
       const payload = req.body as ResendOtpRequestDto;
 
-      const response = await this.travelerProfileService.resendOtp(payload);
+      const response = await this._travelerProfileService.resendOtp(payload);
 
       res.status(STATUS_CODES.OK).json({
         success: true,
@@ -97,7 +97,7 @@ export class TravelerProfileController {
         profileImage: req.file!,
       };
 
-      const response = await this.travelerProfileService.updateProfileImage(payload);
+      const response = await this._travelerProfileService.updateProfileImage(payload);
 
       // console.log(response);
 
@@ -114,7 +114,7 @@ export class TravelerProfileController {
     try {
       const payload: TravelerProfilePayload = { userId: req.user.userId };
 
-      const response = await this.travelerProfileService.getProfile(payload);
+      const response = await this._travelerProfileService.getProfile(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", response);
     } catch (error) {
@@ -140,7 +140,7 @@ export class TravelerProfileController {
 
       // console.log(payload);
 
-      const response = await this.travelerProfileService.updateProfile(payload);
+      const response = await this._travelerProfileService.updateProfile(payload);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "", response);
     } catch (error) {
