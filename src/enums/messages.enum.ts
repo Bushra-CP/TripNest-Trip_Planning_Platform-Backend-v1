@@ -41,6 +41,10 @@ export enum ErrorMessages {
   PASSWORD_NOT_MATCHING = "Password is not matching",
   EMAIL_UPDATE_FAILED = "Email update failed",
   ACCOUNT_BLOCKED = "Your account has been blocked by the admin",
+  ROOM_NOT_FOUND = "Room not found",
+  MEMBER_NOT_FOUND = "Member not found",
+  UNABLE_TO_UPDATE_MEMBER = "Unable to update member",
+  NOT_ROOM_MEMBER = "You must join the room first",
 }
 
 export enum ValidationMessages {

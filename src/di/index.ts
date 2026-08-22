@@ -7,6 +7,8 @@ import { authContainer } from "./container/auth.container";
 import { registerMiddleware } from "./container/middleware.container";
 import { registerLogger } from "./container/logger.container";
 import { registerUserManagementContainer } from "./container/user-management.container";
+import { registerTripPlanning } from "./container/trip-planning.container";
+import { registerSocket } from "./container/socket.container";
 
 const container = new Container();
 
@@ -25,5 +27,9 @@ registerMiddleware(container);
 registerLogger(container);
 
 registerUserManagementContainer(container);
+
+registerTripPlanning(container);
+
+registerSocket(container);
 
 export { container };

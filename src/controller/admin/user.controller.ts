@@ -14,9 +14,15 @@ export class UserManagementController {
     private readonly _userManagementService: IUserManagementService,
   ) {}
 
-  /*-----------------------
-  GET USERS
-  ------------------------*/
+  /**
+   * GET USERS
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @return {*}  {Promise<void>}
+   */
+
   async getUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query: GetUsersRequestDto = {
@@ -34,9 +40,15 @@ export class UserManagementController {
     }
   }
 
-  /*-----------------------
-  GET USER USING ID
-  ------------------------*/
+  /**
+   * GET USER USING ID
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @return {*}  {Promise<void>}
+   */
+
   async getUserDetails(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = await this._userManagementService.getUserDetails(req.params.id as string);
@@ -47,9 +59,15 @@ export class UserManagementController {
     }
   }
 
-  /*-----------------------
-  UPDATE USER STATUS 
-  ------------------------*/
+  /**
+   * UPDATE USER STATUS
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @return {*}  {Promise<void>}
+   */
+
   async updateUserStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = await this._userManagementService.updateUserStatus({

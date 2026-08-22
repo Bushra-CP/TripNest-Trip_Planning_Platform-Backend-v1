@@ -1,26 +1,25 @@
 import { inject, injectable } from "inversify";
-import { ITravelerProfileService } from "../../interfaces/IServices/user(traveler)/ITravelerProfileService";
-import { TYPES } from "../../di/types";
-import { IUserRepository } from "../../interfaces/IRepository/user(traveler)/profile/IUserRepository";
-import { ITravelerProfileRepository } from "../../interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository";
-import { IOtpRepository } from "../../interfaces/IRepository/user(traveler)/otp/IOtpRepository";
-import { IOtpService } from "../../infrastructure/otp/IOtpService";
-import { IPasswordService } from "../../infrastructure/password/IPasswordService";
-import { IMailService } from "../../infrastructure/mail/IMailService";
-import { IJwtService } from "../../infrastructure/jwt/IJwtService";
-import { IDatabaseService } from "../../infrastructure/database/IDatabaseService";
-import { RegisterRequestDto } from "../../dtos/user(traveler)/register/register-request.dto";
-import { RegisterResponseDto } from "../../dtos/user(traveler)/register/register-response.dto";
-import { AppError } from "../../shared/errors/app.error";
-import { STATUS_CODES } from "../../enums/status.codes.enum";
-import { ErrorMessages, SuccessMessages } from "../../enums/messages.enum";
-import { AuthProvider } from "../../enums/auth-provider.enum";
-import { UserRole } from "../../enums/user-role.enum";
-import { AuthMapper } from "../../mapper/auth.mapper";
-import { VerifyRegistrationRequestDto } from "../../dtos/user(traveler)/register/verify-registration-request.dto";
-import { IAuthResult } from "../../interfaces/IAuthResult";
-import { ResendOtpRequestDto } from "../../dtos/user(traveler)/register/resend-otp-request.dto";
-import { ResendOtpResponseDto } from "../../dtos/user(traveler)/register/resend-otp-response.dto";
+import { TYPES } from "../../../di/types";
+import { IUserRepository } from "../../../interfaces/IRepository/user(traveler)/profile/IUserRepository";
+import { ITravelerProfileRepository } from "../../../interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository";
+import { IOtpRepository } from "../../../interfaces/IRepository/user(traveler)/otp/IOtpRepository";
+import { IOtpService } from "../../../infrastructure/otp/IOtpService";
+import { IPasswordService } from "../../../infrastructure/password/IPasswordService";
+import { IMailService } from "../../../infrastructure/mail/IMailService";
+import { IJwtService } from "../../../infrastructure/jwt/IJwtService";
+import { IDatabaseService } from "../../../infrastructure/database/IDatabaseService";
+import { RegisterRequestDto } from "../../../dtos/user(traveler)/register/register-request.dto";
+import { RegisterResponseDto } from "../../../dtos/user(traveler)/register/register-response.dto";
+import { AppError } from "../../../shared/errors/app.error";
+import { STATUS_CODES } from "../../../enums/status.codes.enum";
+import { ErrorMessages, SuccessMessages } from "../../../enums/messages.enum";
+import { AuthProvider } from "../../../enums/auth-provider.enum";
+import { UserRole } from "../../../enums/user-role.enum";
+import { AuthMapper } from "../../../mapper/auth.mapper";
+import { VerifyRegistrationRequestDto } from "../../../dtos/user(traveler)/register/verify-registration-request.dto";
+import { IAuthResult } from "../../../interfaces/IAuthResult";
+import { ResendOtpRequestDto } from "../../../dtos/user(traveler)/register/resend-otp-request.dto";
+import { ResendOtpResponseDto } from "../../../dtos/user(traveler)/register/resend-otp-response.dto";
 import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureRequestDto";
 import { UpdateProfilePictureResponseDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureResponseDto";
 import { IS3Service } from "@/infrastructure/s3/IS3Service";
@@ -34,6 +33,7 @@ import {
   UpdateTravelerProfileRequestDto,
   UpdateTravelerProfileResponseDto,
 } from "@/dtos/user(traveler)/profile/UpdateTravelerProfileRequestDto";
+import { ITravelerProfileService } from "@/interfaces/IServices/user(traveler)/ITravelerProfileService";
 
 injectable();
 export class TravelerProfileService implements ITravelerProfileService {

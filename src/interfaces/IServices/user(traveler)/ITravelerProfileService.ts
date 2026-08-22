@@ -1,9 +1,3 @@
-import { IAuthResult } from "../../IAuthResult.js";
-import { RegisterRequestDto } from "../../../dtos/user(traveler)/register/register-request.dto.js";
-import { RegisterResponseDto } from "../../../dtos/user(traveler)/register/register-response.dto.js";
-import { ResendOtpRequestDto } from "../../../dtos/user(traveler)/register/resend-otp-request.dto.js";
-import { ResendOtpResponseDto } from "../../../dtos/user(traveler)/register/resend-otp-response.dto.js";
-import { VerifyRegistrationRequestDto } from "../../../dtos/user(traveler)/register/verify-registration-request.dto.js";
 import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureRequestDto.js";
 import { UpdateProfilePictureResponseDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureResponseDto.js";
 import {
@@ -14,6 +8,12 @@ import {
   UpdateTravelerProfileRequestDto,
   UpdateTravelerProfileResponseDto,
 } from "@/dtos/user(traveler)/profile/UpdateTravelerProfileRequestDto.js";
+import { RegisterRequestDto } from "@/dtos/user(traveler)/register/register-request.dto";
+import { RegisterResponseDto } from "@/dtos/user(traveler)/register/register-response.dto";
+import { VerifyRegistrationRequestDto } from "@/dtos/user(traveler)/register/verify-registration-request.dto";
+import { IAuthResult } from "@/interfaces/IAuthResult";
+import { ResendOtpRequestDto } from "@/dtos/user(traveler)/register/resend-otp-request.dto";
+import { ResendOtpResponseDto } from "@/dtos/user(traveler)/register/resend-otp-response.dto";
 
 export interface ITravelerProfileService {
   register(payload: RegisterRequestDto): Promise<RegisterResponseDto>;
