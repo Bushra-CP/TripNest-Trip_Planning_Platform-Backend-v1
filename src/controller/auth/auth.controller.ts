@@ -31,8 +31,6 @@ export class AuthController {
   //////////LOGIN/////////
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // console.log(req.body);
-
       const payload = req.body as LoginRequestDto;
 
       const response = await this._authService.login(payload);

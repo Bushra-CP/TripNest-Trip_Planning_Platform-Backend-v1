@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
-import { ITravelerProfileService } from "../../interfaces/IServices/user(traveler)/ITravelerProfileService";
 import { RegisterRequestDto } from "../../dtos/user(traveler)/register/register-request.dto";
 import { STATUS_CODES } from "../../enums/status.codes.enum";
 import { VerifyRegistrationRequestDto } from "../../dtos/user(traveler)/register/verify-registration-request.dto";
@@ -13,6 +12,7 @@ import { AuthResponseDto } from "../../dtos/user(traveler)/register/verify-regis
 import { UpdateProfilePictureRequestDto } from "@/dtos/user(traveler)/profile/UpdateProfilePictureRequestDto";
 import { TravelerProfilePayload } from "@/dtos/user(traveler)/profile/TravelerProfileResponseDto";
 import { UpdateTravelerProfileRequestDto } from "@/dtos/user(traveler)/profile/UpdateTravelerProfileRequestDto";
+import { ITravelerProfileService } from "@/interfaces/IServices/user(traveler)/ITravelerProfileService";
 
 @injectable()
 export class TravelerProfileController {

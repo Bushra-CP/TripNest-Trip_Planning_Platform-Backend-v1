@@ -56,4 +56,20 @@ export const TYPES = {
   UserManagementService: Symbol.for("UserManagementService"),
   UserManagementController: Symbol.for("UserManagementController"),
   UserManagementRoutes: Symbol.for("UserManagementRoutes"),
+
+  /* ==============================
+   * TRIP PLANNING
+   * ============================== */
+  RoomRepository: Symbol.for("RoomRepository"),
+  RoomService: Symbol.for("RoomService"),
+  RoomController: Symbol.for("RoomController"),
+  MessageRepository: Symbol.for("MessageRepository"),
+  MessageService: Symbol.for("MessageService"),
+  MessageController: Symbol.for("MessageController"),
+  TripPlanningRoutes: Symbol.for("TripPlanningRoutes"),
+
+  /* ==============================
+   * SOCKET
+   * ============================== */
+  ChatSocket: Symbol.for("ChatSocket"),
 } as const;
