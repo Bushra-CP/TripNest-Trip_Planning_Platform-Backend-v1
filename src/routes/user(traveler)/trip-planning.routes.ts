@@ -41,10 +41,10 @@ export class TripPlanningRoutes {
     );
 
     /**
-     * Get room by room ID
+     * Get room by room ID - join room
      */
     this.router.get(
-      "/:roomId",
+      "/room/:roomId",
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._roomController.getRoom.bind(this._roomController),
@@ -52,7 +52,7 @@ export class TripPlanningRoutes {
 
     //Get messages
     this.router.get(
-      "/messages/:roomId",
+      "/room/:roomId/messages",
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._messageController.getMessagesByRoom,

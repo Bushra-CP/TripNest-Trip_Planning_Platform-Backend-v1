@@ -2,10 +2,8 @@ import { Server } from "socket.io";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@/di/types";
 import { IRoomService } from "@/interfaces/IServices/user(traveler)/IRoomService";
-import {
-  IMessageService,
-  SendMessageData,
-} from "@/interfaces/IServices/user(traveler)/IMessageService";
+import { IMessageService } from "@/interfaces/IServices/user(traveler)/IMessageService";
+import { SendMessageRequestDto } from "@/dtos/user(traveler)/travel-planning/chat.req.res.dto";
 
 @injectable()
 export class ChatSocket {
@@ -32,7 +30,6 @@ export class ChatSocket {
 
           if (!room) {
             socket.emit("roomError", "Room not found");
-
             return;
           }
 
@@ -51,18 +48,12 @@ export class ChatSocket {
       /**
        * Send message
        */
-      socket.on("sendMessage", async (data: SendMessageData) => {
+      socket.on("sendMessage", async (data: SendMessageRequestDto) => {
         try {
-          console.log("Message data:", data);
-
           const savedMessage = await this._messageService.saveMessage(data);
 
           const roomId = data.roomId.trim().toUpperCase();
 
-          /**
-           * Send the saved message
-           * to everyone in the room
-           */
           io.to(roomId).emit("receiveMessage", savedMessage);
         } catch (error) {
           console.error("Send message error:", error);

@@ -112,6 +112,8 @@ export class TravelerProfileController {
   ------------------------*/
   async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      console.log("entered here");
+
       const payload: TravelerProfilePayload = { userId: req.user.userId };
 
       const response = await this._travelerProfileService.getProfile(payload);

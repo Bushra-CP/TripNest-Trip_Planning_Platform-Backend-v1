@@ -1,14 +1,10 @@
-import { IChatMessage } from "@/interfaces/IModel/IMessage";
-
-export interface SendMessageData {
-  roomId: string;
-  senderId: string;
-  message: string;
-  createdAt: Date;
-}
+import {
+  SendMessageRequestDto,
+  SendMessageResponseDto,
+} from "@/dtos/user(traveler)/travel-planning/chat.req.res.dto";
 
 export interface IMessageService {
-  getMessagesByRoom(roomId: string): Promise<IChatMessage[]>;
+  getMessagesByRoom(roomId: string): Promise<SendMessageResponseDto[]>;
 
-  saveMessage(data: SendMessageData): Promise<IChatMessage>;
+  saveMessage(data: SendMessageRequestDto): Promise<SendMessageResponseDto>;
 }
