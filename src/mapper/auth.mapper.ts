@@ -13,6 +13,7 @@ export class AuthMapper {
   ): IAuthResult {
     return {
       user: {
+        userId: user._id.toString(),
         fullName: profile.fullName,
         email: user.email,
         role: user.role,

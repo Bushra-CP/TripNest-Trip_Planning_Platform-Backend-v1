@@ -350,7 +350,11 @@ export class TravelerProfileService implements ITravelerProfileService {
   async getProfile(payload: TravelerProfilePayload): Promise<TravelerProfileResponseDto> {
     const userId = payload.userId;
 
+    console.log(userId);
+
     const profile = await this._travelerProfileRepository.findByUserId(userId);
+
+    console.log(profile);
 
     if (!profile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);

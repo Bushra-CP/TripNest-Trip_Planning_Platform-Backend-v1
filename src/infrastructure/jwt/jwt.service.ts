@@ -13,32 +13,32 @@ import { IJwtService, JwtPayload } from "./IJwtService.js";
 @injectable()
 export class JwtService implements IJwtService {
   generateAccessToken(payload: JwtPayload): string {
-    return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    return jwt.sign(payload, env.JWT_ACCESS_SECRET!, {
       expiresIn: env.JWT_ACCESS_EXPIRY,
     } as SignOptions);
   }
 
   generateRefreshToken(payload: JwtPayload): string {
-    return jwt.sign(payload, env.JWT_REFRESH_SECRET, {
+    return jwt.sign(payload, env.JWT_REFRESH_SECRET!, {
       expiresIn: env.JWT_REFRESH_EXPIRY,
     } as SignOptions);
   }
 
   verifyAccessToken(token: string): JwtPayload {
-    return jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+    return jwt.verify(token, env.JWT_ACCESS_SECRET!) as JwtPayload;
   }
 
   verifyRefreshToken(token: string): JwtPayload {
-    return jwt.verify(token, env.JWT_REFRESH_SECRET) as JwtPayload;
+    return jwt.verify(token, env.JWT_REFRESH_SECRET!) as JwtPayload;
   }
 
   generateResetToken(payload: JwtPayload): string {
-    return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    return jwt.sign(payload, env.JWT_ACCESS_SECRET!, {
       expiresIn: "10m",
     } as SignOptions);
   }
 
   verifyResetToken(token: string): JwtPayload {
-    return jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtPayload;
+    return jwt.verify(token, env.JWT_ACCESS_SECRET!) as JwtPayload;
   }
 }

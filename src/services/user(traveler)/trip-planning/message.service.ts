@@ -1,12 +1,13 @@
 import { TYPES } from "@/di/types";
-import { IChatMessage } from "@/interfaces/IModel/IMessage";
+import {
+  SendMessageRequestDto,
+  SendMessageResponseDto,
+} from "@/dtos/user(traveler)/travel-planning/chat.req.res.dto";
 import { ITravelerProfileRepository } from "@/interfaces/IRepository/user(traveler)/profile/ITravelerProfileRepository";
 import { IMessageRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/IMessageRepository";
 import { IRoomRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/IRoomRepository";
-import {
-  IMessageService,
-  SendMessageData,
-} from "@/interfaces/IServices/user(traveler)/IMessageService";
+import { IMessageService } from "@/interfaces/IServices/user(traveler)/IMessageService";
+import { MessageMapper } from "@/mapper/message.mapper";
 import { injectable, inject } from "inversify";
 import mongoose from "mongoose";
 
@@ -26,7 +27,7 @@ export class MessageService implements IMessageService {
   /**
    * Get messages for a room
    */
-  async getMessagesByRoom(roomId: string): Promise<IChatMessage[]> {
+  async getMessagesByRoom(roomId: string): Promise<SendMessageResponseDto[]> {
     const normalizedRoomId = roomId.trim().toUpperCase();
 
     const room = await this._roomRepository.findByRoomId(normalizedRoomId);
@@ -35,13 +36,17 @@ export class MessageService implements IMessageService {
       throw new Error("Room not found");
     }
 
-    return this._messageRepository.findByRoomId(normalizedRoomId);
+    const messages = await this._messageRepository.findByRoomId(normalizedRoomId);
+
+    // console.log(messages);
+
+    return messages.map((message) => MessageMapper.toSavedMessage(message));
   }
 
   /**
    * Save a new message
    */
-  async saveMessage(data: SendMessageData): Promise<IChatMessage> {
+  async saveMessage(data: SendMessageRequestDto): Promise<SendMessageResponseDto> {
     const roomId = data.roomId.trim().toUpperCase();
 
     const room = await this._roomRepository.findByRoomId(roomId);
@@ -50,17 +55,26 @@ export class MessageService implements IMessageService {
       throw new Error("Room does not exist");
     }
 
-    const user = await this._travelerProfileRepository.findById(data.senderId);
+    const user = await this._travelerProfileRepository.findByUserId(data.senderId);
 
     if (!user) {
       throw new Error("User does not exist");
     }
 
-    return this._messageRepository.create({
+    const messageRes = await this._messageRepository.create({
       roomId,
       senderId: new mongoose.Types.ObjectId(data.senderId),
-      senderName: user.fullName,
       message: data.message,
     });
+
+    const messageWithSender = await this._messageRepository.findByIdWithSender(
+      messageRes._id.toString(),
+    );
+
+    if (!messageWithSender) {
+      throw new Error("Failed to retrieve saved message");
+    }
+
+    return MessageMapper.toSavedMessage(messageWithSender);
   }
 }

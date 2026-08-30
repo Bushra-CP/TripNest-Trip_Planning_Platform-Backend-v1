@@ -14,11 +14,6 @@ const chatMessageSchema = new Schema<IChatMessage>(
       required: true,
     },
 
-    senderName: {
-      type: String,
-      required: true,
-    },
-
     message: {
       type: String,
       required: true,

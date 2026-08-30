@@ -28,7 +28,15 @@ export class AuthController {
     private readonly _authService: IAuthService,
   ) {}
 
-  //////////LOGIN/////////
+  /**
+   * LOGIN
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @return {*}  {Promise<void>}
+   * @memberof AuthController
+   */
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const payload = req.body as LoginRequestDto;
