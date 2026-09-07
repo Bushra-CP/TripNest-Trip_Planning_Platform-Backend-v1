@@ -9,6 +9,7 @@ import { registerLogger } from "./container/logger.container";
 import { registerUserManagementContainer } from "./container/user-management.container";
 import { registerTripPlanning } from "./container/trip-planning.container";
 import { registerSocket } from "./container/socket.container";
+import { registerAIPlanning } from "./container/ai-planning.container";
 
 const container = new Container();
 
@@ -31,5 +32,7 @@ registerUserManagementContainer(container);
 registerTripPlanning(container);
 
 registerSocket(container);
+
+registerAIPlanning(container);
 
 export { container };
