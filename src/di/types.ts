@@ -72,4 +72,16 @@ export const TYPES = {
    * SOCKET
    * ============================== */
   ChatSocket: Symbol.for("ChatSocket"),
+
+  /* ==============================
+   * AI PLANNING
+   * ============================== */
+  AIPlanningService: Symbol.for("AIPlanningService"),
+  TripExtractionService: Symbol.for("TripExtractionService"),
+  TripStateService: Symbol.for("TripStateService"),
+  TripDateService: Symbol.for("TripDateService"),
+  RoutePlanningService: Symbol.for("RoutePlanningService"),
+  TravelModeMapper: Symbol.for("TravelModeMapper"),
+  TripChangeDetectorService: Symbol.for("TripChangeDetectorService"),
+  AIPlanningController: Symbol.for("AIPlanningController"),
 } as const;
