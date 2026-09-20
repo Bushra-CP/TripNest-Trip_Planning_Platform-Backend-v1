@@ -18,4 +18,6 @@ export interface AIChatResult {
 
   // Route information generated from the current trip state.
   route: RoutePlanningResult | null;
+
+  threadId: string;
 }

@@ -12,7 +12,7 @@ export class AIPlanningController {
 
   sendMessage = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { message } = req.body;
+      const { message, threadId } = req.body;
 
       if (typeof message !== "string" || message.trim().length === 0) {
         res.status(400).json({
@@ -23,14 +23,28 @@ export class AIPlanningController {
         return;
       }
 
-      const result = await this._aiPlanningService.generateResponse(message);
+      if (
+        threadId !== undefined &&
+        (typeof threadId !== "string" || threadId.trim().length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid thread ID",
+        });
 
-      // console.log(result);
+        return;
+      }
+
+      const result = await this._aiPlanningService.generateResponse(message, threadId);
+
+      console.log(result);
 
       res.status(200).json({
         success: true,
 
         data: {
+          threadId: result.threadId,
+
           reply: result.reply,
 
           tripRequirements: result.requirements,

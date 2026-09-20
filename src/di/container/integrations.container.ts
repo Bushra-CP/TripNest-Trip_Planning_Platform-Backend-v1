@@ -14,6 +14,7 @@ import { IGoogleService } from "@/infrastructure/google/IGoogleService";
 import { GoogleService } from "@/infrastructure/google/google.service";
 import { IS3Service } from "@/infrastructure/s3/IS3Service";
 import { S3Service } from "@/infrastructure/s3/s3.service";
+import { UUIDUtil } from "@/shared/utils/uuid.util";
 
 export function registerIntegrationsContainer(container: Container): void {
   container.bind<IJwtService>(TYPES.JwtService).to(JwtService).inSingletonScope();
@@ -27,4 +28,6 @@ export function registerIntegrationsContainer(container: Container): void {
   container.bind<IGoogleService>(TYPES.GoogleService).to(GoogleService);
 
   container.bind<IS3Service>(TYPES.S3Service).to(S3Service);
+
+  container.bind(TYPES.UUIDUtil).to(UUIDUtil);
 }

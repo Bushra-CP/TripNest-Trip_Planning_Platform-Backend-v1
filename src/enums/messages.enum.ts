@@ -17,6 +17,10 @@ export enum SuccessMessages {
   EMAIL_UPDATED_SUCCESSFULLY = "Email updated successfully",
   USERS_FETCHED = "Fetched all users",
   USER_STATUS_UPDATED = "User status updated successfully.",
+  KNOWLEDGE_DOCUMENT_UPLOADED = "Knowledge document uploaded",
+  KNOWLEDGE_DOCUMENTS_FETCHED = "Knowledge documents fetched",
+  KNOWLEDGE_DOCUMENT_FETCHED = "Knowledge document fetched",
+  KNOWLEDGE_DOCUMENT_DELETED = "Knowledge document deleted",
 }
 
 export enum ErrorMessages {
@@ -45,6 +49,11 @@ export enum ErrorMessages {
   MEMBER_NOT_FOUND = "Member not found",
   UNABLE_TO_UPDATE_MEMBER = "Unable to update member",
   NOT_ROOM_MEMBER = "You must join the room first",
+  DOCUMENT_ALREADY_EXISTS = "This document has already been uploaded.",
+  DOCUMENT_PROCESSING = "This document is already being processed.",
+  DOCUMENT_RESET_FAILED = "Failed to reset the previous knowledge document.",
+  KNOWLEDGE_DOCUMENT_NOT_FOUND = "Knowledge document not found.",
+  INVALID_DOCUMENT_ID = "Invalid knowledge document ID.",
 }
 
 export enum ValidationMessages {

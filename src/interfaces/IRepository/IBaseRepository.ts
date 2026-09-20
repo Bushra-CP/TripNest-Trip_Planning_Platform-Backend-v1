@@ -9,6 +9,8 @@ export interface IBaseRepository<T> {
 
   find(filter?: QueryFilter<T>): Promise<T[]>;
 
+  findPaginated(filter: QueryFilter<T>, page: number, limit: number): Promise<T[]>;
+
   updateById(id: string, data: UpdateQuery<T>): Promise<T | null>;
 
   updateOne(filter: QueryFilter<T>, data: UpdateQuery<T>): Promise<T | null>;
@@ -20,4 +22,6 @@ export interface IBaseRepository<T> {
   exists(filter: QueryFilter<T>): Promise<boolean>;
 
   count(filter?: QueryFilter<T>): Promise<number>;
+
+  insertMany(data: Partial<T>[], session?: ClientSession): Promise<void>;
 }
