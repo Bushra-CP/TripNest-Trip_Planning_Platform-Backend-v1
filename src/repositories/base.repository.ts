@@ -34,6 +34,13 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
   }
 
   //////////////////////////////////////////////////
+  async findPaginated(filter: QueryFilter<T> = {}, page: number, limit: number): Promise<T[]> {
+    const skip = (page - 1) * limit;
+
+    return this.model.find(filter).skip(skip).limit(limit).exec();
+  }
+
+  //////////////////////////////////////////////////
   async updateById(id: string, data: UpdateQuery<T>): Promise<T | null> {
     return this.model
       .findByIdAndUpdate(id, data, {
@@ -75,5 +82,12 @@ export abstract class BaseRepository<T extends Document> implements IBaseReposit
   //////////////////////////////////////////////////
   async count(filter: QueryFilter<T> = {}): Promise<number> {
     return this.model.countDocuments(filter).exec();
+  }
+
+  //////////////////////////////////////////////////
+  async insertMany(data: Partial<T>[], session?: ClientSession): Promise<void> {
+    const options = session ? { session } : {};
+
+    await this.model.insertMany(data, options);
   }
 }

@@ -6,10 +6,13 @@ import app from "./app/app";
 import { container } from "./di";
 import { ChatSocket } from "./socket/chat.socket";
 import { TYPES } from "./di/types";
+import { KnowledgeIngestionWorker } from "./workers/knowledge-ingestion.worker";
 
 const startServer = async (): Promise<void> => {
   try {
     await connectDB();
+
+    container.get<KnowledgeIngestionWorker>(TYPES.KnowledgeIngestionWorker);
 
     const httpServer = http.createServer(app);
 

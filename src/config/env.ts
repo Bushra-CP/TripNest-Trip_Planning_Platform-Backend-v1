@@ -21,11 +21,14 @@ export const env = {
   AWS_REGION: process.env.AWS_REGION,
   MAX_IMAGE_SIZE: Number(process.env.MAX_IMAGE_SIZE),
   MAX_VIDEO_SIZE: Number(process.env.MAX_VIDEO_SIZE),
+  MAX_DOCUMENT_SIZE: Number(process.env.MAX_DOCUMENT_SIZE ?? 10 * 1024 * 1024),
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
   GEMINI_MODEL: process.env.GEMINI_MODEL!,
   GROQ_API_KEY: process.env.GROQ_API_KEY!,
   GROQ_MODEL: process.env.GROQ_MODEL!,
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+  REDIS_HOST: process.env.REDIS_HOST,
+  REDIS_PORT: Number(process.env.REDIS_PORT),
 };
 
 // `.env` vs `config/env.ts`

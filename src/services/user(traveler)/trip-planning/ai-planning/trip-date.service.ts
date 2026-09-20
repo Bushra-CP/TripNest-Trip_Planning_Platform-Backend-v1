@@ -49,8 +49,7 @@ export class TripDateService {
       return this.formatDate(weekdayDate);
     }
 
-    // If it is already an actual date,
-    // keep it unchanged.
+    // If it is already an actual date, keep it unchanged.
     return dateValue;
   }
 
@@ -87,20 +86,17 @@ export class TripDateService {
 
     let daysToAdd = targetDay - currentDay;
 
-    // "next Monday" should mean the
-    // next occurrence, not today.
+    // "next Monday" should mean the next occurrence, not today.
     if (dateValue.startsWith("next ") && daysToAdd <= 0) {
       daysToAdd += 7;
     }
 
-    // For "this Monday", if today is Monday,
-    // use today.
+    // For "this Monday", if today is Monday, use today.
     if (dateValue.startsWith("this ") && daysToAdd < 0) {
       daysToAdd += 7;
     }
 
-    // If just "Monday" is provided and
-    // today is Monday, use today.
+    // If just "Monday" is provided and today is Monday, use today.
     if (!dateValue.startsWith("next ") && !dateValue.startsWith("this ") && daysToAdd < 0) {
       daysToAdd += 7;
     }

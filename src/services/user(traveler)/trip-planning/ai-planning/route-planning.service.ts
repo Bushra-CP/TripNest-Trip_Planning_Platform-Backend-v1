@@ -35,8 +35,7 @@ export class RoutePlanningService {
       throw new Error("Google Maps API key is not configured");
     }
 
-    // Convert our application's travel mode
-    // into Google's travel mode.
+    // Convert our application's travel mode into Google's travel mode.
     const googleTravelMode = this._travelModeMapper.mapToGoogleMode(request.travelMode ?? null);
 
     if (request.travelMode && !googleTravelMode) {
@@ -47,7 +46,6 @@ export class RoutePlanningService {
 
     /*
      * Google Routes API expects:
-     *
      * origin
      * destination
      * intermediates
@@ -59,9 +57,7 @@ export class RoutePlanningService {
       address: location,
     }));
 
-    /*
-     * Build the Google Routes API request.
-     */
+    //Build the Google Routes API request.
     const requestBody = {
       origin: {
         address: request.source,
@@ -77,10 +73,7 @@ export class RoutePlanningService {
 
       travelMode: finalTravelMode,
 
-      /*
-       * Traffic-aware routing is only used for
-       * DRIVE and TWO_WHEELER.
-       */
+      //Traffic-aware routing is only used for DRIVE and TWO_WHEELER.
       ...(finalTravelMode === "DRIVE" || finalTravelMode === "TWO_WHEELER"
         ? {
             routingPreference: "TRAFFIC_AWARE",
@@ -94,9 +87,7 @@ export class RoutePlanningService {
       languageCode: "en-US",
     };
 
-    /*
-     * Send request to Google Routes API.
-     */
+    //Send request to Google Routes API.
     const response = await fetch(this.routesApiUrl, {
       method: "POST",
 
@@ -105,9 +96,7 @@ export class RoutePlanningService {
 
         "X-Goog-Api-Key": env.GOOGLE_MAPS_API_KEY,
 
-        /*
-         * Request only the fields we need.
-         */
+        //Request only the fields needed.
         "X-Goog-FieldMask": [
           "routes.distanceMeters",
           "routes.duration",
@@ -122,24 +111,17 @@ export class RoutePlanningService {
       body: JSON.stringify(requestBody),
     });
 
-    /*
-     * Handle Google API errors.
-     */
+    //Handle Google API errors.
     if (!response.ok) {
       const errorMessage = await response.text();
 
       throw new Error(`Google Routes API request failed: ${response.status} ${errorMessage}`);
     }
 
-    /*
-     * Convert Google's response
-     * into a JavaScript object.
-     */
+    //Convert Google's response into a JavaScript object.
     const data = (await response.json()) as GoogleRoutesApiResponse;
 
-    /*
-     * We only requested one route.
-     */
+    // only requested one route.
     const route = data.routes?.[0];
 
     if (!route) {
@@ -147,10 +129,7 @@ export class RoutePlanningService {
     }
 
     /*
-     * Google returns durations like:
-     *
-     * "31500s"
-     *
+     * Google returns durations like:"31500s"
      * Convert them into numbers.
      */
     const googleLegs = route.legs ?? [];
@@ -168,10 +147,7 @@ export class RoutePlanningService {
      */
     const waypointNames = [request.source, ...request.destinations];
 
-    /*
-     * Convert Google's legs into
-     * our application's RouteLeg format.
-     */
+    //Convert Google's legs into application's RouteLeg format.
     const legs: RouteLeg[] = googleLegs.map((leg, index) => {
       const startLocation = leg.startLocation?.latLng;
 
@@ -204,10 +180,7 @@ export class RoutePlanningService {
       };
     });
 
-    /*
-     * Create a simple list of all
-     * unique route locations.
-     */
+    //Create a simple list of all unique route locations.
     const locations: RouteLocation[] = [];
 
     for (const leg of legs) {
@@ -232,10 +205,7 @@ export class RoutePlanningService {
       }
     }
 
-    /*
-     * Return our application's
-     * clean route format.
-     */
+    //Return clean route format.
     return {
       distanceMeters: route.distanceMeters,
 

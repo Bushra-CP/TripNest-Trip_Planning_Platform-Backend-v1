@@ -8,6 +8,7 @@ export const TYPES = {
   PasswordService: Symbol.for("PasswordService"),
   GoogleService: Symbol.for("GoogleService"),
   S3Service: Symbol.for("S3Service"),
+  UUIDUtil: Symbol.for("UUIDUtil"),
 
   /* ==============================
    * OTP
@@ -83,5 +84,28 @@ export const TYPES = {
   RoutePlanningService: Symbol.for("RoutePlanningService"),
   TravelModeMapper: Symbol.for("TravelModeMapper"),
   TripChangeDetectorService: Symbol.for("TripChangeDetectorService"),
+  TripGraphService: Symbol.for("TripGraphService"),
   AIPlanningController: Symbol.for("AIPlanningController"),
+
+  /* ==============================
+   * RAG
+   * ============================== */
+  DocumentTextExtractionService: Symbol.for("DocumentTextExtractionService"),
+  DocumentChunkingService: Symbol.for("DocumentChunkingService"),
+  DocumentEmbeddingService: Symbol.for("DocumentEmbeddingService"),
+  KnowledgeEmbeddingService: Symbol.for("KnowledgeEmbeddingService"),
+  KnowledgeDocumentRepository: Symbol.for("KnowledgeDocumentRepository"),
+  KnowledgeChunkRepository: Symbol.for("KnowledgeChunkRepository"),
+  KnowledgeIngestionService: Symbol.for("KnowledgeIngestionService"),
+  KnowledgeVectorSearchService: Symbol.for("KnowledgeVectorSearchService"),
+  ChunkMetadataExtractionService: Symbol.for("ChunkMetadataExtractionService"),
+  DocumentHashService: Symbol.for("DocumentHashService"),
+  BatchProcessingService: Symbol.for("BatchProcessingService"),
+  RetryService: Symbol.for("RetryService"),
+  KnowledgeIngestionWorker: Symbol.for("KnowledgeIngestionWorker"),
+  KnowledgeDocumentUploadService: Symbol.for("KnowledgeDocumentUploadService"),
+  KnowledgeDocumentManagementService: Symbol.for("KnowledgeDocumentManagementService"),
+  KnowledgeIngestionQueue: Symbol.for("KnowledgeIngestionQueue"),
+  KnowledgeDocumentController: Symbol.for("KnowledgeDocumentController"),
+  KnowledgeDocumentRoutes: Symbol.for("KnowledgeDocumentRoutes"),
 } as const;

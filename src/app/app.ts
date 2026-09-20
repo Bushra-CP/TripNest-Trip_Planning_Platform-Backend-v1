@@ -11,6 +11,7 @@ import cookieParser from "cookie-parser";
 import { UserManagementRoutes } from "@/routes/admin/admin.routes";
 import { env } from "@/config/env";
 import { TripPlanningRoutes } from "@/routes/user(traveler)/trip-planning.routes";
+import { KnowledgeDocumentRoutes } from "@/routes/admin/knowledge-document.routes";
 
 const app = express();
 
@@ -19,6 +20,10 @@ const travelerProfileRoutes = container.get<TravelerProfileRoutes>(TYPES.Travele
 const authRoute = container.get<AuthRoutes>(TYPES.AuthRoutes);
 
 const userManagementRoute = container.get<UserManagementRoutes>(TYPES.UserManagementRoutes);
+
+const knowledgeDocumentRoutes = container.get<KnowledgeDocumentRoutes>(
+  TYPES.KnowledgeDocumentRoutes,
+);
 
 const tripPlanningRoute = container.get<TripPlanningRoutes>(TYPES.TripPlanningRoutes);
 
@@ -39,6 +44,7 @@ app.use("/", travelerProfileRoutes.router);
 app.use("/", authRoute.router);
 app.use("/trip-planning", tripPlanningRoute.router);
 app.use("/admin", userManagementRoute.router);
+app.use("/admin", knowledgeDocumentRoutes.router);
 
 // Route not found
 app.use(notFoundMiddleware);

@@ -1,12 +1,11 @@
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-
+import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-
 import { randomUUID } from "crypto";
 import { IS3Service, UploadFileResult } from "./IS3Service";
 import { s3Client } from "@/config/s3";
 import { env } from "@/config/env";
 import { injectable } from "inversify";
+import { MediaFolder } from "@/enums/media.enums";
 
 @injectable()
 export class S3Service implements IS3Service {
@@ -14,7 +13,7 @@ export class S3Service implements IS3Service {
   async uploadFile(
     file: Express.Multer.File,
 
-    folder: string,
+    folder: MediaFolder,
   ): Promise<UploadFileResult> {
     const extension = file.originalname.split(".").pop();
 
@@ -41,6 +40,23 @@ export class S3Service implements IS3Service {
 
       url: `https://${env.AWS_BUCKET_NAME}.s3.${env.AWS_REGION}.amazonaws.com/${key}`,
     };
+  }
+
+  public async downloadFile(key: string): Promise<Buffer> {
+    const response = await s3Client.send(
+      new GetObjectCommand({
+        Bucket: env.AWS_BUCKET_NAME,
+        Key: key,
+      }),
+    );
+
+    if (!response.Body) {
+      throw new Error("S3 file body is empty.");
+    }
+
+    const bytes = await response.Body.transformToByteArray();
+
+    return Buffer.from(bytes);
   }
 
   //to delete a media file from s3
