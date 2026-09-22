@@ -11,6 +11,7 @@ export interface ChatMessage {
 
 export interface AIChatResult {
   reply: string; //response shown to the user.
+  title: string | null;
   requirements: TripRequirements;
   missingFields: string[];
   isComplete: boolean;

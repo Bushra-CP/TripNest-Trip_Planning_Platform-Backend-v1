@@ -1,5 +1,5 @@
 import { SendMessageResponseDto } from "@/dtos/user(traveler)/travel-planning/chat.req.res.dto";
-import { IChatMessageWithSender } from "@/interfaces/IModel/IMessage";
+import { IChatMessageWithSender } from "@/interfaces/IModel/trip-planning/IMessage";
 
 export class MessageMapper {
   static toSavedMessage(messageRes: IChatMessageWithSender): SendMessageResponseDto {

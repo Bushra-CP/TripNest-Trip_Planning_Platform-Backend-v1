@@ -14,23 +14,37 @@ import { inject, injectable } from "inversify";
  */
 @injectable()
 export class KnowledgeVectorSearchService {
+  //Minimum semantic similarity score.
+  private readonly minimumScore = 0.8;
+
   constructor(
     @inject(TYPES.DocumentEmbeddingService)
-    private readonly embeddingService: DocumentEmbeddingService,
+    private readonly _documentEmbeddingService: DocumentEmbeddingService,
 
     @inject(TYPES.KnowledgeChunkRepository)
-    private readonly knowledgeChunkRepository: IKnowledgeChunkRepository,
+    private readonly _knowledgeChunkRepository: IKnowledgeChunkRepository,
   ) {}
 
-  public async search(query: string, limit = 5): Promise<KnowledgeChunkSearchResult[]> {
+  public async search(
+    query: string,
+    destination: string | null,
+    limit = 5,
+  ): Promise<KnowledgeChunkSearchResult[]> {
     if (!query.trim()) {
       throw new Error("Search query cannot be empty");
     }
 
     //Generate an embedding using the "query"
-    const queryEmbedding = await this.embeddingService.generateQueryEmbedding(query);
+    const queryEmbedding = await this._documentEmbeddingService.generateQueryEmbedding(query);
 
-    // Search MongoDB for semantically similar knowledge chunks
-    return this.knowledgeChunkRepository.searchSimilarChunks(queryEmbedding, limit);
+    // Retrieve destination-aware candidates.
+    const results = await this._knowledgeChunkRepository.searchSimilarChunks(
+      queryEmbedding,
+      destination,
+      limit,
+    );
+
+    // Remove results that are below the minimum semantic similarity score.
+    return results.filter((result) => result.score >= this.minimumScore);
   }
 }

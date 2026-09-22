@@ -6,6 +6,7 @@ export interface KnowledgeChunkSearchResult {
   documentId: string;
   content: string;
   destination: string | null;
+  places: string[];
   category: string;
   score: number;
 }
@@ -13,6 +14,7 @@ export interface KnowledgeChunkSearchResult {
 export interface IKnowledgeChunkRepository extends IBaseRepository<KnowledgeChunk> {
   searchSimilarChunks(
     queryEmbedding: number[],
+    destination: string | null,
     limit?: number,
   ): Promise<KnowledgeChunkSearchResult[]>;
 

@@ -3,9 +3,11 @@ import { z } from "zod";
 import type { TripRequirements } from "@/interfaces/trip-planning/trip.interfaces";
 import type { RoutePlanningResult } from "@/interfaces/trip-planning/route.interfaces";
 import type { ChatMessage } from "@/interfaces/trip-planning/ai-planning.interfaces";
+import { KnowledgeChunkSearchResult } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
 
 export interface TripGraphState {
   userMessage: string;
+  title: string | null;
   previousTripRequirements: TripRequirements;
   tripRequirements: TripRequirements;
   conversationHistory: ChatMessage[];
@@ -15,6 +17,9 @@ export interface TripGraphState {
   canGenerateDraft: boolean;
   routeChanged: boolean;
   destinationOrderChanged: boolean;
+  currentKnowledgeDestination: string | null;
+  ragContext: KnowledgeChunkSearchResult[]; //Knowledge retrieved from the RAG system.
+  requestRoute: "knowledge" | "none";
   response: string;
 }
 
@@ -47,6 +52,7 @@ export const tripRequirementsSchema = z.object({
  * LangGraph thread is created.
  */
 const emptyTripRequirements = {
+  title: null,
   source: null,
   destinations: [],
   startDate: null,
@@ -73,6 +79,8 @@ const emptyTripRequirements = {
 export const tripGraphStateSchema = {
   userMessage: z.string(),
 
+  title: z.string().nullable().default(null),
+
   previousTripRequirements: tripRequirementsSchema.default(emptyTripRequirements),
 
   tripRequirements: tripRequirementsSchema.default(emptyTripRequirements),
@@ -90,6 +98,12 @@ export const tripGraphStateSchema = {
   routeChanged: z.boolean().default(false),
 
   destinationOrderChanged: z.boolean().default(false),
+
+  currentKnowledgeDestination: z.string().nullable().default(null),
+
+  ragContext: z.array(z.any()).default([]), //Knowledge retrieved from the RAG system.
+
+  requestRoute: z.enum(["knowledge", "none"]).default("none"),
 
   response: z.string().default(""),
 };

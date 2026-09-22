@@ -7,12 +7,15 @@ export const createExtractRequirementsNode = (tripExtractionService: TripExtract
     const extractionResult = await tripExtractionService.extractTripRequirements(
       state.userMessage,
       state.conversationHistory,
+      state.currentKnowledgeDestination,
     );
 
     return {
+      title: extractionResult.title,
       tripRequirements: extractionResult.requirements,
       missingFields: extractionResult.missingFields,
       destinationOrderChanged: extractionResult.destinationOrderChanged,
+      currentKnowledgeDestination: extractionResult.knowledgeDestination,
     };
   };
 };

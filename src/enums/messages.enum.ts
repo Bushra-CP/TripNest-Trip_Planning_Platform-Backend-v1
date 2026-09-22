@@ -54,6 +54,14 @@ export enum ErrorMessages {
   DOCUMENT_RESET_FAILED = "Failed to reset the previous knowledge document.",
   KNOWLEDGE_DOCUMENT_NOT_FOUND = "Knowledge document not found.",
   INVALID_DOCUMENT_ID = "Invalid knowledge document ID.",
+  TRIP_NOT_FOUND = "Trip not found",
+  TRIP_REQUIREMENTS_NOT_FOUND = "Trip requirements not found",
+  FAILED_TO_UPDATE_TRIP_ROUTE = "Failed to update trip route",
+  TRIP_ROUTE_NOT_FOUND = "Trip route not found",
+  FAILED_TO_DELETE_TRIP_ROUTE = "Failed to delete trip route",
+  TRIP_OWNER_CAN_ONLY_CREATE_ROOM = "Only the trip owner can create a group room",
+  FAILED_TO_RETRIEVE_MESSAGE = "Failed to retrieve saved message",
+  FAILED_TO_UPDATE_TRIP_REQUIREMENTS = "Failed to update trip requirements",
 }
 
 export enum ValidationMessages {

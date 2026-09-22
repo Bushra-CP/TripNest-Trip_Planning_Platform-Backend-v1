@@ -14,6 +14,11 @@ import { createCalculateRouteNode } from "./nodes/calculate-route.node";
 import { createGenerateResponseNode } from "./nodes/generate-response.node";
 import { calculateTripStatus } from "./nodes/calculate-trip-status.node";
 import { routeDecision } from "./route-decision";
+import { KnowledgeVectorSearchService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-vector-search.service";
+import { createRetrieveKnowledgeNode } from "./nodes/retrieve-knowledge.node";
+import { RouteRequestService } from "@/services/user(traveler)/trip-planning/ai-planning/route-request.service";
+import { createRouteRequestNode } from "./nodes/route-request.node";
+import { knowledgeRouteDecision } from "./knowledge-route-decision";
 
 const TripState = new StateSchema(tripGraphStateSchema);
 
@@ -23,6 +28,8 @@ export const createTripGraph = (
   tripStateService: TripStateService,
   tripChangeDetectorService: TripChangeDetectorService,
   routePlanningService: RoutePlanningService,
+  knowledgeVectorSearchService: KnowledgeVectorSearchService,
+  routeRequestService: RouteRequestService,
   checkpointer: MongoDBSaver,
 ) => {
   // Create graph nodes using injected services.
@@ -35,6 +42,10 @@ export const createTripGraph = (
   const checkRouteChange = createCheckRouteChangeNode(tripChangeDetectorService);
 
   const calculateRoute = createCalculateRouteNode(routePlanningService);
+
+  const routeRequest = createRouteRequestNode(routeRequestService);
+
+  const retrieveKnowledge = createRetrieveKnowledgeNode(knowledgeVectorSearchService);
 
   const generateResponse = createGenerateResponseNode();
 
@@ -51,7 +62,11 @@ export const createTripGraph = (
 
     .addNode("checkRouteChange", checkRouteChange)
 
+    .addNode("routeRequest", routeRequest)
+
     .addNode("calculateRoute", calculateRoute)
+
+    .addNode("retrieveKnowledge", retrieveKnowledge)
 
     .addNode("generateResponse", generateResponse)
 
@@ -73,11 +88,20 @@ export const createTripGraph = (
     // Decide whether route needs recalculation.
     .addConditionalEdges("checkRouteChange", routeDecision, {
       calculateRoute: "calculateRoute",
+      generateResponse: "routeRequest",
+    })
+
+    // Route calculation → Request router
+    .addEdge("calculateRoute", "routeRequest")
+
+    //Request router decides whether RAG is needed.
+    .addConditionalEdges("routeRequest", knowledgeRouteDecision, {
+      retrieveKnowledge: "retrieveKnowledge",
       generateResponse: "generateResponse",
     })
 
-    // Route → Generate response
-    .addEdge("calculateRoute", "generateResponse")
+    // Retrieved knowledge → Generate response
+    .addEdge("retrieveKnowledge", "generateResponse")
 
     // Response → END
     .addEdge("generateResponse", END);
