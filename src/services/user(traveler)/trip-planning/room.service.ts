@@ -1,5 +1,5 @@
 import { TYPES } from "@/di/types";
-import { IRoomRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/IRoomRepository";
+import { IRoomRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/room.repository.interface";
 import { IRoomService } from "@/interfaces/IServices/user(traveler)/IRoomService";
 import { randomBytes } from "crypto";
 import { inject, injectable } from "inversify";

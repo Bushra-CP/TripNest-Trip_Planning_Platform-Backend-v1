@@ -28,6 +28,15 @@ import { KnowledgeIngestionQueue } from "@/queues/knowledge-ingestion.queue";
 import { IKnowledgeIngestionQueue } from "@/interfaces/IQueue/knowledge-ingestion-job.interfaces";
 import { KnowledgeDocumentController } from "@/controller/admin/knowledge-document.controller";
 import { KnowledgeDocumentRoutes } from "@/routes/admin/knowledge-document.routes";
+import { RouteRequestService } from "@/services/user(traveler)/trip-planning/ai-planning/route-request.service";
+import { TripRequirementsRepository } from "@/repositories/user(traveler)/trip-planning/trip-requirements.repository";
+import { TripRouteRepository } from "@/repositories/user(traveler)/trip-planning/trip-route.repository";
+import { TripRepository } from "@/repositories/user(traveler)/trip-planning/trip.repository";
+import { RoomRepository } from "@/repositories/user(traveler)/trip-planning/room.repository";
+import { MessageRepository } from "@/repositories/user(traveler)/trip-planning/message.repository";
+import { TripService } from "@/services/user(traveler)/trip-planning/trip.service";
+import { TripRequirementsService } from "@/services/user(traveler)/trip-planning/trip-requirements.service";
+import { TripRouteService } from "@/services/user(traveler)/trip-planning/trip-route.service";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -38,7 +47,16 @@ export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.TravelModeMapper).to(TravelModeMapper);
   container.bind(TYPES.TripChangeDetectorService).to(TripChangeDetectorService);
   container.bind(TYPES.TripGraphService).to(TripGraphService);
+  container.bind(TYPES.RouteRequestService).to(RouteRequestService);
   container.bind(TYPES.AIPlanningController).to(AIPlanningController);
+  container.bind(TYPES.TripRequirementsRepository).to(TripRequirementsRepository);
+  container.bind(TYPES.TripRouteRepository).to(TripRouteRepository);
+  container.bind(TYPES.TripRepository).to(TripRepository);
+  container.bind(TYPES.RoomRepository).to(RoomRepository);
+  container.bind(TYPES.MessageRepository).to(MessageRepository);
+  container.bind(TYPES.TripService).to(TripService);
+  container.bind(TYPES.TripRequirementsService).to(TripRequirementsService);
+  container.bind(TYPES.TripRouteService).to(TripRouteService);
 
   //RAG related
   container

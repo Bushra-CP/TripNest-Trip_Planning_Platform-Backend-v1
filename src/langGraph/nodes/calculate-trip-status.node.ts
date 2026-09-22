@@ -11,6 +11,7 @@ export const calculateTripStatus = async (
   const requirements = state.tripRequirements;
 
   // Check required trip information.
+
   if (!requirements.source) {
     missingFields.push("source");
   }

@@ -1,4 +1,4 @@
-import { IChatMessage, IChatMessageWithSender } from "@/interfaces/IModel/IMessage";
+import { IChatMessage, IChatMessageWithSender } from "@/interfaces/IModel/trip-planning/IMessage";
 import { IBaseRepository } from "@/interfaces/IRepository/IBaseRepository";
 
 export interface IMessageRepository extends IBaseRepository<IChatMessage> {

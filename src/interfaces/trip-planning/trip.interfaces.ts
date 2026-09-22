@@ -24,7 +24,9 @@ export interface TripRequirements {
 }
 
 export interface TripExtractionResult {
+  title: string | null;
   requirements: TripRequirements;
   missingFields: string[];
   destinationOrderChanged: boolean;
+  knowledgeDestination: string | null;
 }

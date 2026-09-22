@@ -1,8 +1,8 @@
 import { injectable } from "inversify";
 import { BaseRepository } from "@/repositories/base.repository";
-import { IChatMessage, IChatMessageWithSender } from "@/interfaces/IModel/IMessage";
-import { IMessageRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/IMessageRepository";
-import { ChatMessageModel } from "@/models/user(traveler)/chat-message.model";
+import { IChatMessage, IChatMessageWithSender } from "@/interfaces/IModel/trip-planning/IMessage";
+import { IMessageRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/message.repository.interface";
+import { ChatMessageModel } from "@/models/user(traveler)/trip-planning/chat-message.model";
 import mongoose from "mongoose";
 
 @injectable()
@@ -11,7 +11,6 @@ export class MessageRepository extends BaseRepository<IChatMessage> implements I
     super(ChatMessageModel);
   }
 
-  // Find all messages belonging to a room with sender details
   async findByRoomId(roomId: string): Promise<IChatMessageWithSender[]> {
     const messages = await ChatMessageModel.aggregate<IChatMessageWithSender>([
       {
@@ -53,6 +52,7 @@ export class MessageRepository extends BaseRepository<IChatMessage> implements I
           _id: new mongoose.Types.ObjectId(messageId),
         },
       },
+
       {
         $lookup: {
           from: "travelerprofiles",
@@ -61,10 +61,11 @@ export class MessageRepository extends BaseRepository<IChatMessage> implements I
           as: "sender",
         },
       },
+
       {
         $unwind: "$sender",
       },
-    ]);
+    ]).exec();
 
     return messages[0] ?? null;
   }

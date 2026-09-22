@@ -27,17 +27,31 @@ export class KnowledgeChunkRepository
    */
   public async searchSimilarChunks(
     queryEmbedding: number[],
+    destination: string | null,
     limit = 5,
   ): Promise<KnowledgeChunkSearchResult[]> {
+    const filter = destination
+      ? {
+          $or: [
+            {
+              destination: destination,
+            },
+            {
+              places: destination,
+            },
+          ],
+        }
+      : undefined;
+
     const results = await this.model.aggregate<KnowledgeChunkSearchResult>([
       {
-        //mongoDB vector search
         $vectorSearch: {
-          index: "TripNest-knowledge_chunks_vector_index", //name of vector search index
-          path: "embedding", //field containing our 768-dimensional embeddings
-          queryVector: queryEmbedding, //embedding generated from user's query
-          numCandidates: 50, //number of candidates mongoDB considers
-          limit, //number of final results we want
+          index: "TripNest-knowledge_chunks_vector_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: 50,
+          limit,
+          ...(filter && { filter }),
         },
       },
       {
@@ -46,9 +60,10 @@ export class KnowledgeChunkRepository
           documentId: 1,
           content: 1,
           destination: 1,
+          places: 1,
           category: 1,
           score: {
-            $meta: "vectorSearchScore", //similarity score given by mongoDB
+            $meta: "vectorSearchScore",
           },
         },
       },

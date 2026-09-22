@@ -68,6 +68,12 @@ export const TYPES = {
   MessageService: Symbol.for("MessageService"),
   MessageController: Symbol.for("MessageController"),
   TripPlanningRoutes: Symbol.for("TripPlanningRoutes"),
+  TripRequirementsRepository: Symbol.for("TripRequirementsRepository"),
+  TripRouteRepository: Symbol.for("TripRouteRepository"),
+  TripRepository: Symbol.for("TripRepository"),
+  TripService: Symbol.for("TripService"),
+  TripRequirementsService: Symbol.for("TripRequirementsService"),
+  TripRouteService: Symbol.for("TripRouteService"),
 
   /* ==============================
    * SOCKET
@@ -85,6 +91,7 @@ export const TYPES = {
   TravelModeMapper: Symbol.for("TravelModeMapper"),
   TripChangeDetectorService: Symbol.for("TripChangeDetectorService"),
   TripGraphService: Symbol.for("TripGraphService"),
+  RouteRequestService: Symbol.for("RouteRequestService"),
   AIPlanningController: Symbol.for("AIPlanningController"),
 
   /* ==============================

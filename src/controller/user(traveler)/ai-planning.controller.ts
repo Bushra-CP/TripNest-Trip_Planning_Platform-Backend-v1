@@ -35,7 +35,8 @@ export class AIPlanningController {
         return;
       }
 
-      const result = await this._aiPlanningService.generateResponse(message, threadId);
+      const userId = req.user.userId;
+      const result = await this._aiPlanningService.generateResponse(userId, message, threadId);
 
       console.log(result);
 
