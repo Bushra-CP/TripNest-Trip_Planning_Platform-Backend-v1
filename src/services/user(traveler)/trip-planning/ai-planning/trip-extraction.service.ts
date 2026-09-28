@@ -705,6 +705,10 @@ Return no markdown, explanations, comments, or code fences.`,
 
       const parsed = JSON.parse(cleanedResponse) as TripExtractionResult;
 
+      if (typeof parsed.title !== "string" || parsed.title.trim() === "") {
+        parsed.title = "My Trip";
+      }
+
       // Make sure the extracted structure follows
       // our expected format.
       this.validateResult(parsed);

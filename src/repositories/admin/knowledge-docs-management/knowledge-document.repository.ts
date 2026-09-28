@@ -1,5 +1,5 @@
 import {
-  KnowledgeDocument,
+  IKnowledgeDocument,
   KnowledgeDocumentStatus,
 } from "@/interfaces/IModel/knowledge-document.interfaces";
 import {
@@ -13,7 +13,7 @@ import type { PipelineStage, QueryFilter } from "mongoose";
 
 @injectable()
 export class KnowledgeDocumentRepository
-  extends BaseRepository<KnowledgeDocument>
+  extends BaseRepository<IKnowledgeDocument>
   implements IKnowledgeDocumentRepository
 {
   constructor() {
@@ -28,7 +28,7 @@ export class KnowledgeDocumentRepository
   ): Promise<KnowledgeDocumentWithChunkCount[]> {
     const skip = (page - 1) * limit;
 
-    const filter: QueryFilter<KnowledgeDocument> = {};
+    const filter: QueryFilter<IKnowledgeDocument> = {};
 
     if (search?.trim()) {
       const searchRegex = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
@@ -94,7 +94,7 @@ export class KnowledgeDocumentRepository
     search?: string,
     status?: KnowledgeDocumentStatus,
   ): Promise<number> {
-    const filter: QueryFilter<KnowledgeDocument> = {};
+    const filter: QueryFilter<IKnowledgeDocument> = {};
 
     if (search?.trim()) {
       const searchRegex = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");

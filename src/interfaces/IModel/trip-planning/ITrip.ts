@@ -5,7 +5,7 @@ export type TripMode = "solo" | "group";
 export type TripStatus = "planning" | "ready" | "completed" | "cancelled";
 
 export interface ITrip extends Document {
-  ownerId: Types.ObjectId;
+  ownerId: Types.ObjectId | null;
 
   title: string;
 

@@ -5,6 +5,7 @@ import {
 } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
 import { DocumentEmbeddingService } from "@/services/admin/ai/rag/doc-chunk-processing/document-embedding.service";
 import { inject, injectable } from "inversify";
+import { KnowledgeMetadataFieldOrNull } from "./knowledge-query-classifier.service";
 
 /**
  * Convert the user's question into an embedding and search for similar chunks
@@ -28,6 +29,7 @@ export class KnowledgeVectorSearchService {
   public async search(
     query: string,
     destination: string | null,
+    metadataField: KnowledgeMetadataFieldOrNull,
     limit = 5,
   ): Promise<KnowledgeChunkSearchResult[]> {
     if (!query.trim()) {
@@ -41,6 +43,7 @@ export class KnowledgeVectorSearchService {
     const results = await this._knowledgeChunkRepository.searchSimilarChunks(
       queryEmbedding,
       destination,
+      metadataField,
       limit,
     );
 

@@ -1,5 +1,5 @@
 import { env } from "@/config/env";
-import { ChunkMetadata } from "@/interfaces/IModel/knowledge-document.interfaces";
+import { IChunkMetadata } from "@/interfaces/IModel/knowledge-document.interfaces";
 import { batchChunkMetadataResultSchema } from "@/validation/user(traveler)/trip-planning/chunkMetadata.schema";
 import { ChatGroq } from "@langchain/groq";
 import { injectable } from "inversify";
@@ -19,7 +19,7 @@ export class ChunkMetadataExtractionService {
     });
   }
 
-  public async extractMetadata(chunks: string[]): Promise<ChunkMetadata[]> {
+  public async extractMetadata(chunks: string[]): Promise<IChunkMetadata[]> {
     if (chunks.length === 0) {
       throw new Error("Cannot extract metadata from an empty batch");
     }
@@ -40,7 +40,7 @@ export class ChunkMetadataExtractionService {
    * If the LLM returns the wrong number of results,
    * split the batch into smaller batches and try again.
    */
-  private async extractBatchMetadata(chunks: string[]): Promise<ChunkMetadata[]> {
+  private async extractBatchMetadata(chunks: string[]): Promise<IChunkMetadata[]> {
     const results = await this.callLLM(chunks);
 
     if (results.length === chunks.length) {
@@ -75,7 +75,7 @@ export class ChunkMetadataExtractionService {
   }
 
   //Makes the actual Groq structured-output request.
-  private async callLLM(chunks: string[]): Promise<ChunkMetadata[]> {
+  private async callLLM(chunks: string[]): Promise<IChunkMetadata[]> {
     const structuredModel = this.model.withStructuredOutput(batchChunkMetadataResultSchema);
 
     const formattedChunks = chunks

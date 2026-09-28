@@ -35,7 +35,8 @@ export class AIPlanningController {
         return;
       }
 
-      const userId = req.user.userId;
+      const userId = req.user?.userId;
+
       const result = await this._aiPlanningService.generateResponse(userId, message, threadId);
 
       console.log(result);
@@ -57,6 +58,8 @@ export class AIPlanningController {
           canGenerateDraft: result.canGenerateDraft,
 
           route: result.route,
+
+          ragSources: result.ragSources,
         },
       });
     } catch (error) {

@@ -1,11 +1,11 @@
 import {
-  KnowledgeDocument,
+  IKnowledgeDocument,
   KnowledgeDocumentFileType,
   KnowledgeDocumentStatus,
 } from "@/interfaces/IModel/knowledge-document.interfaces";
 import mongoose, { Schema, type Model } from "mongoose";
 
-const knowledgeDocumentSchema = new Schema<KnowledgeDocument>(
+const knowledgeDocumentSchema = new Schema<IKnowledgeDocument>(
   {
     title: {
       type: String,
@@ -33,29 +33,26 @@ const knowledgeDocumentSchema = new Schema<KnowledgeDocument>(
 
     fileType: {
       type: String,
-      enum: ["PDF", "DOCX", "TXT"] satisfies KnowledgeDocumentFileType[],
+      enum: ["PDF", "DOCX", "TXT", "TRIP_TALES"] satisfies KnowledgeDocumentFileType[],
       required: true,
     },
 
     fileKey: {
       type: String,
-      required: true,
+      default: null,
       trim: true,
     },
 
     fileUrl: {
       type: String,
-      required: true,
+      default: null,
       trim: true,
     },
 
     fileHash: {
       // Used to prevent the same file from being ingested twice
       type: String,
-      required: true,
-      unique: true,
-      sparse: true,
-      index: true,
+      default: null,
     },
 
     status: {
@@ -68,13 +65,30 @@ const knowledgeDocumentSchema = new Schema<KnowledgeDocument>(
       type: String,
       required: true,
     },
+
+    sourceType: {
+      type: String,
+      enum: ["DOCUMENT", "TRIP_TALES"],
+      default: "DOCUMENT",
+      required: true,
+    },
+
+    sourceId: {
+      type: String,
+      default: null,
+    },
+
+    sourceContent: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-export const KnowledgeDocumentModel: Model<KnowledgeDocument> = mongoose.model<KnowledgeDocument>(
+export const KnowledgeDocumentModel: Model<IKnowledgeDocument> = mongoose.model<IKnowledgeDocument>(
   "KnowledgeDocument",
   knowledgeDocumentSchema,
 );

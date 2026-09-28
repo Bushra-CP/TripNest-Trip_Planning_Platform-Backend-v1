@@ -19,6 +19,8 @@ import { createRetrieveKnowledgeNode } from "./nodes/retrieve-knowledge.node";
 import { RouteRequestService } from "@/services/user(traveler)/trip-planning/ai-planning/route-request.service";
 import { createRouteRequestNode } from "./nodes/route-request.node";
 import { knowledgeRouteDecision } from "./knowledge-route-decision";
+import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
+import { KnowledgeSourceService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-source.service";
 
 const TripState = new StateSchema(tripGraphStateSchema);
 
@@ -29,6 +31,8 @@ export const createTripGraph = (
   tripChangeDetectorService: TripChangeDetectorService,
   routePlanningService: RoutePlanningService,
   knowledgeVectorSearchService: KnowledgeVectorSearchService,
+  knowledgeQueryClassifierService: KnowledgeQueryClassifierService,
+  knowledgeSourceService: KnowledgeSourceService,
   routeRequestService: RouteRequestService,
   checkpointer: MongoDBSaver,
 ) => {
@@ -45,7 +49,11 @@ export const createTripGraph = (
 
   const routeRequest = createRouteRequestNode(routeRequestService);
 
-  const retrieveKnowledge = createRetrieveKnowledgeNode(knowledgeVectorSearchService);
+  const retrieveKnowledge = createRetrieveKnowledgeNode(
+    knowledgeVectorSearchService,
+    knowledgeQueryClassifierService,
+    knowledgeSourceService,
+  );
 
   const generateResponse = createGenerateResponseNode();
 

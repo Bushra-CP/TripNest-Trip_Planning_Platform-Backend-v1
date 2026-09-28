@@ -93,6 +93,8 @@ export const TYPES = {
   TripGraphService: Symbol.for("TripGraphService"),
   RouteRequestService: Symbol.for("RouteRequestService"),
   AIPlanningController: Symbol.for("AIPlanningController"),
+  KnowledgeQueryClassifierService: Symbol.for("KnowledgeQueryClassifierService"),
+  KnowledgeSourceService: Symbol.for("KnowledgeSourceService"),
 
   /* ==============================
    * RAG
@@ -115,4 +117,14 @@ export const TYPES = {
   KnowledgeIngestionQueue: Symbol.for("KnowledgeIngestionQueue"),
   KnowledgeDocumentController: Symbol.for("KnowledgeDocumentController"),
   KnowledgeDocumentRoutes: Symbol.for("KnowledgeDocumentRoutes"),
+
+  /* ==============================
+   * TripTales
+   * ============================== */
+  PostRepository: Symbol.for("PostRepository"),
+  PostService: Symbol.for("PostService"),
+  TripTalesController: Symbol.for("TripTalesController"),
+  TripTalesRoutes: Symbol.for("TripTalesRoutes"),
+  TripTalesRagService: Symbol.for("TripTalesRagService"),
+  TripTalesMediaUnderstandingService: Symbol.for("TripTalesMediaUnderstandingService"),
 } as const;

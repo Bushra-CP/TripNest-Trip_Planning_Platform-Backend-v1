@@ -1,78 +1,88 @@
 import { injectable } from "inversify";
-import { KnowledgeChunk } from "@/interfaces/IModel/knowledge-document.interfaces";
+import { PipelineStage, Types } from "mongoose";
+
+import { IKnowledgeChunk } from "@/interfaces/IModel/knowledge-document.interfaces";
 import { BaseRepository } from "@/repositories/base.repository";
 import { KnowledgeChunkModel } from "@/models/admin/knowledge-chunk.model";
+
 import {
   IKnowledgeChunkRepository,
   KnowledgeChunkSearchResult,
 } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
-import { Types } from "mongoose";
+import { KnowledgeMetadataFieldOrNull } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
 
 @injectable()
 export class KnowledgeChunkRepository
-  extends BaseRepository<KnowledgeChunk>
+  extends BaseRepository<IKnowledgeChunk>
   implements IKnowledgeChunkRepository
 {
   constructor() {
     super(KnowledgeChunkModel);
   }
 
-  /**
-   * Search MongoDB for chunks similar to the query embedding
-   *
-   * @param {number[]} queryEmbedding
-   * @param {number} [limit=5]
-   * @return {*}  {Promise<KnowledgeChunkSearchResult[]>}
-   * @memberof KnowledgeChunkRepository
-   */
   public async searchSimilarChunks(
     queryEmbedding: number[],
     destination: string | null,
+    metadataField: KnowledgeMetadataFieldOrNull,
     limit = 5,
   ): Promise<KnowledgeChunkSearchResult[]> {
-    const filter = destination
-      ? {
-          $or: [
-            {
-              destination: destination,
-            },
-            {
-              places: destination,
-            },
-          ],
-        }
-      : undefined;
+    const candidateLimit = Math.max(limit * 10, 50);
 
-    const results = await this.model.aggregate<KnowledgeChunkSearchResult>([
+    const pipeline: PipelineStage[] = [
       {
         $vectorSearch: {
           index: "TripNest-knowledge_chunks_vector_index",
           path: "embedding",
           queryVector: queryEmbedding,
-          numCandidates: 50,
-          limit,
-          ...(filter && { filter }),
+          numCandidates: 100,
+          limit: candidateLimit,
         },
       },
-      {
-        $project: {
-          _id: 0,
-          documentId: 1,
-          content: 1,
-          destination: 1,
-          places: 1,
-          category: 1,
-          score: {
-            $meta: "vectorSearchScore",
+    ];
+
+    // Filter destination after vector search.
+    if (destination) {
+      pipeline.push({
+        $match: {
+          destination: {
+            $regex: destination,
+            $options: "i",
           },
         },
-      },
-    ]);
+      });
+    }
 
-    return results;
+    // Filter using the selected metadata field.
+    if (metadataField) {
+      pipeline.push({
+        $match: {
+          [`${metadataField}.0`]: {
+            $exists: true,
+          },
+        },
+      });
+    }
+
+    pipeline.push({
+      $project: {
+        _id: 0,
+        documentId: 1,
+        content: 1,
+        destination: 1,
+        places: 1,
+        category: 1,
+        score: {
+          $meta: "vectorSearchScore",
+        },
+      },
+    });
+
+    const results = await this.model.aggregate<KnowledgeChunkSearchResult>(pipeline);
+
+    return results.slice(0, limit);
   }
 
-  public async findChunksByDocument(documentId: Types.ObjectId): Promise<KnowledgeChunk[]> {
+  public async findChunksByDocument(documentId: Types.ObjectId): Promise<IKnowledgeChunk[]> {
     return this.find({
       documentId,
     });

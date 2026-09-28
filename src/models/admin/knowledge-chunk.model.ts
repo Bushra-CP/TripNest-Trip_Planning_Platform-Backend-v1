@@ -1,7 +1,7 @@
-import { KnowledgeChunk } from "@/interfaces/IModel/knowledge-document.interfaces";
+import { IKnowledgeChunk } from "@/interfaces/IModel/knowledge-document.interfaces";
 import mongoose, { Schema, type Model } from "mongoose";
 
-const knowledgeChunkSchema = new Schema<KnowledgeChunk>(
+const knowledgeChunkSchema = new Schema<IKnowledgeChunk>(
   {
     documentId: {
       type: Schema.Types.ObjectId,
@@ -113,7 +113,7 @@ const knowledgeChunkSchema = new Schema<KnowledgeChunk>(
   },
 );
 
-export const KnowledgeChunkModel: Model<KnowledgeChunk> = mongoose.model<KnowledgeChunk>(
+export const KnowledgeChunkModel: Model<IKnowledgeChunk> = mongoose.model<IKnowledgeChunk>(
   "KnowledgeChunk",
   knowledgeChunkSchema,
 );

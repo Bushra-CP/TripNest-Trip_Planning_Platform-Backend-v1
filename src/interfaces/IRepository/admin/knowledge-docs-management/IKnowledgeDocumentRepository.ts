@@ -1,11 +1,11 @@
-import type { KnowledgeDocument } from "@/interfaces/IModel/knowledge-document.interfaces";
+import type { IKnowledgeDocument } from "@/interfaces/IModel/knowledge-document.interfaces";
 import { IBaseRepository } from "../../IBaseRepository";
 
-export interface KnowledgeDocumentWithChunkCount extends KnowledgeDocument {
+export interface KnowledgeDocumentWithChunkCount extends IKnowledgeDocument {
   chunkCount: number;
 }
 
-export interface IKnowledgeDocumentRepository extends IBaseRepository<KnowledgeDocument> {
+export interface IKnowledgeDocumentRepository extends IBaseRepository<IKnowledgeDocument> {
   findPaginatedWithChunkCount(
     page: number,
     limit: number,

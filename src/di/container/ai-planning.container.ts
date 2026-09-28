@@ -37,6 +37,8 @@ import { MessageRepository } from "@/repositories/user(traveler)/trip-planning/m
 import { TripService } from "@/services/user(traveler)/trip-planning/trip.service";
 import { TripRequirementsService } from "@/services/user(traveler)/trip-planning/trip-requirements.service";
 import { TripRouteService } from "@/services/user(traveler)/trip-planning/trip-route.service";
+import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
+import { KnowledgeSourceService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-source.service";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -57,6 +59,8 @@ export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.TripService).to(TripService);
   container.bind(TYPES.TripRequirementsService).to(TripRequirementsService);
   container.bind(TYPES.TripRouteService).to(TripRouteService);
+  container.bind(TYPES.KnowledgeQueryClassifierService).to(KnowledgeQueryClassifierService);
+  container.bind(TYPES.KnowledgeSourceService).to(KnowledgeSourceService);
 
   //RAG related
   container

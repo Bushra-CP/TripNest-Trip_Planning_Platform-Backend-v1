@@ -64,8 +64,6 @@ export class TripPlanningRoutes {
 
     this.router.post(
       "/message",
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._aiPlanningController.sendMessage.bind(this._aiPlanningController),
     );
   }

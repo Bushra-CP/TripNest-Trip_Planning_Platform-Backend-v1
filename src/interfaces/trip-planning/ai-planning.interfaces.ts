@@ -20,5 +20,22 @@ export interface AIChatResult {
   // Route information generated from the current trip state.
   route: RoutePlanningResult | null;
 
+  // Sources used to generate the AI response.
+  ragSources: RagSource[];
+
   threadId: string;
+}
+
+//To show source of rag knowledge sources
+export interface RagSourceMedia {
+  type: "image" | "video";
+  url: string;
+}
+
+export interface RagSource {
+  documentId: string;
+  postId: string;
+  title: string;
+  destination: string;
+  media: RagSourceMedia[];
 }
