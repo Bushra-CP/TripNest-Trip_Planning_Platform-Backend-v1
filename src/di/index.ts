@@ -10,6 +10,7 @@ import { registerUserManagementContainer } from "./container/user-management.con
 import { registerTripPlanning } from "./container/trip-planning.container";
 import { registerSocket } from "./container/socket.container";
 import { registerAIPlanning } from "./container/ai-planning.container";
+import { registerTripTales } from "./container/trip-tales.container";
 
 const container = new Container();
 
@@ -34,5 +35,7 @@ registerTripPlanning(container);
 registerSocket(container);
 
 registerAIPlanning(container);
+
+registerTripTales(container);
 
 export { container };

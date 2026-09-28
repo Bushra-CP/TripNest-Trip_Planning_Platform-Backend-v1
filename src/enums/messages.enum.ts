@@ -21,6 +21,7 @@ export enum SuccessMessages {
   KNOWLEDGE_DOCUMENTS_FETCHED = "Knowledge documents fetched",
   KNOWLEDGE_DOCUMENT_FETCHED = "Knowledge document fetched",
   KNOWLEDGE_DOCUMENT_DELETED = "Knowledge document deleted",
+  POST_CREATED = "Post created successfully",
 }
 
 export enum ErrorMessages {
@@ -62,6 +63,8 @@ export enum ErrorMessages {
   TRIP_OWNER_CAN_ONLY_CREATE_ROOM = "Only the trip owner can create a group room",
   FAILED_TO_RETRIEVE_MESSAGE = "Failed to retrieve saved message",
   FAILED_TO_UPDATE_TRIP_REQUIREMENTS = "Failed to update trip requirements",
+  NO_TEXT_FOUND = "No text found for knowledge ingestion.",
+  INVALID_POST_ID = "Invalid post ID",
 }
 
 export enum ValidationMessages {

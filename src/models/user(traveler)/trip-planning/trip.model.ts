@@ -6,8 +6,7 @@ const tripSchema = new Schema<ITrip>(
     ownerId: {
       type: Types.ObjectId,
       ref: "User",
-      required: true,
-      index: true,
+      default: null,
     },
 
     title: {

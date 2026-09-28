@@ -12,6 +12,6 @@ export enum MediaFolder {
   PROFILE_IMAGES = "profile-images",
   COVER_IMAGES = "cover-images",
   POST_IMAGES = "post-images",
-  VIDEOS = "videos",
+  VIDEOS = "post-videos",
   KNOWLEDGE_DOCUMENTS = "knowledge-documents",
 }

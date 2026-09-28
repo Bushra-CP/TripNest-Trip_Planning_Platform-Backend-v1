@@ -5,7 +5,7 @@ import {
   KnowledgeDocumentResponseDto,
 } from "@/dtos/admin/rag-knowledge-document/knowledge-document.dto";
 import { IS3Service } from "@/infrastructure/s3/IS3Service";
-import { KnowledgeDocument } from "@/interfaces/IModel/knowledge-document.interfaces";
+import { IKnowledgeDocument } from "@/interfaces/IModel/knowledge-document.interfaces";
 import { IKnowledgeDocumentRepository } from "@/interfaces/IRepository/admin/knowledge-docs-management/IKnowledgeDocumentRepository";
 import { IKnowledgeChunkRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
 import { IKnowledgeDocumentManagementService } from "@/interfaces/IServices/admin/IKnowledgeDocumentService";
@@ -106,7 +106,7 @@ export class KnowledgeDocumentManagementService implements IKnowledgeDocumentMan
     }
 
     //Delete original file from S3.
-    await this._s3Service.deleteFile(document.fileKey);
+    await this._s3Service.deleteFile(document.fileKey!);
 
     //Delete all knowledge chunks.
     await this._knowledgeChunkRepository.deleteByDocumentId(objectId);
@@ -116,7 +116,7 @@ export class KnowledgeDocumentManagementService implements IKnowledgeDocumentMan
   }
 
   private toResponseDto(
-    document: KnowledgeDocument,
+    document: IKnowledgeDocument,
     chunkCount?: number,
   ): KnowledgeDocumentResponseDto {
     return {
@@ -126,7 +126,7 @@ export class KnowledgeDocumentManagementService implements IKnowledgeDocumentMan
       destination: document.destination,
       category: document.category,
       fileType: document.fileType,
-      fileUrl: document.fileUrl,
+      fileUrl: document.fileUrl!,
       status: document.status,
       uploadedBy: document.uploadedBy,
       uploadedAt: document.createdAt.toISOString(),

@@ -15,6 +15,8 @@ import { TripChangeDetectorService } from "@/services/user(traveler)/trip-planni
 import { RoutePlanningService } from "@/services/user(traveler)/trip-planning/ai-planning/route-planning.service";
 import { KnowledgeVectorSearchService } from "../rag/knowledge-vector-search.service";
 import { RouteRequestService } from "../route-request.service";
+import { KnowledgeQueryClassifierService } from "../rag/knowledge-query-classifier.service";
+import { KnowledgeSourceService } from "../knowledge-source.service";
 
 @injectable()
 export class TripGraphService {
@@ -42,6 +44,12 @@ export class TripGraphService {
 
     @inject(TYPES.KnowledgeVectorSearchService)
     private readonly _knowledgeVectorSearchService: KnowledgeVectorSearchService,
+
+    @inject(TYPES.KnowledgeQueryClassifierService)
+    private readonly _knowledgeQueryClassifierService: KnowledgeQueryClassifierService,
+
+    @inject(TYPES.KnowledgeSourceService)
+    private readonly _knowledgeSourceService: KnowledgeSourceService,
 
     @inject(TYPES.RouteRequestService)
     private readonly _routeRequestService: RouteRequestService,
@@ -74,6 +82,8 @@ export class TripGraphService {
       this._tripChangeDetectorService,
       this._routePlanningService,
       this._knowledgeVectorSearchService,
+      this._knowledgeQueryClassifierService,
+      this._knowledgeSourceService,
       this._routeRequestService,
       this.checkpointer,
     );
@@ -92,6 +102,10 @@ export class TripGraphService {
     const result = await this.graph.invoke(
       {
         userMessage,
+
+        ragContext: [],
+        ragSources: [],
+        requestRoute: "none",
       },
       {
         configurable: {

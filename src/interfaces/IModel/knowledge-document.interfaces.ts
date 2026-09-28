@@ -1,9 +1,12 @@
 import { Document, Types } from "mongoose";
 
 export type KnowledgeDocumentStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
-export type KnowledgeDocumentFileType = "PDF" | "DOCX" | "TXT";
 
-export interface ChunkMetadata {
+export type KnowledgeDocumentFileType = "PDF" | "DOCX" | "TXT" | "TRIP_TALES";
+
+export type KnowledgeSourceType = "DOCUMENT" | "TRIP_TALES";
+
+export interface IChunkMetadata {
   places: string[];
   attractions: string[];
   activities: string[];
@@ -21,22 +24,25 @@ export interface ChunkMetadata {
   topics: string[];
 }
 
-export interface KnowledgeDocument extends Document {
+export interface IKnowledgeDocument extends Document {
   title: string;
   description: string | null;
   destination: string | null;
   category: string;
   fileType: KnowledgeDocumentFileType;
-  fileKey: string;
-  fileUrl: string;
-  fileHash: string;
+  fileKey: string | null;
+  fileUrl: string | null;
+  fileHash: string | null;
   status: KnowledgeDocumentStatus;
   uploadedBy: string;
+  sourceType: KnowledgeSourceType;
+  sourceId: string | null;
+  sourceContent: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface KnowledgeChunk extends Document, ChunkMetadata {
+export interface IKnowledgeChunk extends Document, IChunkMetadata {
   documentId: Types.ObjectId;
   content: string;
   destination: string | null;

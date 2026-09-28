@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { TripRequirements } from "@/interfaces/trip-planning/trip.interfaces";
 import type { RoutePlanningResult } from "@/interfaces/trip-planning/route.interfaces";
-import type { ChatMessage } from "@/interfaces/trip-planning/ai-planning.interfaces";
+import type { ChatMessage, RagSource } from "@/interfaces/trip-planning/ai-planning.interfaces";
 import { KnowledgeChunkSearchResult } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
 
 export interface TripGraphState {
@@ -19,6 +19,7 @@ export interface TripGraphState {
   destinationOrderChanged: boolean;
   currentKnowledgeDestination: string | null;
   ragContext: KnowledgeChunkSearchResult[]; //Knowledge retrieved from the RAG system.
+  ragSources: RagSource[];
   requestRoute: "knowledge" | "none";
   response: string;
 }
@@ -102,6 +103,8 @@ export const tripGraphStateSchema = {
   currentKnowledgeDestination: z.string().nullable().default(null),
 
   ragContext: z.array(z.any()).default([]), //Knowledge retrieved from the RAG system.
+
+  ragSources: z.array(z.any()).default([]),
 
   requestRoute: z.enum(["knowledge", "none"]).default("none"),
 

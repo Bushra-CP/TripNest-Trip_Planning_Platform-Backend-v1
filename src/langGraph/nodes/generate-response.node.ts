@@ -435,9 +435,12 @@ system information to the user.
       },
     ];
 
+    //  console.log('from generate response',state.ragSources);
+
     return {
       response: response.text,
       conversationHistory: updatedConversationHistory,
+      ragSources: state.ragSources,
     };
   };
 };

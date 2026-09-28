@@ -31,31 +31,40 @@ export class AIPlanningService {
   ) {}
 
   public async generateResponse(
-    userId: string,
+    userId: string | null,
     userMessage: string,
     threadId?: string,
   ): Promise<AIChatResult> {
     let currentThreadId = threadId;
     let trip;
 
-    //First message: Create a new Trip and a new LangGraph thread.
+    // First message: Create a new Trip and a new LangGraph thread.
     if (!currentThreadId) {
       currentThreadId = this._uuidUtil.generate();
 
       trip = await this._tripRepository.create({
-        ownerId: new Types.ObjectId(userId),
+        ownerId: userId ? new Types.ObjectId(userId) : null,
         threadId: currentThreadId,
       });
     } else {
-      //Existing conversation: Find the Trip using the threadId.
+      // Existing conversation: Find the Trip using the threadId.
       trip = await this._tripRepository.findByThreadId(currentThreadId);
 
       if (!trip) {
         throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.TRIP_NOT_FOUND);
       }
+
+      // If the trip was created by a guest and the user is now logged in,
+      // associate the trip with that user.
+      if (userId && !trip.ownerId) {
+        await this._tripRepository.updateOne(
+          { threadId: currentThreadId },
+          { ownerId: new Types.ObjectId(userId) },
+        );
+      }
     }
 
-    console.log(trip);
+    console.log("TRIP:", trip);
 
     const result = await this._tripGraphService.processMessage(userMessage, currentThreadId);
 
@@ -63,20 +72,20 @@ export class AIPlanningService {
 
     console.info("TITLE:", JSON.stringify(result.title));
 
-    //Update Trip title if the AI generated one.
+    // Update Trip title if the AI generated one.
     if (result.title) {
       await this._tripRepository.updateById(trip._id.toString(), {
         title: result.title,
       });
     }
 
-    //Create or update TripRequirements.
+    // Create or update TripRequirements.
     await this._tripRequirementsService.saveRequirements({
       tripId: trip._id.toString(),
       requirements: result.tripRequirements,
     });
 
-    //Create or update TripRoute only when LangGraph has calculated a route.
+    // Create or update TripRoute only when LangGraph has calculated a route.
     if (result.route) {
       await this._tripRouteService.saveRoute({
         tripId: trip._id.toString(),
@@ -86,19 +95,13 @@ export class AIPlanningService {
 
     return {
       reply: result.response,
-
       title: result.title,
-
       requirements: result.tripRequirements,
-
       missingFields: result.missingFields,
-
       isComplete: result.isComplete,
-
       canGenerateDraft: result.canGenerateDraft,
-
       route: result.route,
-
+      ragSources: result.ragSources,
       threadId: currentThreadId,
     };
   }

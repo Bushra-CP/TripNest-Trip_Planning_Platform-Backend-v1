@@ -1,6 +1,6 @@
 import { TYPES } from "@/di/types";
 import type {
-  KnowledgeDocument,
+  IKnowledgeDocument,
   KnowledgeDocumentFileType,
 } from "@/interfaces/IModel/knowledge-document.interfaces";
 import { MediaFolder } from "@/enums/media.enums";
@@ -43,7 +43,7 @@ export class KnowledgeDocumentUploadService {
     private readonly _knowledgeIngestionQueue: IKnowledgeIngestionQueue,
   ) {}
 
-  public async uploadDocument(input: KnowledgeDocumentUploadInput): Promise<KnowledgeDocument> {
+  public async uploadDocument(input: KnowledgeDocumentUploadInput): Promise<IKnowledgeDocument> {
     // Generate hash from the uploaded file
     const fileHash = this._documentHashService.generateHashFromBuffer(input.file.buffer);
 
@@ -96,7 +96,7 @@ export class KnowledgeDocumentUploadService {
       MediaFolder.KNOWLEDGE_DOCUMENTS,
     );
 
-    let document: KnowledgeDocument | null = null;
+    let document: IKnowledgeDocument | null = null;
 
     try {
       document = await this._knowledgeDocumentRepository.create({
