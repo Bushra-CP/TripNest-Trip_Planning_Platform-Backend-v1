@@ -96,6 +96,14 @@ export class TripGraphService {
     console.log("LangGraph MongoDB checkpointer initialized");
   }
 
+  /**
+   * processMessage
+   *
+   * @param {string} userMessage
+   * @param {string} threadId
+   * @return {*}  {Promise<TripGraphState>}
+   * @memberof TripGraphService
+   */
   public async processMessage(userMessage: string, threadId: string): Promise<TripGraphState> {
     await this.checkpointerInitialization;
 
@@ -115,5 +123,28 @@ export class TripGraphService {
     );
 
     return result;
+  }
+
+  /**
+   * getState
+   *
+   * @param {string} threadId
+   * @return {*}  {(Promise<TripGraphState | null>)}
+   * @memberof TripGraphService
+   */
+  public async getState(threadId: string): Promise<TripGraphState | null> {
+    await this.checkpointerInitialization;
+
+    const state = await this.graph.getState({
+      configurable: {
+        thread_id: threadId,
+      },
+    });
+
+    if (!state || !state.values) {
+      return null;
+    }
+
+    return state.values as TripGraphState;
   }
 }

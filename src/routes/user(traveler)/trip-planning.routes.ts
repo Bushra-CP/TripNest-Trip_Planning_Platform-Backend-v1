@@ -1,6 +1,7 @@
 import { AIPlanningController } from "@/controller/user(traveler)/ai-planning.controller";
 import { MessageController } from "@/controller/user(traveler)/message.controller";
 import { RoomController } from "@/controller/user(traveler)/room.controller";
+import { TripController } from "@/controller/user(traveler)/trip.controller";
 import { TYPES } from "@/di/types";
 import { UserRole } from "@/enums/user-role.enum";
 import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware";
@@ -21,6 +22,9 @@ export class TripPlanningRoutes {
 
     @inject(TYPES.AIPlanningController)
     private readonly _aiPlanningController: AIPlanningController,
+
+    @inject(TYPES.TripController)
+    private readonly _tripController: TripController,
 
     @inject(TYPES.AuthenticateMiddleware)
     private readonly _authenticateMiddleware: AuthenticateMiddleware,
@@ -64,7 +68,20 @@ export class TripPlanningRoutes {
 
     this.router.post(
       "/message",
+      this._authenticateMiddleware.optionalAuthenticate,
       this._aiPlanningController.sendMessage.bind(this._aiPlanningController),
+    );
+
+    this.router.get(
+      "/trip/:threadId",
+      this._aiPlanningController.getPlanningState.bind(this._aiPlanningController),
+    );
+
+    this.router.get(
+      "/trips",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripController.getMyTrips.bind(this._tripController),
     );
   }
 }

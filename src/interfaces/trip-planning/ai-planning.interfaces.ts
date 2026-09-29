@@ -7,6 +7,7 @@ export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
+  ragSources?: RagSource[];
 }
 
 export interface AIChatResult {
@@ -22,6 +23,8 @@ export interface AIChatResult {
 
   // Sources used to generate the AI response.
   ragSources: RagSource[];
+
+  conversationHistory: ChatMessage[];
 
   threadId: string;
 }

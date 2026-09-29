@@ -39,6 +39,7 @@ import { TripRequirementsService } from "@/services/user(traveler)/trip-planning
 import { TripRouteService } from "@/services/user(traveler)/trip-planning/trip-route.service";
 import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
 import { KnowledgeSourceService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-source.service";
+import { TripController } from "@/controller/user(traveler)/trip.controller";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -61,6 +62,7 @@ export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.TripRouteService).to(TripRouteService);
   container.bind(TYPES.KnowledgeQueryClassifierService).to(KnowledgeQueryClassifierService);
   container.bind(TYPES.KnowledgeSourceService).to(KnowledgeSourceService);
+  container.bind(TYPES.TripController).to(TripController);
 
   //RAG related
   container

@@ -6,7 +6,7 @@ import {
 } from "@/interfaces/IServices/user(traveler)/trip-planning/trip.service.interface";
 import { TYPES } from "@/di/types";
 import { ITripRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/trip.repository.interface";
-import { ITrip, TripMode, TripStatus } from "@/interfaces/IModel/trip-planning/ITrip";
+import { ITrip, TripMode } from "@/interfaces/IModel/trip-planning/ITrip";
 import { AppError } from "@/shared/errors/app.error";
 import { ErrorMessages } from "@/enums/messages.enum";
 import { STATUS_CODES } from "@/enums/status.codes.enum";
@@ -50,48 +50,18 @@ export class TripService implements ITripService {
   }
 
   /**
-   * getTripById
-   *
-   * @param {string} tripId
-   * @return {*}  {Promise<ITrip>}
-   * @memberof TripService
-   */
-  async getTripById(tripId: string): Promise<ITrip> {
-    const trip = await this._tripRepository.findById(tripId);
-
-    if (!trip) {
-      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.TRIP_NOT_FOUND);
-    }
-
-    return trip;
-  }
-
-  /**
    * getTripsByOwnerId
    *
    * @param {string} ownerId
    * @return {*}  {Promise<ITrip[]>}
    * @memberof TripService
    */
-  async getTripsByOwnerId(ownerId: string): Promise<ITrip[]> {
-    return this._tripRepository.findByOwnerId(ownerId);
-  }
-
-  /**
-   * getTripByThreadId
-   *
-   * @param {string} threadId
-   * @return {*}  {Promise<ITrip>}
-   * @memberof TripService
-   */
-  async getTripByThreadId(threadId: string): Promise<ITrip> {
-    const trip = await this._tripRepository.findByThreadId(threadId);
-
-    if (!trip) {
-      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.TRIP_NOT_FOUND);
-    }
-
-    return trip;
+  async getTripsByOwnerId(
+    ownerId: string,
+    search?: string,
+    tripMode?: "solo" | "group",
+  ): Promise<ITrip[]> {
+    return this._tripRepository.findByOwnerId(ownerId, search, tripMode);
   }
 
   /**
@@ -123,26 +93,6 @@ export class TripService implements ITripService {
   async updateTripMode(tripId: string, tripMode: TripMode): Promise<ITrip> {
     const trip = await this._tripRepository.updateById(tripId, {
       tripMode,
-    });
-
-    if (!trip) {
-      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.TRIP_NOT_FOUND);
-    }
-
-    return trip;
-  }
-
-  /**
-   * updateTripStatus
-   *
-   * @param {string} tripId
-   * @param {TripStatus} status
-   * @return {*}  {Promise<ITrip>}
-   * @memberof TripService
-   */
-  async updateTripStatus(tripId: string, status: TripStatus): Promise<ITrip> {
-    const trip = await this._tripRepository.updateById(tripId, {
-      status,
     });
 
     if (!trip) {

@@ -110,10 +110,34 @@ User:
 Return ONLY valid JSON.
 `;
 
-    const response = await this._ai.models.generateContent({
-      model: this._model,
-      contents: prompt,
-    });
+    let response;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        response = await this._ai.models.generateContent({
+          model: this._model,
+          contents: prompt,
+        });
+
+        break;
+      } catch (error) {
+        const status = (error as { status?: number }).status;
+
+        if ((status === 503 || status === 429) && attempt < 3) {
+          const delay = attempt * 2000;
+
+          console.log(`Gemini request failed with ${status}. Retrying in ${delay}ms...`);
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    if (!response) {
+      throw new Error("Gemini request failed after retries");
+    }
 
     let text = response.text?.trim();
 

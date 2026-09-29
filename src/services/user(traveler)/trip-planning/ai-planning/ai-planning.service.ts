@@ -57,10 +57,16 @@ export class AIPlanningService {
       // If the trip was created by a guest and the user is now logged in,
       // associate the trip with that user.
       if (userId && !trip.ownerId) {
+        console.log("Assigning trip to user:", userId);
+
         await this._tripRepository.updateOne(
           { threadId: currentThreadId },
-          { ownerId: new Types.ObjectId(userId) },
+          {
+            ownerId: new Types.ObjectId(userId),
+          },
         );
+
+        trip.ownerId = new Types.ObjectId(userId);
       }
     }
 
@@ -102,7 +108,35 @@ export class AIPlanningService {
       canGenerateDraft: result.canGenerateDraft,
       route: result.route,
       ragSources: result.ragSources,
+      conversationHistory: result.conversationHistory,
       threadId: currentThreadId,
+    };
+  }
+
+  public async getPlanningState(threadId: string): Promise<AIChatResult | null> {
+    const trip = await this._tripRepository.findByThreadId(threadId);
+
+    if (!trip) {
+      return null;
+    }
+
+    const state = await this._tripGraphService.getState(threadId);
+
+    if (!state) {
+      return null;
+    }
+
+    return {
+      reply: state.response,
+      title: state.title,
+      requirements: state.tripRequirements,
+      missingFields: state.missingFields,
+      isComplete: state.isComplete,
+      canGenerateDraft: state.canGenerateDraft,
+      route: state.route,
+      ragSources: state.ragSources,
+      conversationHistory: state.conversationHistory,
+      threadId,
     };
   }
 }
