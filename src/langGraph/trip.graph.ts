@@ -19,8 +19,13 @@ import { createRetrieveKnowledgeNode } from "./nodes/retrieve-knowledge.node";
 import { RouteRequestService } from "@/services/user(traveler)/trip-planning/ai-planning/route-request.service";
 import { createRouteRequestNode } from "./nodes/route-request.node";
 import { knowledgeRouteDecision } from "./knowledge-route-decision";
-import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
+import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-query-classifier.service";
 import { KnowledgeSourceService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-source.service";
+import { createCheckKnowledgeSufficiencyNode } from "./nodes/check-knowledge-sufficiency.node";
+import { KnowledgeSufficiencyService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-sufficiency.service";
+import { KnowledgeAcquisitionService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-acquisition.service";
+import { knowledgeSufficiencyDecision } from "./knowledge-sufficiency-decision";
+import { createAcquireKnowledgeNode } from "./nodes/create-acquire-knowledge.node";
 
 const TripState = new StateSchema(tripGraphStateSchema);
 
@@ -34,6 +39,8 @@ export const createTripGraph = (
   knowledgeQueryClassifierService: KnowledgeQueryClassifierService,
   knowledgeSourceService: KnowledgeSourceService,
   routeRequestService: RouteRequestService,
+  knowledgeSufficiencyService: KnowledgeSufficiencyService,
+  knowledgeAcquisitionService: KnowledgeAcquisitionService,
   checkpointer: MongoDBSaver,
 ) => {
   // Create graph nodes using injected services.
@@ -55,6 +62,12 @@ export const createTripGraph = (
     knowledgeSourceService,
   );
 
+  const checkKnowledgeSufficiency = createCheckKnowledgeSufficiencyNode(
+    knowledgeSufficiencyService,
+  );
+
+  const acquireKnowledge = createAcquireKnowledgeNode(knowledgeAcquisitionService);
+
   const generateResponse = createGenerateResponseNode();
 
   // Create the trip-planning workflow.
@@ -75,6 +88,10 @@ export const createTripGraph = (
     .addNode("calculateRoute", calculateRoute)
 
     .addNode("retrieveKnowledge", retrieveKnowledge)
+
+    .addNode("checkKnowledgeSufficiency", checkKnowledgeSufficiency)
+
+    .addNode("acquireKnowledge", acquireKnowledge)
 
     .addNode("generateResponse", generateResponse)
 
@@ -108,8 +125,15 @@ export const createTripGraph = (
       generateResponse: "generateResponse",
     })
 
-    // Retrieved knowledge → Generate response
-    .addEdge("retrieveKnowledge", "generateResponse")
+    // Retrieved knowledge → checkKnowledgeSufficiency
+    .addEdge("retrieveKnowledge", "checkKnowledgeSufficiency")
+
+    .addConditionalEdges("checkKnowledgeSufficiency", knowledgeSufficiencyDecision, {
+      generateResponse: "generateResponse",
+      acquireKnowledge: "acquireKnowledge",
+    })
+
+    .addEdge("acquireKnowledge", "generateResponse")
 
     // Response → END
     .addEdge("generateResponse", END);

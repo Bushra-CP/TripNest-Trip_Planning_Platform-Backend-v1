@@ -5,7 +5,7 @@ import {
 } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
 import { DocumentEmbeddingService } from "@/services/admin/ai/rag/doc-chunk-processing/document-embedding.service";
 import { inject, injectable } from "inversify";
-import { KnowledgeMetadataFieldOrNull } from "./knowledge-query-classifier.service";
+import { KnowledgeMetadataFieldOrNull } from "../knowledge-query-classifier.service";
 
 /**
  * Convert the user's question into an embedding and search for similar chunks

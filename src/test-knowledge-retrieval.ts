@@ -5,7 +5,7 @@ import { KnowledgeChunkRepository } from "@/repositories/admin/knowledge-docs-ma
 import { container } from "./di";
 import { DocumentEmbeddingService } from "./services/admin/ai/rag/doc-chunk-processing/document-embedding.service";
 import { connectDB } from "./config/db";
-import { KnowledgeQueryClassifierService } from "./services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
+import { KnowledgeQueryClassifierService } from "./services/user(traveler)/trip-planning/ai-planning/knowledge-query-classifier.service";
 
 const knowledgeChunkRepository = container.get<KnowledgeChunkRepository>(
   TYPES.KnowledgeChunkRepository,

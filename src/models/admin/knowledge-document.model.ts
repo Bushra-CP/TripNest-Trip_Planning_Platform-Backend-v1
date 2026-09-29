@@ -33,7 +33,13 @@ const knowledgeDocumentSchema = new Schema<IKnowledgeDocument>(
 
     fileType: {
       type: String,
-      enum: ["PDF", "DOCX", "TXT", "TRIP_TALES"] satisfies KnowledgeDocumentFileType[],
+      enum: [
+        "PDF",
+        "DOCX",
+        "TXT",
+        "TRIP_TALES",
+        "AI_ACQUIRED",
+      ] satisfies KnowledgeDocumentFileType[],
       required: true,
     },
 
@@ -68,7 +74,7 @@ const knowledgeDocumentSchema = new Schema<IKnowledgeDocument>(
 
     sourceType: {
       type: String,
-      enum: ["DOCUMENT", "TRIP_TALES"],
+      enum: ["DOCUMENT", "TRIP_TALES", "AI_ACQUIRED"],
       default: "DOCUMENT",
       required: true,
     },

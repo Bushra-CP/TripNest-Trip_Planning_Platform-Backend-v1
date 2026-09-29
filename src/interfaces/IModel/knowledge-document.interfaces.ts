@@ -2,9 +2,9 @@ import { Document, Types } from "mongoose";
 
 export type KnowledgeDocumentStatus = "PENDING" | "PROCESSING" | "READY" | "FAILED";
 
-export type KnowledgeDocumentFileType = "PDF" | "DOCX" | "TXT" | "TRIP_TALES";
+export type KnowledgeDocumentFileType = "PDF" | "DOCX" | "TXT" | "TRIP_TALES" | "AI_ACQUIRED";
 
-export type KnowledgeSourceType = "DOCUMENT" | "TRIP_TALES";
+export type KnowledgeSourceType = "DOCUMENT" | "TRIP_TALES" | "AI_ACQUIRED";
 
 export interface IChunkMetadata {
   places: string[];

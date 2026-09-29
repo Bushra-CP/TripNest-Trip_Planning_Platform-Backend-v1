@@ -15,8 +15,10 @@ import { TripChangeDetectorService } from "@/services/user(traveler)/trip-planni
 import { RoutePlanningService } from "@/services/user(traveler)/trip-planning/ai-planning/route-planning.service";
 import { KnowledgeVectorSearchService } from "../rag/knowledge-vector-search.service";
 import { RouteRequestService } from "../route-request.service";
-import { KnowledgeQueryClassifierService } from "../rag/knowledge-query-classifier.service";
+import { KnowledgeQueryClassifierService } from "../knowledge-query-classifier.service";
 import { KnowledgeSourceService } from "../knowledge-source.service";
+import { KnowledgeSufficiencyService } from "../knowledge-sufficiency.service";
+import { KnowledgeAcquisitionService } from "../knowledge-acquisition.service";
 
 @injectable()
 export class TripGraphService {
@@ -53,6 +55,12 @@ export class TripGraphService {
 
     @inject(TYPES.RouteRequestService)
     private readonly _routeRequestService: RouteRequestService,
+
+    @inject(TYPES.KnowledgeSufficiencyService)
+    private readonly _knowledgeSufficiencyService: KnowledgeSufficiencyService,
+
+    @inject(TYPES.KnowledgeAcquisitionService)
+    private readonly _knowledgeAcquisitionService: KnowledgeAcquisitionService,
   ) {
     /*
      * The LangGraph checkpointer stores the graph state after each
@@ -85,6 +93,8 @@ export class TripGraphService {
       this._knowledgeQueryClassifierService,
       this._knowledgeSourceService,
       this._routeRequestService,
+      this._knowledgeSufficiencyService,
+      this._knowledgeAcquisitionService,
       this.checkpointer,
     );
   }

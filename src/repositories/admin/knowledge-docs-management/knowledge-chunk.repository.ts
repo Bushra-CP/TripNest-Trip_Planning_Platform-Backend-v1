@@ -9,7 +9,7 @@ import {
   IKnowledgeChunkRepository,
   KnowledgeChunkSearchResult,
 } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
-import { KnowledgeMetadataFieldOrNull } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
+import { KnowledgeMetadataFieldOrNull } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-query-classifier.service";
 
 @injectable()
 export class KnowledgeChunkRepository
