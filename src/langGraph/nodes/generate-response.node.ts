@@ -3,6 +3,7 @@ import { ChatGroq } from "@langchain/groq";
 import { env } from "@/config/env";
 
 import type { TripGraphState } from "../trip-graph.state";
+import { ChatMessage } from "@/interfaces/trip-planning/ai-planning.interfaces";
 
 /*
  * Generate the AI's conversational response.
@@ -419,23 +420,25 @@ system information to the user.
     /*
      * Add the current conversation to the graph state.
      */
+    const assistantMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: response.text,
+    };
+
+    if (state.ragSources.length > 0) {
+      assistantMessage.ragSources = state.ragSources;
+    }
+
     const updatedConversationHistory = [
       ...state.conversationHistory,
-
       {
         id: crypto.randomUUID(),
         role: "user" as const,
         content: state.userMessage,
       },
-
-      {
-        id: crypto.randomUUID(),
-        role: "assistant" as const,
-        content: response.text,
-      },
+      assistantMessage,
     ];
-
-    //  console.log('from generate response',state.ragSources);
 
     return {
       response: response.text,

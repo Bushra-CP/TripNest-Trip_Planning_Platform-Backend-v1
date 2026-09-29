@@ -10,7 +10,6 @@ export class TripStateService {
    */
   public createEmptyState(): TripRequirements {
     return {
-      title: null,
       source: null,
       destinations: [],
       startDate: null,
@@ -35,8 +34,6 @@ export class TripStateService {
     destinationOrderChanged: boolean = false,
   ): TripRequirements {
     return {
-      title: newRequirements.title ?? currentState.title,
-
       // Use the new source if it exists.
       // Otherwise keep the previous source.
       source: newRequirements.source ?? currentState.source,

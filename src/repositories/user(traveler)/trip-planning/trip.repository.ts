@@ -10,10 +10,27 @@ export class TripRepository extends BaseRepository<ITrip> implements ITripReposi
     super(TripModel);
   }
 
-  async findByOwnerId(ownerId: string): Promise<ITrip[]> {
-    return this.find({
+  async findByOwnerId(
+    ownerId: string,
+    search?: string,
+    tripMode?: "solo" | "group",
+  ): Promise<ITrip[]> {
+    const filter: Record<string, unknown> = {
       ownerId,
-    });
+    };
+
+    if (search?.trim()) {
+      filter.title = {
+        $regex: search.trim(),
+        $options: "i",
+      };
+    }
+
+    if (tripMode) {
+      filter.tripMode = tripMode;
+    }
+
+    return this.model.find(filter).sort({ updatedAt: -1 }).exec();
   }
 
   async findByThreadId(threadId: string): Promise<ITrip | null> {

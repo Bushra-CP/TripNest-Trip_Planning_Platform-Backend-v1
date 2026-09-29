@@ -16,18 +16,13 @@ export interface UpdateTripPayload {
 export interface ITripService {
   createTrip(payload: CreateTripPayload): Promise<ITrip>;
 
-  getTripById(tripId: string): Promise<ITrip>;
-
-  getTripsByOwnerId(ownerId: string): Promise<ITrip[]>;
-
-  getTripByThreadId(threadId: string): Promise<ITrip>;
+  getTripsByOwnerId(
+    ownerId: string,
+    search?: string,
+    tripMode?: "solo" | "group",
+  ): Promise<ITrip[]>;
 
   updateTrip(tripId: string, data: UpdateTripPayload): Promise<ITrip>;
 
   updateTripMode(tripId: string, tripMode: "solo" | "group"): Promise<ITrip>;
-
-  updateTripStatus(
-    tripId: string,
-    status: "planning" | "ready" | "completed" | "cancelled",
-  ): Promise<ITrip>;
 }

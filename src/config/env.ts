@@ -26,6 +26,8 @@ export const env = {
   GEMINI_MODEL: process.env.GEMINI_MODEL!,
   GROQ_API_KEY: process.env.GROQ_API_KEY!,
   GROQ_MODEL: process.env.GROQ_MODEL!,
+  MISTRAL_API_KEY: process.env.MISTRAL_API_KEY!,
+  MISTRAL_MODEL: process.env.MISTRAL_MODEL!,
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: Number(process.env.REDIS_PORT),

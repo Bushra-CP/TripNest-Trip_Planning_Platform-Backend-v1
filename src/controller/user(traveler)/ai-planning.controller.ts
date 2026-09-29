@@ -36,10 +36,11 @@ export class AIPlanningController {
       }
 
       const userId = req.user?.userId;
+      console.log("reached here...", userId);
 
       const result = await this._aiPlanningService.generateResponse(userId, message, threadId);
 
-      console.log(result);
+      // console.log(result);
 
       res.status(200).json({
         success: true,
@@ -68,6 +69,53 @@ export class AIPlanningController {
       res.status(500).json({
         success: false,
         message: "Failed to process AI response",
+      });
+    }
+  };
+
+  getPlanningState = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { threadId } = req.params;
+
+      if (!threadId || Array.isArray(threadId) || threadId.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid thread ID",
+        });
+
+        return;
+      }
+
+      const result = await this._aiPlanningService.getPlanningState(threadId);
+
+      if (!result) {
+        res.status(404).json({
+          success: false,
+          message: "Trip planning state not found",
+        });
+
+        return;
+      }
+
+      res.status(200).json({
+        success: true,
+        data: {
+          threadId: result.threadId,
+          title: result.title,
+          conversationHistory: result.conversationHistory,
+          tripRequirements: result.requirements,
+          missingFields: result.missingFields,
+          isComplete: result.isComplete,
+          canGenerateDraft: result.canGenerateDraft,
+          route: result.route,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to restore AI planning state:", error);
+
+      res.status(500).json({
+        success: false,
+        message: "Failed to restore AI planning state",
       });
     }
   };

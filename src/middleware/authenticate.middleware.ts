@@ -48,4 +48,38 @@ export class AuthenticateMiddleware {
       next(error);
     }
   };
+
+  optionalAuthenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(" ")[1];
+
+      // No token means guest user.
+      if (!token) {
+        next();
+        return;
+      }
+
+      const payload = this.jwtService.verifyAccessToken(token);
+
+      const user = await this.userRepository.findById(payload.userId);
+
+      if (!user) {
+        throw new AppError(STATUS_CODES.UNAUTHORIZED, ErrorMessages.USER_NOT_FOUND);
+      }
+
+      if (!user.isActive) {
+        throw new AppError(STATUS_CODES.FORBIDDEN, ErrorMessages.ACCOUNT_BLOCKED);
+      }
+
+      req.user = {
+        userId: payload.userId,
+        role: payload.role,
+      };
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 }
