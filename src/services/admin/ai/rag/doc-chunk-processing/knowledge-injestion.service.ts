@@ -82,6 +82,9 @@ export class KnowledgeIngestionService {
       if (document.sourceType === "TRIP_TALES") {
         //TripTales source content
         text = await this.processTripTalesContent(document);
+      } else if (document.sourceType === "AI_ACQUIRED") {
+        //AI_acquired knowledge
+        text = await this.processAIacquiredContent(document);
       } else {
         //Normal knowledge document - PDF / DOCX / TXT
         text = await this.processNormalDocument(document);
@@ -288,6 +291,22 @@ ${description}
 
     //Combine post text + image descriptions + video descriptions into one string.
     return contentParts.join("\n\n");
+  }
+
+  /**
+   * processAIacquiredContent
+   *
+   * @private
+   * @param {IKnowledgeDocument} document
+   * @return {*}  {Promise<string>}
+   * @memberof KnowledgeIngestionService
+   */
+  private async processAIacquiredContent(document: IKnowledgeDocument): Promise<string> {
+    if (!document.sourceContent?.trim()) {
+      throw new Error("AI acquired knowledge content not found.");
+    }
+
+    return document.sourceContent.trim();
   }
 
   /**

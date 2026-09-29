@@ -4,6 +4,11 @@ import type { TripRequirements } from "@/interfaces/trip-planning/trip.interface
 import type { RoutePlanningResult } from "@/interfaces/trip-planning/route.interfaces";
 import type { ChatMessage, RagSource } from "@/interfaces/trip-planning/ai-planning.interfaces";
 import { KnowledgeChunkSearchResult } from "@/interfaces/IRepository/user(traveler)/trip-planning/knowledge-chunk-repo.interface";
+import {
+  KNOWLEDGE_METADATA_FIELDS,
+  KnowledgeMetadataFieldOrNull,
+} from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-query-classifier.service";
+import { AcquiredKnowledge } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-acquisition.service";
 
 export interface TripGraphState {
   userMessage: string;
@@ -18,8 +23,15 @@ export interface TripGraphState {
   routeChanged: boolean;
   destinationOrderChanged: boolean;
   currentKnowledgeDestination: string | null;
+
   ragContext: KnowledgeChunkSearchResult[]; //Knowledge retrieved from the RAG system.
   ragSources: RagSource[];
+
+  knowledgeMetadataField: KnowledgeMetadataFieldOrNull;
+  knowledgeSufficient: boolean;
+
+  acquiredKnowledge: AcquiredKnowledge | null;
+
   requestRoute: "knowledge" | "none";
   response: string;
 }
@@ -105,6 +117,21 @@ export const tripGraphStateSchema = {
   ragContext: z.array(z.any()).default([]), //Knowledge retrieved from the RAG system.
 
   ragSources: z.array(z.any()).default([]),
+
+  knowledgeMetadataField: z.enum(KNOWLEDGE_METADATA_FIELDS).nullable().default(null),
+
+  knowledgeSufficient: z.boolean().default(false),
+
+  acquiredKnowledge: z
+    .object({
+      title: z.string(),
+      destination: z.string().nullable(),
+      category: z.string(),
+      content: z.string(),
+      documentId: z.string(),
+    })
+    .nullable()
+    .default(null),
 
   requestRoute: z.enum(["knowledge", "none"]).default("none"),
 

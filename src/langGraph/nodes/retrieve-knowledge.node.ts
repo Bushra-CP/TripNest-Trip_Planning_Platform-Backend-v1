@@ -1,6 +1,6 @@
 import { KnowledgeVectorSearchService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-vector-search.service";
 import type { TripGraphState } from "../trip-graph.state";
-import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
+import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-query-classifier.service";
 import { KnowledgeSourceService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-source.service";
 
 export const createRetrieveKnowledgeNode = (
@@ -38,6 +38,7 @@ export const createRetrieveKnowledgeNode = (
     return {
       ragContext: results,
       ragSources,
+      knowledgeMetadataField: metadataField,
     };
   };
 };

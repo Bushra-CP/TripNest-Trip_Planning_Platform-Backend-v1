@@ -37,9 +37,11 @@ import { MessageRepository } from "@/repositories/user(traveler)/trip-planning/m
 import { TripService } from "@/services/user(traveler)/trip-planning/trip.service";
 import { TripRequirementsService } from "@/services/user(traveler)/trip-planning/trip-requirements.service";
 import { TripRouteService } from "@/services/user(traveler)/trip-planning/trip-route.service";
-import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/rag/knowledge-query-classifier.service";
+import { KnowledgeQueryClassifierService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-query-classifier.service";
 import { KnowledgeSourceService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-source.service";
 import { TripController } from "@/controller/user(traveler)/trip.controller";
+import { KnowledgeSufficiencyService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-sufficiency.service";
+import { KnowledgeAcquisitionService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-acquisition.service";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -94,6 +96,8 @@ export function registerAIPlanning(container: Container): void {
     .bind(TYPES.KnowledgeDocumentUploadService)
     .to(KnowledgeDocumentUploadService)
     .inSingletonScope();
+  container.bind(TYPES.KnowledgeSufficiencyService).to(KnowledgeSufficiencyService);
+  container.bind(TYPES.KnowledgeAcquisitionService).to(KnowledgeAcquisitionService);
 
   //Knowledge document management related
   container

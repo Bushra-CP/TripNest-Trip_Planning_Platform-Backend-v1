@@ -118,6 +118,8 @@ export const TYPES = {
   KnowledgeIngestionQueue: Symbol.for("KnowledgeIngestionQueue"),
   KnowledgeDocumentController: Symbol.for("KnowledgeDocumentController"),
   KnowledgeDocumentRoutes: Symbol.for("KnowledgeDocumentRoutes"),
+  KnowledgeSufficiencyService: Symbol.for("KnowledgeSufficiencyService"),
+  KnowledgeAcquisitionService: Symbol.for("KnowledgeAcquisitionService"),
 
   /* ==============================
    * TripTales

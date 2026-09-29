@@ -23,4 +23,8 @@ export class DocumentHashService {
   public generateHashFromBuffer(fileBuffer: Buffer): string {
     return createHash("sha256").update(fileBuffer).digest("hex");
   }
+
+  public generateHashFromText(text: string): string {
+    return createHash("sha256").update(text.trim()).digest("hex");
+  }
 }
