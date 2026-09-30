@@ -22,6 +22,11 @@ export enum SuccessMessages {
   KNOWLEDGE_DOCUMENT_FETCHED = "Knowledge document fetched",
   KNOWLEDGE_DOCUMENT_DELETED = "Knowledge document deleted",
   POST_CREATED = "Post created successfully",
+  VEHICLE_CREATED = "Vehicle created successfully",
+  VEHICLE_UPDATED = "Vehicle updated successfully",
+  VEHICLE_DELETED = "Vehicle deleted successfully",
+  VEHICLES_FETCHED = "Vehicles fetched successfully",
+  VEHICLE_FETCHED = "Vehicle fetched successfully",
 }
 
 export enum ErrorMessages {
@@ -65,6 +70,10 @@ export enum ErrorMessages {
   FAILED_TO_UPDATE_TRIP_REQUIREMENTS = "Failed to update trip requirements",
   NO_TEXT_FOUND = "No text found for knowledge ingestion.",
   INVALID_POST_ID = "Invalid post ID",
+  VEHICLE_NOT_FOUND = "Vehicle not found",
+  FAILED_TO_UPDATE_VEHICLE = "Failed to update vehicle",
+  FAILED_TO_DELETE_VEHICLE = "Failed to delete vehicle",
+  INVALID_VEHICLE_ID = "Invalid vehicle ID",
 }
 
 export enum ValidationMessages {
