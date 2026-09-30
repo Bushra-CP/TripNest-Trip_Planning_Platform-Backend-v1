@@ -42,6 +42,10 @@ import { KnowledgeSourceService } from "@/services/user(traveler)/trip-planning/
 import { TripController } from "@/controller/user(traveler)/trip.controller";
 import { KnowledgeSufficiencyService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-sufficiency.service";
 import { KnowledgeAcquisitionService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-acquisition.service";
+import { VehicleRepository } from "@/repositories/user(traveler)/trip-planning/vehicle.repository";
+import { TripVehicleRepository } from "@/repositories/user(traveler)/trip-planning/trip-vehicle-repository";
+import { VehicleService } from "@/services/user(traveler)/trip-planning/vehicle.service";
+import { VehicleController } from "@/controller/user(traveler)/vehicle.controller";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -65,6 +69,10 @@ export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.KnowledgeQueryClassifierService).to(KnowledgeQueryClassifierService);
   container.bind(TYPES.KnowledgeSourceService).to(KnowledgeSourceService);
   container.bind(TYPES.TripController).to(TripController);
+  container.bind(TYPES.VehicleRepository).to(VehicleRepository);
+  container.bind(TYPES.TripVehicleRepository).to(TripVehicleRepository);
+  container.bind(TYPES.VehicleService).to(VehicleService);
+  container.bind(TYPES.VehicleController).to(VehicleController);
 
   //RAG related
   container

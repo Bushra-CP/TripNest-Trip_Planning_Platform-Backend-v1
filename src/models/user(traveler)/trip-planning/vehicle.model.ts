@@ -19,7 +19,17 @@ const vehicleSchema = new Schema<IVehicle>(
 
     type: {
       type: String,
-      enum: ["CAR", "BIKE", "SUV", "OTHER"] satisfies VehicleType[],
+      enum: [
+        "CAR",
+        "BIKE",
+        "SUV",
+        "BUS",
+        "VAN",
+        "TRAVELLER",
+        "TAXI",
+        "AUTO",
+        "OTHER",
+      ] satisfies VehicleType[],
       required: true,
     },
 
@@ -35,10 +45,16 @@ const vehicleSchema = new Schema<IVehicle>(
       min: 0,
     },
 
-    fuelPrice: {
+    seatingCapacity: {
       type: Number,
       required: true,
-      min: 0,
+      min: 1,
+    },
+
+    additionalDetails: {
+      type: String,
+      trim: true,
+      maxlength: 300,
     },
   },
   {

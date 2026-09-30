@@ -75,6 +75,10 @@ export const TYPES = {
   TripRequirementsService: Symbol.for("TripRequirementsService"),
   TripRouteService: Symbol.for("TripRouteService"),
   TripController: Symbol.for("TripController"),
+  VehicleRepository: Symbol.for("VehicleRepository"),
+  TripVehicleRepository: Symbol.for("TripVehicleRepository"),
+  VehicleService: Symbol.for("VehicleService"),
+  VehicleController: Symbol.for("VehicleController"),
 
   /* ==============================
    * SOCKET
