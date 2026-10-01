@@ -1,9 +1,7 @@
-export interface IRoomService {
-  createRoom(userId: string): Promise<{
-    roomId: string;
-  }>;
+import { IRoom } from "@/interfaces/IModel/trip-planning/IRoom";
 
-  getRoom(roomId: string): Promise<{
-    roomId: string;
-  }>;
+export interface IRoomService {
+  createRoom(userId: string, tripId: string): Promise<IRoom>;
+
+  getRoom(roomId: string): Promise<IRoom>;
 }

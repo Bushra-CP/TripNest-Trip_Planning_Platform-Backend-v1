@@ -79,6 +79,9 @@ export const TYPES = {
   TripVehicleRepository: Symbol.for("TripVehicleRepository"),
   VehicleService: Symbol.for("VehicleService"),
   VehicleController: Symbol.for("VehicleController"),
+  MemberRepository: Symbol.for("MemberRepository"),
+  MemberService: Symbol.for("MemberService"),
+  MemberController: Symbol.for("MemberController"),
 
   /* ==============================
    * SOCKET

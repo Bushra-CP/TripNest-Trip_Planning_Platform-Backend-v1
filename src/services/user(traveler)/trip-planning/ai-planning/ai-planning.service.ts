@@ -45,6 +45,9 @@ export class AIPlanningService {
       trip = await this._tripRepository.create({
         ownerId: userId ? new Types.ObjectId(userId) : null,
         threadId: currentThreadId,
+        tripMode: "solo",
+        status: "planning",
+        roomId: null,
       });
     } else {
       // Existing conversation: Find the Trip using the threadId.

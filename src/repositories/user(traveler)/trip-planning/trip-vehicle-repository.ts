@@ -13,12 +13,27 @@ export class TripVehicleRepository
     super(TripVehicleModel);
   }
 
+  /**
+   * To fetch all vehicles proposed for the trip
+   *
+   * @param {string} tripId
+   * @return {*}  {Promise<ITripVehicle[]>}
+   * @memberof TripVehicleRepository
+   */
   async findByTripId(tripId: string): Promise<ITripVehicle[]> {
     return this.find({
       tripId,
     });
   }
 
+  /**
+   * To check whether a particular vehicle has already been added to the trip
+   *
+   * @param {string} tripId
+   * @param {string} vehicleId
+   * @return {*}  {(Promise<ITripVehicle | null>)}
+   * @memberof TripVehicleRepository
+   */
   async findByTripAndVehicle(tripId: string, vehicleId: string): Promise<ITripVehicle | null> {
     return this.findOne({
       tripId,
@@ -26,10 +41,17 @@ export class TripVehicleRepository
     });
   }
 
-  async findSelectedByTripId(tripId: string): Promise<ITripVehicle | null> {
+  /**
+   * To find the vehicle finally chosen
+   *
+   * @param {string} tripId
+   * @return {*}  {(Promise<ITripVehicle | null>)}
+   * @memberof TripVehicleRepository
+   */
+  async findFinalSelectedByTripId(tripId: string): Promise<ITripVehicle | null> {
     return this.findOne({
       tripId,
-      selected: true,
+      finalSelected: true,
     });
   }
 }

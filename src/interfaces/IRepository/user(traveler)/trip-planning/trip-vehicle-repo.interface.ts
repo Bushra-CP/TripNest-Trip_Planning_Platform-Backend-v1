@@ -6,5 +6,5 @@ export interface ITripVehicleRepository extends IBaseRepository<ITripVehicle> {
 
   findByTripAndVehicle(tripId: string, vehicleId: string): Promise<ITripVehicle | null>;
 
-  findSelectedByTripId(tripId: string): Promise<ITripVehicle | null>;
+  findFinalSelectedByTripId(tripId: string): Promise<ITripVehicle | null>;
 }

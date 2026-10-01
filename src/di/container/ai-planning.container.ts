@@ -46,6 +46,11 @@ import { VehicleRepository } from "@/repositories/user(traveler)/trip-planning/v
 import { TripVehicleRepository } from "@/repositories/user(traveler)/trip-planning/trip-vehicle-repository";
 import { VehicleService } from "@/services/user(traveler)/trip-planning/vehicle.service";
 import { VehicleController } from "@/controller/user(traveler)/vehicle.controller";
+import { MemberRepository } from "@/repositories/user(traveler)/trip-planning/member.repository";
+import { MemberService } from "@/services/user(traveler)/trip-planning/member.service";
+import { IMemberService } from "@/interfaces/IServices/user(traveler)/trip-planning/member.service.interface";
+import { IMemberRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/member.repo.interface";
+import { MemberController } from "@/controller/user(traveler)/member.controller";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -73,6 +78,9 @@ export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.TripVehicleRepository).to(TripVehicleRepository);
   container.bind(TYPES.VehicleService).to(VehicleService);
   container.bind(TYPES.VehicleController).to(VehicleController);
+  container.bind<IMemberRepository>(TYPES.MemberRepository).to(MemberRepository);
+  container.bind<IMemberService>(TYPES.MemberService).to(MemberService);
+  container.bind(TYPES.MemberController).to(MemberController);
 
   //RAG related
   container

@@ -1,6 +1,9 @@
 import { TYPES } from "@/di/types";
+import { ErrorMessages, SuccessMessages } from "@/enums/messages.enum";
+import { STATUS_CODES } from "@/enums/status.codes.enum";
 import { IRoomService } from "@/interfaces/IServices/user(traveler)/IRoomService";
-import type { Request, Response } from "express";
+import { ResponseHandler } from "@/shared/http/responseHandler";
+import type { NextFunction, Request, Response } from "express";
 import { inject, injectable } from "inversify";
 
 @injectable()
@@ -11,48 +14,28 @@ export class RoomController {
   ) {}
 
   /**
-   * Create a new room
-   */
-  async createRoom(req: Request, res: Response): Promise<void> {
-    try {
-      const userId = req.user.userId;
-
-      const room = await this._roomService.createRoom(userId);
-
-      res.status(201).json(room);
-    } catch (error) {
-      console.error("Create room error:", error);
-
-      res.status(500).json({
-        message: "Failed to create room",
-      });
-    }
-  }
-
-  /**
    * Get room by room ID
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @return {*}  {Promise<void>}
+   * @memberof RoomController
    */
-  async getRoom(req: Request, res: Response): Promise<void> {
+  async getRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { roomId } = req.params;
 
-      const room = await this._roomService.getRoom(roomId as string);
-
-      res.status(200).json(room);
-    } catch (error) {
-      console.error("Get room error:", error);
-
-      if (error instanceof Error && error.message === "Room not found") {
-        res.status(404).json({
-          message: "Room not found",
-        });
+      if (!roomId || Array.isArray(roomId)) {
+        ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_ROOM_ID);
 
         return;
       }
 
-      res.status(500).json({
-        message: "Failed to find room",
-      });
+      const data = await this._roomService.getRoom(roomId);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.ROOM_FETCHED, data);
+    } catch (error) {
+      next(error);
     }
   }
 }

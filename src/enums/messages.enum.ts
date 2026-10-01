@@ -27,6 +27,12 @@ export enum SuccessMessages {
   VEHICLE_DELETED = "Vehicle deleted successfully",
   VEHICLES_FETCHED = "Vehicles fetched successfully",
   VEHICLE_FETCHED = "Vehicle fetched successfully",
+  ROOM_FETCHED = "Room details fetched",
+  TRIPS_FETCHED = "Trips fetched",
+  GROUP_TRIP_CREATED = "Group trip created",
+  AI_RESPONSE_GENERATED = "AI response generated",
+  TRIP_PLANNING_STATE_FETCHED = "Trip planning state fetched",
+  MESSAGES_FETCHED = "Messages fetched",
 }
 
 export enum ErrorMessages {
@@ -74,6 +80,11 @@ export enum ErrorMessages {
   FAILED_TO_UPDATE_VEHICLE = "Failed to update vehicle",
   FAILED_TO_DELETE_VEHICLE = "Failed to delete vehicle",
   INVALID_VEHICLE_ID = "Invalid vehicle ID",
+  INVALID_ROOM_ID = "Invalid room ID",
+  INVALID_THREAD_ID = "Invalid thread ID",
+  MESSAGE_REQUIRED = "Message required",
+  TRIP_PLANNING_STATE_NOT_FOUND = "Trip planning state not found",
+  INVALID_TRIP_ID = "Invalid trip ID",
 }
 
 export enum ValidationMessages {

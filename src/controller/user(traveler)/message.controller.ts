@@ -1,6 +1,9 @@
 import { TYPES } from "@/di/types";
+import { ErrorMessages, SuccessMessages } from "@/enums/messages.enum";
+import { STATUS_CODES } from "@/enums/status.codes.enum";
 import { IMessageService } from "@/interfaces/IServices/user(traveler)/IMessageService";
-import type { Request, Response } from "express";
+import { ResponseHandler } from "@/shared/http/responseHandler";
+import type { NextFunction, Request, Response } from "express";
 import { inject } from "inversify";
 
 export class MessageController {
@@ -9,20 +12,28 @@ export class MessageController {
     private readonly _messageService: IMessageService,
   ) {}
 
-  //Get messages for a room
-  getMessagesByRoom = async (req: Request, res: Response): Promise<void> => {
+  /**
+   * Get messages for a room
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @memberof MessageController
+   */
+  getMessagesByRoom = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { roomId } = req.params;
 
+      if (!roomId || Array.isArray(roomId) || roomId.trim().length === 0) {
+        ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_ROOM_ID);
+
+        return;
+      }
+
       const messages = await this._messageService.getMessagesByRoom(roomId as string);
 
-      res.status(200).json(messages);
+      ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.MESSAGES_FETCHED, messages);
     } catch (error) {
-      console.error("Get messages error:", error);
-
-      res.status(500).json({
-        message: "Failed to fetch messages",
-      });
+      next(error);
     }
   };
 }
