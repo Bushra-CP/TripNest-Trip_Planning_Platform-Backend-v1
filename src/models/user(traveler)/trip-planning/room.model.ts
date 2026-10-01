@@ -11,13 +11,13 @@ const roomSchema = new Schema<IRoom>(
       index: true,
     },
 
-    // tripId: {
-    //   type: Types.ObjectId,
-    //   ref: "Trip",
-    //   required: true,
-    //   unique: true,
-    //   index: true,
-    // },
+    tripId: {
+      type: Types.ObjectId,
+      ref: "Trip",
+      required: true,
+      unique: true,
+      index: true,
+    },
 
     createdBy: {
       type: Types.ObjectId,

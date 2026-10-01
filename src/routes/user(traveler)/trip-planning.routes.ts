@@ -1,4 +1,5 @@
 import { AIPlanningController } from "@/controller/user(traveler)/ai-planning.controller";
+import { MemberController } from "@/controller/user(traveler)/member.controller";
 import { MessageController } from "@/controller/user(traveler)/message.controller";
 import { RoomController } from "@/controller/user(traveler)/room.controller";
 import { TripController } from "@/controller/user(traveler)/trip.controller";
@@ -40,6 +41,9 @@ export class TripPlanningRoutes {
 
     @inject(TYPES.AuthorizeMiddleware)
     private readonly _authorizeMiddleware: AuthorizeMiddleware,
+
+    @inject(TYPES.MemberController)
+    private readonly _memberController: MemberController,
   ) {
     this.router = Router();
 
@@ -47,16 +51,6 @@ export class TripPlanningRoutes {
   }
 
   private initializeRoutes(): void {
-    /**
-     * Create a new room
-     */
-    this.router.post(
-      "/room",
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
-      this._roomController.createRoom.bind(this._roomController),
-    );
-
     /**
      * Get room by room ID - join room
      */
@@ -91,6 +85,49 @@ export class TripPlanningRoutes {
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._tripController.getMyTrips.bind(this._tripController),
+    );
+
+    this.router.post(
+      "/trips/convert-to-group",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripController.convertToGroupTrip.bind(this._tripController),
+    );
+
+    this.router.get(
+      "/trips/:threadId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripController.getTripByThreadId.bind(this._tripController),
+    );
+
+    //MEMBER ROUTES
+    this.router.post(
+      "/members",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._memberController.createTripMember,
+    );
+
+    this.router.patch(
+      "/members",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._memberController.updateTripMember,
+    );
+
+    this.router.delete(
+      "/members",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._memberController.deleteTripMember,
+    );
+
+    this.router.get(
+      "/members/:threadId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._memberController.getTripMembers,
     );
 
     //Vehicle routes

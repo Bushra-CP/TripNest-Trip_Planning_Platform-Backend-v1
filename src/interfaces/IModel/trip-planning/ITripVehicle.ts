@@ -4,7 +4,8 @@ export interface ITripVehicle extends Document {
   tripId: Types.ObjectId;
   vehicleId: Types.ObjectId;
   addedBy: Types.ObjectId;
-  selected: boolean;
+  voters: Types.ObjectId[];
+  finalSelected: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

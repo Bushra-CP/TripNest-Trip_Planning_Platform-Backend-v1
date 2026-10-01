@@ -14,8 +14,6 @@ export interface UpdateTripPayload {
 }
 
 export interface ITripService {
-  createTrip(payload: CreateTripPayload): Promise<ITrip>;
-
   getTripsByOwnerId(
     ownerId: string,
     search?: string,
@@ -25,4 +23,8 @@ export interface ITripService {
   updateTrip(tripId: string, data: UpdateTripPayload): Promise<ITrip>;
 
   updateTripMode(tripId: string, tripMode: "solo" | "group"): Promise<ITrip>;
+
+  getTripByThreadId(threadId: string): Promise<ITrip>;
+
+  convertToGroupTrip(userId: string, threadId?: string): Promise<ITrip>;
 }

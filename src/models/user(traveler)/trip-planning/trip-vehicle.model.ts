@@ -1,4 +1,5 @@
 import mongoose, { Schema, Types } from "mongoose";
+
 import type { ITripVehicle } from "@/interfaces/IModel/trip-planning/ITripVehicle";
 
 const tripVehicleSchema = new Schema<ITripVehicle>(
@@ -23,7 +24,13 @@ const tripVehicleSchema = new Schema<ITripVehicle>(
       required: true,
     },
 
-    selected: {
+    voters: {
+      type: [Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
+
+    finalSelected: {
       type: Boolean,
       default: false,
     },
@@ -33,6 +40,7 @@ const tripVehicleSchema = new Schema<ITripVehicle>(
   },
 );
 
+//Compound index - To make sure the same vehicle cannot be added to the same trip twice
 tripVehicleSchema.index({ tripId: 1, vehicleId: 1 }, { unique: true });
 
 export const TripVehicleModel = mongoose.model<ITripVehicle>("TripVehicle", tripVehicleSchema);
