@@ -14,11 +14,7 @@ export interface UpdateTripPayload {
 }
 
 export interface ITripService {
-  getTripsByOwnerId(
-    ownerId: string,
-    search?: string,
-    tripMode?: "solo" | "group",
-  ): Promise<ITrip[]>;
+  getTripsByUserId(ownerId: string, search?: string, tripMode?: "solo" | "group"): Promise<ITrip[]>;
 
   updateTrip(tripId: string, data: UpdateTripPayload): Promise<ITrip>;
 

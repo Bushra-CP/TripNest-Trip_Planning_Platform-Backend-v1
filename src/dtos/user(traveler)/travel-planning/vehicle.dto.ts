@@ -7,7 +7,7 @@ export interface CreateVehicleRequestDto {
 
   fuelType: FuelType;
 
-  mileage: number;
+  fuelEfficiency: number;
 
   seatingCapacity: number;
 
@@ -21,7 +21,7 @@ export interface UpdateVehicleRequestDto {
 
   fuelType?: FuelType;
 
-  mileage?: number;
+  fuelEfficiency?: number;
 
   seatingCapacity?: number;
 

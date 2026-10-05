@@ -51,6 +51,8 @@ import { MemberService } from "@/services/user(traveler)/trip-planning/member.se
 import { IMemberService } from "@/interfaces/IServices/user(traveler)/trip-planning/member.service.interface";
 import { IMemberRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/member.repo.interface";
 import { MemberController } from "@/controller/user(traveler)/member.controller";
+import { TripVehicleService } from "@/services/user(traveler)/trip-planning/trip-vehicle.service";
+import { TripVehicleController } from "@/controller/user(traveler)/trip-vehicle.controller";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -81,6 +83,8 @@ export function registerAIPlanning(container: Container): void {
   container.bind<IMemberRepository>(TYPES.MemberRepository).to(MemberRepository);
   container.bind<IMemberService>(TYPES.MemberService).to(MemberService);
   container.bind(TYPES.MemberController).to(MemberController);
+  container.bind(TYPES.TripVehicleService).to(TripVehicleService);
+  container.bind(TYPES.TripVehicleController).to(TripVehicleController);
 
   //RAG related
   container

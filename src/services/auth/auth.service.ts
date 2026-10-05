@@ -96,6 +96,10 @@ export class AuthService implements IAuthService {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.USER_NOT_FOUND);
     }
 
+    if (user.provider == "GOOGLE") {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.PLEASE_CONTINUE_WITH_GOOGLE_LOGIN);
+    }
+
     // Validate account status
     if (!user.isVerified) {
       throw new AppError(STATUS_CODES.FORBIDDEN, ErrorMessages.VERIFY_EMAIL);
@@ -104,6 +108,8 @@ export class AuthService implements IAuthService {
     if (!user.isActive) {
       throw new AppError(STATUS_CODES.FORBIDDEN, ErrorMessages.ACCOUNT_BLOCKED);
     }
+
+    console.log("user.password:", user.password);
 
     // Verify credentials
     const passwordMatched = await this._passwordService.compare(data.password, user.password!);

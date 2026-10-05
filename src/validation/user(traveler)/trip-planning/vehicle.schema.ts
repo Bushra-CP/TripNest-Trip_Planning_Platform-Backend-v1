@@ -15,11 +15,11 @@ const vehicleFields = {
     message: "Invalid fuel type",
   }),
 
-  mileage: z
+  fuelEfficiency: z
     .number({
-      message: "Mileage must be a number",
+      message: "Fuel Efficiency must be a number",
     })
-    .positive("Mileage must be greater than 0"),
+    .positive("Fuel Efficiency must be greater than 0"),
 
   seatingCapacity: z
     .number({

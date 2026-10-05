@@ -27,6 +27,8 @@ export interface AIChatResult {
   conversationHistory: ChatMessage[];
 
   threadId: string;
+
+  tripId: string;
 }
 
 //To show source of rag knowledge sources

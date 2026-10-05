@@ -33,6 +33,14 @@ export enum SuccessMessages {
   AI_RESPONSE_GENERATED = "AI response generated",
   TRIP_PLANNING_STATE_FETCHED = "Trip planning state fetched",
   MESSAGES_FETCHED = "Messages fetched",
+  VEHICLE_ADDED_TO_TRIP = "Vehicle added to trip successfully",
+  TRIP_VEHICLES_FETCHED = "Trip vehicles fetched successfully",
+  FINAL_VEHICLE_FETCHED = "Final vehicle fetched successfully",
+  VEHICLE_REMOVED_FROM_TRIP = "Vehicle removed from trip successfully",
+  VEHICLE_VOTE_ADDED = "Vehicle vote added successfully",
+  VEHICLE_VOTE_REMOVED = "Vehicle vote removed successfully",
+  VEHICLE_FINALIZED = "Vehicle finalized successfully",
+  VEHICLE_UNFINALIZED = "Vehicle unfinalized",
 }
 
 export enum ErrorMessages {
@@ -85,6 +93,24 @@ export enum ErrorMessages {
   MESSAGE_REQUIRED = "Message required",
   TRIP_PLANNING_STATE_NOT_FOUND = "Trip planning state not found",
   INVALID_TRIP_ID = "Invalid trip ID",
+  NOT_A_MEMBER_OF_THIS_TRIP = "You are not a member of this trip",
+  GUESTS_CANNOT_PERFROM_THIS_ACTION = "Guests cannot perform this action",
+  VEHICLE_ALREADY_ADDED_TO_TRIP = "This vehicle is already added to the trip",
+  VEHICLE_IS_NOT_ADDED_TO_TRIP = "Vehicle is not added to this trip",
+  TRIP_VEHICLE_NOT_FOUND = "Trip vehicle not found",
+  VOTING_AVAILABLE_ONLY_FOR_GROUP_TRIPS = "Voting is available only for group trips",
+  VEHICLE_DOES_NOT_BELONG_TO_TRIP = "Vehicle does not belong to this trip",
+  ONLY_TRIP_OWNER_CAN_FINALIZE_VEHICLE = "Only the trip owner can finalize the vehicle",
+  VEHICLE_FINALIZATION_ONLY_FOR_GROUP_TRIPS = "Vehicle finalization is required only for group trips",
+  TRIP_ID_AND_VEHICLE_ID_ARE_REQUIRED = "tripId and vehicleId are required",
+  TRIP_ID_AND_TRIP_VEHICLE_ID_ARE_REQUIRED = "tripId and tripVehicleId are required",
+  TRIP_ID_IS_REQUIRED = "tripId is required",
+  ONLY_TRIP_OWNER_CAN_ADD_VEHICLE = "Only trip owner can add vehicle",
+  ONLY_TRIP_OWNER_CAN_REMOVE_VEHICLE = "Only trip owner can remove vehicle",
+  VEHICLE_ALREADY_FINALIZED = "A vehicle has already been finalized for this trip",
+  ONLY_TRIP_OWNER_CAN_UNFINALIZE_VEHICLE = "Only trip owner can unfinalize vehicle",
+  VEHICLE_IS_NOT_FINALIZED = "Vehicle is not finalized",
+  PLEASE_CONTINUE_WITH_GOOGLE_LOGIN = "You have registered with Google. Please try with Google login!",
 }
 
 export enum ValidationMessages {

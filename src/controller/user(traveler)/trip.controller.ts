@@ -37,7 +37,7 @@ export class TripController {
           ? req.query.tripMode
           : undefined;
 
-      const trips = await this._tripService.getTripsByOwnerId(userId, search, tripMode);
+      const trips = await this._tripService.getTripsByUserId(userId, search, tripMode);
 
       ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.TRIPS_FETCHED, trips);
     } catch (error) {

@@ -2,6 +2,7 @@ import { AIPlanningController } from "@/controller/user(traveler)/ai-planning.co
 import { MemberController } from "@/controller/user(traveler)/member.controller";
 import { MessageController } from "@/controller/user(traveler)/message.controller";
 import { RoomController } from "@/controller/user(traveler)/room.controller";
+import { TripVehicleController } from "@/controller/user(traveler)/trip-vehicle.controller";
 import { TripController } from "@/controller/user(traveler)/trip.controller";
 import { VehicleController } from "@/controller/user(traveler)/vehicle.controller";
 import { TYPES } from "@/di/types";
@@ -44,6 +45,9 @@ export class TripPlanningRoutes {
 
     @inject(TYPES.MemberController)
     private readonly _memberController: MemberController,
+
+    @inject(TYPES.TripVehicleController)
+    private readonly _tripVehicleController: TripVehicleController,
   ) {
     this.router = Router();
 
@@ -166,6 +170,63 @@ export class TripPlanningRoutes {
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._vehicleController.deleteVehicle.bind(this._vehicleController),
+    );
+
+    //Trip Vehicle routes
+    this.router.post(
+      "/trip-vehicles",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.addVehicleToTrip.bind(this._tripVehicleController),
+    );
+
+    this.router.get(
+      "/trip-vehicles/:tripId/final",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.getFinalSelectedVehicle.bind(this._tripVehicleController),
+    );
+
+    this.router.get(
+      "/trip-vehicles/:tripId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.getTripVehicles.bind(this._tripVehicleController),
+    );
+
+    this.router.delete(
+      "/trip-vehicles",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.removeVehicleFromTrip.bind(this._tripVehicleController),
+    );
+
+    this.router.post(
+      "/trip-vehicles/vote",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.voteForVehicle.bind(this._tripVehicleController),
+    );
+
+    this.router.delete(
+      "/trip-vehicles/vote",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.removeVote.bind(this._tripVehicleController),
+    );
+
+    this.router.patch(
+      "/trip-vehicles/finalize",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.finalizeVehicle.bind(this._tripVehicleController),
+    );
+
+    this.router.patch(
+      "/trip-vehicles/unfinalize",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripVehicleController.unfinalizeVehicle.bind(this._tripVehicleController),
     );
   }
 }
