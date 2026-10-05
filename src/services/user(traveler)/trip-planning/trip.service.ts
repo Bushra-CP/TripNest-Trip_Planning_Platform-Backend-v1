@@ -37,12 +37,12 @@ export class TripService implements ITripService {
    * @return {*}  {Promise<ITrip[]>}
    * @memberof TripService
    */
-  async getTripsByOwnerId(
+  async getTripsByUserId(
     ownerId: string,
     search?: string,
     tripMode?: "solo" | "group",
   ): Promise<ITrip[]> {
-    return this._tripRepository.findByOwnerId(ownerId, search, tripMode);
+    return this._tripRepository.findByUserId(ownerId, search, tripMode);
   }
 
   /**

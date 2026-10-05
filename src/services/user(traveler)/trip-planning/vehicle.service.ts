@@ -33,7 +33,7 @@ export class VehicleService implements IVehicleService {
       name: payload.name,
       type: payload.type,
       fuelType: payload.fuelType,
-      mileage: payload.mileage,
+      fuelEfficiency: payload.fuelEfficiency,
       seatingCapacity: payload.seatingCapacity,
       ...(payload.additionalDetails !== undefined && {
         additionalDetails: payload.additionalDetails,

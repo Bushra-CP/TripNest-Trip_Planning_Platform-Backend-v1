@@ -39,7 +39,7 @@ const vehicleSchema = new Schema<IVehicle>(
       required: true,
     },
 
-    mileage: {
+    fuelEfficiency: {
       type: Number,
       required: true,
       min: 0,

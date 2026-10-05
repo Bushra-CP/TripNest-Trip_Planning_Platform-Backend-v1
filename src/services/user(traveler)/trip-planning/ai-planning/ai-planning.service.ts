@@ -113,6 +113,7 @@ export class AIPlanningService {
       ragSources: result.ragSources,
       conversationHistory: result.conversationHistory,
       threadId: currentThreadId,
+      tripId: trip._id.toString(),
     };
   }
 
@@ -140,6 +141,7 @@ export class AIPlanningService {
       ragSources: state.ragSources,
       conversationHistory: state.conversationHistory,
       threadId,
+      tripId: trip._id.toString(),
     };
   }
 }

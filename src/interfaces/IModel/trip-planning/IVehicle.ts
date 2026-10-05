@@ -14,7 +14,7 @@ export interface IVehicle extends Document {
 
   fuelType: FuelType;
 
-  mileage: number;
+  fuelEfficiency: number;
 
   seatingCapacity: number;
 

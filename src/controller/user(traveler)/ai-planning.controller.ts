@@ -44,8 +44,11 @@ export class AIPlanningController {
 
       const result = await this._aiPlanningService.generateResponse(userId, message, threadId);
 
+      console.log(result);
+
       ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.AI_RESPONSE_GENERATED, {
         threadId: result.threadId,
+        tripId: result.tripId,
         reply: result.reply,
         tripRequirements: result.requirements,
         missingFields: result.missingFields,
@@ -90,6 +93,7 @@ export class AIPlanningController {
 
       ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.TRIP_PLANNING_STATE_FETCHED, {
         threadId: result.threadId,
+        tripId: result.tripId,
         title: result.title,
         conversationHistory: result.conversationHistory,
         tripRequirements: result.requirements,
