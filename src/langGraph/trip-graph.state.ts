@@ -9,21 +9,40 @@ import {
   KnowledgeMetadataFieldOrNull,
 } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-query-classifier.service";
 import { AcquiredKnowledge } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-acquisition.service";
+import {
+  ConfirmationStatus,
+  ItineraryAction,
+  PendingItineraryChange,
+} from "@/interfaces/trip-planning/itinerary/itinerary.interfaces";
 
 export interface TripGraphState {
+  // User message
   userMessage: string;
+
+  // Trip title
   title: string | null;
+
+  // Previous and current requirements
   previousTripRequirements: TripRequirements;
   tripRequirements: TripRequirements;
+
+  // Conversation
   conversationHistory: ChatMessage[];
+
+  // Route
   route: RoutePlanningResult | null;
+
+  // Trip status
   missingFields: string[];
   isComplete: boolean;
   canGenerateDraft: boolean;
+
+  // Route change
   routeChanged: boolean;
   destinationOrderChanged: boolean;
-  currentKnowledgeDestination: string | null;
 
+  // Knowledge
+  currentKnowledgeDestination: string | null;
   ragContext: KnowledgeChunkSearchResult[]; //Knowledge retrieved from the RAG system.
   ragSources: RagSource[];
 
@@ -33,6 +52,13 @@ export interface TripGraphState {
   acquiredKnowledge: AcquiredKnowledge | null;
 
   requestRoute: "knowledge" | "none";
+
+  // Itinerary state
+  itineraryRequested: boolean;
+  itineraryAction: ItineraryAction;
+  confirmationStatus: ConfirmationStatus;
+  pendingItineraryChange: PendingItineraryChange | null;
+
   response: string;
 }
 
@@ -134,6 +160,33 @@ export const tripGraphStateSchema = {
     .default(null),
 
   requestRoute: z.enum(["knowledge", "none"]).default("none"),
+
+  itineraryRequested: z.boolean().default(false),
+
+  itineraryAction: z.enum(["CREATE", "MODIFY"]).nullable().default(null),
+
+  confirmationStatus: z.enum(["PENDING", "CONFIRMED", "REJECTED"]).nullable().default(null),
+
+  pendingItineraryChange: z
+    .object({
+      removePlaces: z.array(z.string()).default([]),
+
+      addPlaces: z.array(z.string()).default([]),
+
+      replacePlaces: z
+        .array(
+          z.object({
+            remove: z.string(),
+
+            add: z.string(),
+          }),
+        )
+        .default([]),
+
+      description: z.string(),
+    })
+    .nullable()
+    .default(null),
 
   response: z.string().default(""),
 };

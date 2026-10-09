@@ -35,7 +35,7 @@ const vehicleSchema = new Schema<IVehicle>(
 
     fuelType: {
       type: String,
-      enum: ["PETROL", "DIESEL", "ELECTRIC", "CNG", "OTHER"] satisfies FuelType[],
+      enum: ["PETROL", "DIESEL", "ELECTRIC", "OTHER"] satisfies FuelType[],
       required: true,
     },
 

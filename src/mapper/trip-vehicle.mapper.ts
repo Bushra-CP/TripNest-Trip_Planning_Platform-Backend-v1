@@ -9,7 +9,7 @@ export interface TripVehicleResponse {
     name: string;
     type: string;
     fuelType: string;
-    mileage: number;
+    fuelEfficiency: number;
     seatingCapacity: number;
     additionalDetails?: string;
   };
@@ -32,7 +32,7 @@ export class TripVehicleMapper {
         name: tripVehicle.vehicleId.name,
         type: tripVehicle.vehicleId.type,
         fuelType: tripVehicle.vehicleId.fuelType,
-        mileage: tripVehicle.vehicleId.mileage,
+        fuelEfficiency: tripVehicle.vehicleId.fuelEfficiency,
         seatingCapacity: tripVehicle.vehicleId.seatingCapacity,
         ...(tripVehicle.vehicleId.additionalDetails !== undefined && {
           additionalDetails: tripVehicle.vehicleId.additionalDetails,

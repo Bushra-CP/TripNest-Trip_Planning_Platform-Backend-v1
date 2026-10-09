@@ -26,6 +26,8 @@ import { KnowledgeSufficiencyService } from "@/services/user(traveler)/trip-plan
 import { KnowledgeAcquisitionService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-acquisition.service";
 import { knowledgeSufficiencyDecision } from "./knowledge-sufficiency-decision";
 import { createAcquireKnowledgeNode } from "./nodes/create-acquire-knowledge.node";
+import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/ai-planning/itinerary-intent.service";
+import { createDetectItineraryIntentNode } from "./nodes/detect-itinerary-intent.node";
 
 const TripState = new StateSchema(tripGraphStateSchema);
 
@@ -41,6 +43,7 @@ export const createTripGraph = (
   routeRequestService: RouteRequestService,
   knowledgeSufficiencyService: KnowledgeSufficiencyService,
   knowledgeAcquisitionService: KnowledgeAcquisitionService,
+  itineraryIntentService: ItineraryIntentService,
   checkpointer: MongoDBSaver,
 ) => {
   // Create graph nodes using injected services.
@@ -68,6 +71,8 @@ export const createTripGraph = (
 
   const acquireKnowledge = createAcquireKnowledgeNode(knowledgeAcquisitionService);
 
+  const detectItineraryIntent = createDetectItineraryIntentNode(itineraryIntentService);
+
   const generateResponse = createGenerateResponseNode();
 
   // Create the trip-planning workflow.
@@ -80,6 +85,8 @@ export const createTripGraph = (
     .addNode("updateTripState", updateTripState)
 
     .addNode("calculateTripStatus", calculateTripStatus)
+
+    .addNode("detectItineraryIntent", detectItineraryIntent)
 
     .addNode("checkRouteChange", checkRouteChange)
 
@@ -107,8 +114,9 @@ export const createTripGraph = (
     // Update state → Calculate trip status
     .addEdge("updateTripState", "calculateTripStatus")
 
-    // Calculate status → Check route change
-    .addEdge("calculateTripStatus", "checkRouteChange")
+    .addEdge("calculateTripStatus", "detectItineraryIntent")
+
+    .addEdge("detectItineraryIntent", "checkRouteChange")
 
     // Decide whether route needs recalculation.
     .addConditionalEdges("checkRouteChange", routeDecision, {

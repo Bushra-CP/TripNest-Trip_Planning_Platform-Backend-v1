@@ -24,6 +24,7 @@ export const env = {
   MAX_DOCUMENT_SIZE: Number(process.env.MAX_DOCUMENT_SIZE ?? 10 * 1024 * 1024),
   GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
   GOOGLE_API_KEY2: process.env.GOOGLE_API_KEY2!,
+  GOOGLE_API_KEY3: process.env.GOOGLE_API_KEY3!,
   GEMINI_MODEL: process.env.GEMINI_MODEL!,
   GROQ_API_KEY: process.env.GROQ_API_KEY!,
   GROQ_API_KEY2: process.env.GROQ_API_KEY2!,
@@ -33,6 +34,7 @@ export const env = {
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: Number(process.env.REDIS_PORT),
+  INDIAN_FUEL_PRICE_API_KEY: process.env.INDIAN_FUEL_PRICE_API_KEY!,
 };
 
 // `.env` vs `config/env.ts`

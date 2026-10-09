@@ -53,6 +53,14 @@ import { IMemberRepository } from "@/interfaces/IRepository/user(traveler)/trip-
 import { MemberController } from "@/controller/user(traveler)/member.controller";
 import { TripVehicleService } from "@/services/user(traveler)/trip-planning/trip-vehicle.service";
 import { TripVehicleController } from "@/controller/user(traveler)/trip-vehicle.controller";
+import { FuelPriceService } from "@/services/user(traveler)/trip-planning/trip-cost/fuel-price.service";
+import { IFuelPriceService } from "@/interfaces/trip-planning/trip-cost/fuel-price.service.interface";
+import { TripCostService } from "@/services/user(traveler)/trip-planning/trip-cost/trip-cost.service";
+import { ITripCostService } from "@/interfaces/trip-planning/trip-cost/trip-cost.service.interface";
+import { EVChargingPriceService } from "@/services/user(traveler)/trip-planning/trip-cost/ev-charging-price.service";
+import { IEVChargingPriceService } from "@/interfaces/trip-planning/trip-cost/ev-charging-price.service.interface";
+import { TripCostController } from "@/controller/user(traveler)/trip-cost.controller";
+import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/ai-planning/itinerary-intent.service";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -85,6 +93,10 @@ export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.MemberController).to(MemberController);
   container.bind(TYPES.TripVehicleService).to(TripVehicleService);
   container.bind(TYPES.TripVehicleController).to(TripVehicleController);
+  container.bind<IFuelPriceService>(TYPES.FuelPriceService).to(FuelPriceService);
+  container.bind<ITripCostService>(TYPES.TripCostService).to(TripCostService);
+  container.bind<IEVChargingPriceService>(TYPES.EVChargingPriceService).to(EVChargingPriceService);
+  container.bind(TYPES.TripCostController).to(TripCostController);
 
   //RAG related
   container
@@ -129,6 +141,9 @@ export function registerAIPlanning(container: Container): void {
     .to(KnowledgeDocumentController)
     .inSingletonScope();
   container.bind(TYPES.KnowledgeDocumentRoutes).to(KnowledgeDocumentRoutes).inSingletonScope();
+
+  //Itinerary related
+  container.bind(TYPES.ItineraryIntentService).to(ItineraryIntentService);
 
   //Queue
   container

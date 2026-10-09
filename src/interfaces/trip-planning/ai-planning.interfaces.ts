@@ -17,6 +17,7 @@ export interface AIChatResult {
   missingFields: string[];
   isComplete: boolean;
   canGenerateDraft: boolean;
+  routeChanged: boolean;
 
   // Route information generated from the current trip state.
   route: RoutePlanningResult | null;
