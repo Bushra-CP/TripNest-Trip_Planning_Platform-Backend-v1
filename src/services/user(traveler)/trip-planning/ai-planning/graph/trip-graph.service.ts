@@ -19,6 +19,7 @@ import { KnowledgeQueryClassifierService } from "../knowledge-query-classifier.s
 import { KnowledgeSourceService } from "../knowledge-source.service";
 import { KnowledgeSufficiencyService } from "../knowledge-sufficiency.service";
 import { KnowledgeAcquisitionService } from "../knowledge-acquisition.service";
+import { ItineraryIntentService } from "../itinerary-intent.service";
 
 @injectable()
 export class TripGraphService {
@@ -61,6 +62,9 @@ export class TripGraphService {
 
     @inject(TYPES.KnowledgeAcquisitionService)
     private readonly _knowledgeAcquisitionService: KnowledgeAcquisitionService,
+
+    @inject(TYPES.ItineraryIntentService)
+    private readonly _itineraryIntentService: ItineraryIntentService,
   ) {
     /*
      * The LangGraph checkpointer stores the graph state after each
@@ -95,6 +99,7 @@ export class TripGraphService {
       this._routeRequestService,
       this._knowledgeSufficiencyService,
       this._knowledgeAcquisitionService,
+      this._itineraryIntentService,
       this.checkpointer,
     );
   }

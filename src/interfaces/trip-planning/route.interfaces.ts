@@ -8,6 +8,9 @@ export interface RoutePlanningRequest {
 
 export interface RouteLocation {
   name: string;
+  city: string;
+  state: string;
+  country: string;
   latitude: number;
   longitude: number;
 }
@@ -25,6 +28,23 @@ export interface RoutePlanningResult {
   encodedPolyline: string | null;
   locations: RouteLocation[];
   legs: RouteLeg[];
+}
+
+export interface GoogleGeocodingAddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+export interface GoogleGeocodingResult {
+  formatted_address: string;
+  address_components: GoogleGeocodingAddressComponent[];
+}
+
+export interface GoogleGeocodingApiResponse {
+  results: GoogleGeocodingResult[];
+  status: string;
+  error_message?: string;
 }
 
 // ------------------------------

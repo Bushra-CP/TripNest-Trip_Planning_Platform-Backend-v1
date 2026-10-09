@@ -41,6 +41,7 @@ export enum SuccessMessages {
   VEHICLE_VOTE_REMOVED = "Vehicle vote removed successfully",
   VEHICLE_FINALIZED = "Vehicle finalized successfully",
   VEHICLE_UNFINALIZED = "Vehicle unfinalized",
+  TRIP_VEHICLE_COSTS_FETCHED = "Trip vehicle costs fetched successfully",
 }
 
 export enum ErrorMessages {
@@ -111,6 +112,8 @@ export enum ErrorMessages {
   ONLY_TRIP_OWNER_CAN_UNFINALIZE_VEHICLE = "Only trip owner can unfinalize vehicle",
   VEHICLE_IS_NOT_FINALIZED = "Vehicle is not finalized",
   PLEASE_CONTINUE_WITH_GOOGLE_LOGIN = "You have registered with Google. Please try with Google login!",
+  FUEL_PRICE_NOT_FOUND = "Fuel price not found",
+  FUEL_PRICE_SERVICE_UNAVAILABLE = "Fuel price service is currently unavailable",
 }
 
 export enum ValidationMessages {

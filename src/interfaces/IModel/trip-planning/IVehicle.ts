@@ -3,7 +3,7 @@ import { Document, Types } from "mongoose";
 export type VehicleType =
   "CAR" | "BIKE" | "SUV" | "BUS" | "VAN" | "TRAVELLER" | "TAXI" | "AUTO" | "OTHER";
 
-export type FuelType = "PETROL" | "DIESEL" | "ELECTRIC" | "CNG" | "OTHER";
+export type FuelType = "PETROL" | "DIESEL" | "ELECTRIC" | "OTHER";
 
 export interface IVehicle extends Document {
   ownerId: Types.ObjectId;

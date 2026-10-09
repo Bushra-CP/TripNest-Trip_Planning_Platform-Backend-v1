@@ -50,7 +50,7 @@ export class TripVehicleService implements ITripVehicleService {
 
     const finalVehicle = await this._tripVehicleRepository.findRawFinalSelectedByTripId(tripId);
 
-    if (finalVehicle) {
+    if (trip.tripMode == "group" && finalVehicle) {
       throw new AppError(STATUS_CODES.BAD_REQUEST, ErrorMessages.VEHICLE_ALREADY_FINALIZED);
     }
 

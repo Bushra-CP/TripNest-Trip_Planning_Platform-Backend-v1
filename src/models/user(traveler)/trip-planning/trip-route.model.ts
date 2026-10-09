@@ -10,6 +10,26 @@ const routeLocationSchema = new Schema(
       trim: true,
     },
 
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    state: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true,
+    },
+
+    country: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true,
+    },
+
     latitude: {
       type: Number,
       required: true,

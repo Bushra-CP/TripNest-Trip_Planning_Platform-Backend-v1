@@ -84,6 +84,10 @@ export const TYPES = {
   MemberController: Symbol.for("MemberController"),
   TripVehicleService: Symbol.for("TripVehicleService"),
   TripVehicleController: Symbol.for("TripVehicleController"),
+  FuelPriceService: Symbol.for("FuelPriceService"),
+  TripCostService: Symbol.for("TripCostService"),
+  EVChargingPriceService: Symbol.for("EVChargingPriceService"),
+  TripCostController: Symbol.for("TripCostController"),
 
   /* ==============================
    * SOCKET
@@ -105,6 +109,11 @@ export const TYPES = {
   AIPlanningController: Symbol.for("AIPlanningController"),
   KnowledgeQueryClassifierService: Symbol.for("KnowledgeQueryClassifierService"),
   KnowledgeSourceService: Symbol.for("KnowledgeSourceService"),
+
+  /* ==============================
+   * ITINERARY
+   * ============================== */
+  ItineraryIntentService: Symbol.for("ItineraryIntentService"),
 
   /* ==============================
    * RAG

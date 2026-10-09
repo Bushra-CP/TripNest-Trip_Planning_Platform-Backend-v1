@@ -135,9 +135,9 @@ export class VehicleController {
         return next(new Error("Invalid vehicle ID"));
       }
 
-      await this._vehicleService.deleteVehicle(req.user.userId, vehicleId);
+      const data = await this._vehicleService.deleteVehicle(req.user.userId, vehicleId);
 
-      ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.VEHICLE_DELETED);
+      ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.VEHICLE_DELETED, data);
     } catch (error) {
       next(error);
     }

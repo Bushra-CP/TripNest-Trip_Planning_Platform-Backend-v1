@@ -13,6 +13,8 @@ export const createCheckRouteChangeNode = (
       state.tripRequirements,
     );
 
+    console.log("ROUTE CAHNGED:", routeChanged);
+
     return {
       routeChanged,
     };

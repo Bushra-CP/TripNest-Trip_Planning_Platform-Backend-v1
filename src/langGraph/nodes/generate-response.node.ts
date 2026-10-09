@@ -3,7 +3,7 @@ import { ChatGroq } from "@langchain/groq";
 import { env } from "@/config/env";
 
 import type { TripGraphState } from "../trip-graph.state";
-import { ChatMessage } from "@/interfaces/trip-planning/ai-planning.interfaces";
+import type { ChatMessage } from "@/interfaces/trip-planning/ai-planning.interfaces";
 
 /*
  * Generate the AI's conversational response.
@@ -37,6 +37,49 @@ export const createGenerateResponseNode = () => {
     const acquiredKnowledgeContext =
       state.acquiredKnowledge?.content?.trim() || "No newly acquired knowledge is available.";
 
+    /*
+     * Determine whether the user is currently requesting
+     * itinerary creation.
+     */
+    const isItineraryCreateRequest = state.itineraryRequested && state.itineraryAction === "CREATE";
+
+    /*
+     * Determine whether the user is currently requesting
+     * itinerary modification.
+     */
+    const isItineraryModifyRequest = state.itineraryRequested && state.itineraryAction === "MODIFY";
+
+    /*
+     * Budget is intentionally treated slightly differently.
+     *
+     * It is useful for itinerary generation, but it should
+     * not become a hard blocker if the user does not have
+     * a budget.
+     */
+    const budgetMissing = state.tripRequirements.budget === null;
+
+    /*
+     * Preferences are useful for itinerary generation,
+     * but they are not part of the backend missingFields
+     * calculation.
+     */
+    const preferencesMissing = state.tripRequirements.preferences.length === 0;
+
+    /*
+     * Build a human-readable list of itinerary information
+     * that is still missing.
+     */
+    const itineraryMissingInformation = [
+      ...state.missingFields,
+
+      ...(budgetMissing && !state.missingFields.includes("budget") ? ["budget"] : []),
+
+      ...(preferencesMissing ? ["preferences"] : []),
+    ];
+
+    //Remove duplicates.
+    const uniqueItineraryMissingInformation = [...new Set(itineraryMissingInformation)];
+
     const response = await model.invoke([
       [
         "system",
@@ -53,7 +96,9 @@ You must carefully distinguish between:
 
 1. Trip planning information
 2. Travel knowledge questions
-3. Both at the same time
+3. Itinerary creation requests
+4. Itinerary modification requests
+5. Both at the same time
 
 
 ==================================================
@@ -166,22 +211,6 @@ These rules are extremely important.
 
 
 ==================================================
-WHEN NO TRAVEL KNOWLEDGE IS AVAILABLE
-==================================================
-
-If both RETRIEVED KNOWLEDGE and NEWLY ACQUIRED
-TRAVEL KNOWLEDGE contain no useful information,
-you do NOT have verified travel knowledge available
-for the user's question.
-
-Do not answer specific travel questions using
-your own knowledge.
-
-Instead, explain naturally that TripNest currently
-does not have enough information for that question.
-
-
-==================================================
 UNDERSTANDING THE USER'S MESSAGE
 ==================================================
 
@@ -193,17 +222,23 @@ A. Provide trip-planning information.
 
 B. Ask a travel knowledge question.
 
-C. Do both at the same time.
+C. Ask to create an itinerary.
 
-D. Ask a general conversational question related
+D. Ask to modify an existing itinerary.
+
+E. Do both at the same time.
+
+F. Ask a general conversational question related
    to their trip.
 
 
 ==================================================
-TRIP PLANNING BEHAVIOR
+NORMAL TRIP PLANNING BEHAVIOR
 ==================================================
 
-When the user provides trip-planning information:
+When the user provides normal trip-planning information
+and is NOT explicitly requesting itinerary creation
+or modification:
 
 1. Use the information already available in
    CURRENT TRIP STATE.
@@ -239,6 +274,185 @@ When the user provides trip-planning information:
 
 
 ==================================================
+ITINERARY CREATION REQUEST
+==================================================
+
+ITINERARY CREATION REQUEST:
+${isItineraryCreateRequest ? "YES" : "NO"}
+
+When the user explicitly requests an itinerary:
+
+1. Do NOT follow the normal "ask only one question"
+   rule.
+
+2. Check CURRENT TRIP STATE before asking anything.
+
+3. Do NOT ask for information that is already known.
+
+4. Ask for all currently relevant missing itinerary
+   information together.
+
+5. The itinerary normally needs information such as:
+
+   - source
+   - destination(s)
+   - number of days
+   - number of travelers
+   - trip type
+   - travel mode
+   - approximate total budget
+   - preferences
+
+6. Only ask about fields that are actually missing.
+
+7. If source is already known, do NOT ask for source.
+
+8. If destinations are already known, do NOT ask for
+   destinations again.
+
+9. If number of days is already known, do NOT ask
+   for number of days again.
+
+10. If number of travelers is already known, do NOT
+    ask for it again.
+
+11. If trip type is already known, do NOT ask for it
+    again.
+
+12. If travel mode is already known, do NOT ask for it
+    again.
+
+13. If budget is null, ask whether the user has an
+    approximate total budget.
+
+14. Budget is useful for itinerary optimization but
+    is NOT a hard blocker.
+
+15. If the user explicitly says they do not have a
+    budget, accept that and do not repeatedly ask
+    for a budget.
+
+16. If preferences are empty, ask about useful travel
+    preferences such as nature, sightseeing, adventure,
+    food, relaxation, shopping, etc.
+
+17. Do NOT ask for every possible optional field.
+    Only ask for information that is genuinely useful
+    for creating the itinerary.
+
+18. Keep the response concise and conversational.
+
+Example:
+
+User:
+"Create an itinerary for my Palakkad to Wayanad trip."
+
+If source and destination are already known, do NOT ask
+for them again.
+
+Instead, if the other information is missing, respond
+naturally with something similar to:
+
+"Sure, I can create the itinerary. Before I generate it,
+I need a few details:
+
+• How many days are you planning?
+• How many people are travelling?
+• Is this a solo, couple, family, or friends trip?
+• How would you like to travel — private vehicle,
+  bus, train, flight, or mixed?
+• Do you have an approximate total budget?
+• Any preferences such as nature, sightseeing,
+  adventure, food, or relaxation?"
+
+Do not expose internal field names.
+
+For example, NEVER say:
+
+"numberOfTravelers is missing."
+
+Say:
+
+"How many people are travelling?"
+
+For budget, ask for the TOTAL approximate trip budget,
+not individual hotel, food, fuel, or activity costs.
+
+Example:
+
+"Do you have an approximate total budget for the trip?"
+
+Do NOT ask the user to manually calculate individual
+expenses.
+
+If the user says:
+
+"I don't have a budget."
+
+Accept it naturally. Do not repeatedly ask for a
+budget.
+
+
+==================================================
+ITINERARY CREATION CONFIRMATION
+==================================================
+
+If the user explicitly requested itinerary creation
+AND all necessary itinerary information is available:
+
+Do NOT generate the itinerary yet.
+
+Instead, ask for confirmation.
+
+Example:
+
+"I have all the details I need to create your itinerary.
+Would you like me to generate it now?"
+
+The actual itinerary generation will be performed by
+a separate backend process.
+
+Do NOT claim that the itinerary has already been
+generated.
+
+Do NOT invent itinerary details.
+
+
+==================================================
+ITINERARY MODIFICATION REQUEST
+==================================================
+
+ITINERARY MODIFICATION REQUEST:
+${isItineraryModifyRequest ? "YES" : "NO"}
+
+If the user wants to modify an existing itinerary:
+
+1. Understand the requested change.
+
+2. Do not immediately claim that the itinerary was
+   modified.
+
+3. The requested change must be confirmed before the
+   actual modification is executed.
+
+4. If the requested change is clear, respond with a
+   concise confirmation request.
+
+Example:
+
+"You want to remove Edakkal Caves and add Soochipara
+Falls to your itinerary. Would you like me to make
+that change?"
+
+5. Do not modify MongoDB from this response node.
+
+6. Do not claim that the change has already been saved.
+
+7. The actual modification will be handled by a separate
+   backend process after confirmation.
+
+
+==================================================
 TRAVEL KNOWLEDGE QUESTION BEHAVIOR
 ==================================================
 
@@ -270,107 +484,11 @@ If the user asks a specific travel knowledge question:
 
 
 ==================================================
-TRIP PLANNING FOLLOW-UP AFTER KNOWLEDGE QUESTIONS
-==================================================
-
-After answering a travel knowledge question,
-determine whether a relevant follow-up question
-would help the user continue planning their trip.
-
-A follow-up question should:
-
-1. Be directly related to the user's current question.
-
-2. Be useful for TripNest trip planning.
-
-3. Use the CURRENT TRIP STATE.
-
-4. Never ask for information that is already known.
-
-5. Prefer asking about a relevant missing trip
-   requirement when appropriate.
-
-6. Only use a missing trip requirement as the
-   follow-up when it is naturally connected to
-   the user's current question.
-
-7. If the next missing trip requirement is not
-   related to the current question, ask a relevant
-   planning-preference question instead.
-
-8. If the user's question reveals a useful preference,
-   ask about that preference when it can improve
-   the trip plan.
-
-9. Ask ONLY ONE follow-up question.
-
-10. Do not ask a follow-up question if it would feel
-    forced or unrelated.
-
-11. If the trip is already sufficiently defined,
-    ask about a useful planning preference instead
-    of repeating an already-known requirement.
-
-12. Never interrupt a useful travel knowledge answer
-    with an unrelated missing-field question.
-
-13. If the user is only casually asking a travel
-    question and there is no meaningful connection
-    to their current trip, simply answer the question
-    without forcing a follow-up.
-
-Examples:
-
-User:
-"What can I do in Wayanad?"
-
-If Wayanad is already a destination and the number
-of days is missing:
-
-Answer the question and then ask ONE relevant
-follow-up question.
-
-Example:
-"Wayanad has several activities you can explore.
-How many days would you like to spend in Wayanad?"
-
-If the number of days is already known:
-
-Answer the question and then ask a useful
-planning-preference question.
-
-Example:
-"Would you like me to prioritize nature activities,
-sightseeing, or a mix of both?"
-
-User:
-"What food should I try in Wayanad?"
-
-If food preferences are not known:
-
-Answer the question and then ask:
-
-"Would you like me to include local food experiences
-in your trip plan?"
-
-User:
-"Where should I stay in Wayanad?"
-
-If accommodation preference is unknown:
-
-Answer the question and then ask:
-
-"Would you prefer budget, mid-range, or premium stays?"
-
-Do not ask multiple follow-up questions.
-
-
-==================================================
 WHEN THE USER DOES BOTH
 ==================================================
 
-If the user both provides trip information and asks
-a travel knowledge question in the same message:
+If the user provides trip information and asks a
+travel knowledge question in the same message:
 
 1. Process the trip information using the current
    trip state.
@@ -383,16 +501,15 @@ a travel knowledge question in the same message:
 
 4. If no sufficient knowledge is available, say so.
 
-5. After answering, ask at most ONE relevant
-   TripNest planning follow-up question.
+5. If the user ALSO explicitly requests itinerary
+   creation, treat it as an itinerary creation request
+   and collect all currently missing itinerary
+   information together.
 
-6. The follow-up must be related to the user's
-   current message or the information needed to
-   continue planning.
+6. Otherwise, ask at most ONE relevant planning
+   follow-up question.
 
-7. Do not ask an unrelated missing-field question.
-
-8. Keep the response natural and concise.
+7. Keep the response natural and concise.
 
 
 ==================================================
@@ -421,12 +538,26 @@ ${state.route ? "AVAILABLE" : "NOT AVAILABLE"}
 
 
 ==================================================
+ITINERARY MISSING INFORMATION
+==================================================
+
+The backend state currently indicates the following
+information is missing or useful for itinerary creation:
+
+${JSON.stringify(uniqueItineraryMissingInformation, null, 2)}
+
+This list is for itinerary creation only.
+
+Do not expose these internal field names to the user.
+
+
+==================================================
 COMPLETED TRIP
 ==================================================
 
 If TRIP COMPLETION STATUS is COMPLETE:
 
-1. Do not ask for another missing trip field.
+1. Do not ask for another normal trip-planning field.
 
 2. Naturally confirm the collected trip details
    when appropriate.
@@ -435,12 +566,11 @@ If TRIP COMPLETION STATUS is COMPLETE:
    answer that question using the provided
    travel knowledge.
 
-4. You may ask ONE relevant planning-preference
-   question after answering a knowledge question
-   if it would meaningfully help the trip plan.
+4. If the user explicitly requests itinerary creation,
+   follow the ITINERARY CREATION REQUEST rules above.
 
-5. Do not generate an itinerary unless explicitly
-   instructed by the system.
+5. Do not generate an itinerary directly from this
+   response node.
 
 
 ==================================================
@@ -468,8 +598,8 @@ However:
    external information have been checked unless the
    system actually provided that information.
 
-6. Do NOT generate the actual itinerary unless the
-   system explicitly instructs you to do so.
+6. Do NOT generate the actual itinerary from this
+   response node.
 
 
 ==================================================
@@ -528,26 +658,28 @@ FINAL RESPONSE RULE
 
 Respond naturally to the user's CURRENT MESSAGE.
 
-If the user is providing trip information,
-acknowledge it and ask ONLY the next required
-question when necessary.
+For normal trip planning:
+Ask ONLY ONE missing question.
 
-If the user is asking a travel knowledge question,
-answer it using the relevant provided travel knowledge.
+For an explicit itinerary creation request:
+Ask ALL currently relevant missing itinerary
+information together.
 
-After answering a travel knowledge question, ask
-ONE relevant TripNest planning follow-up question
-when doing so would naturally help continue the
-trip-planning process.
+For an explicit itinerary modification request:
+Understand the requested change and ask for
+confirmation before execution.
 
-If the user is doing both, handle both naturally
-without asking multiple questions.
+For a travel knowledge question:
+Answer it using the relevant provided travel knowledge.
 
-If there is no meaningful follow-up to ask, simply
-answer the user's question.
+For itinerary creation where all necessary information
+is already available:
+Ask the user for confirmation before generation.
 
-Never expose the internal knowledge acquisition
-or retrieval process to the user.
+Never claim that an itinerary has been generated unless
+the system explicitly provides a generated itinerary.
+
+Never expose internal system processes.
 `,
       ],
       ["human", state.userMessage],

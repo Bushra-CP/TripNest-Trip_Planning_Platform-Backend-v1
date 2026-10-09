@@ -2,6 +2,7 @@ import { AIPlanningController } from "@/controller/user(traveler)/ai-planning.co
 import { MemberController } from "@/controller/user(traveler)/member.controller";
 import { MessageController } from "@/controller/user(traveler)/message.controller";
 import { RoomController } from "@/controller/user(traveler)/room.controller";
+import { TripCostController } from "@/controller/user(traveler)/trip-cost.controller";
 import { TripVehicleController } from "@/controller/user(traveler)/trip-vehicle.controller";
 import { TripController } from "@/controller/user(traveler)/trip.controller";
 import { VehicleController } from "@/controller/user(traveler)/vehicle.controller";
@@ -48,6 +49,9 @@ export class TripPlanningRoutes {
 
     @inject(TYPES.TripVehicleController)
     private readonly _tripVehicleController: TripVehicleController,
+
+    @inject(TYPES.TripCostController)
+    private readonly _tripCostController: TripCostController,
   ) {
     this.router = Router();
 
@@ -227,6 +231,14 @@ export class TripPlanningRoutes {
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._tripVehicleController.unfinalizeVehicle.bind(this._tripVehicleController),
+    );
+
+    //vehicle fuel cost calculation
+    this.router.get(
+      "/trip-vehicles/:tripId/costs",
+      // this._authenticateMiddleware.authenticate,
+      // this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripCostController.getTripVehicleCosts.bind(this._tripCostController),
     );
   }
 }

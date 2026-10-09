@@ -36,7 +36,7 @@ export class TripVehicleController {
         userId,
       );
 
-      console.log("addVehicleToTrip:", tripVehicle);
+      // console.log("addVehicleToTrip:", tripVehicle);
 
       ResponseHandler.success(
         res,
@@ -65,7 +65,7 @@ export class TripVehicleController {
 
       const tripVehicles = await this._tripVehicleService.getTripVehicles(tripId);
 
-      console.log("getTripVehicles:", tripVehicles);
+      // console.log("getTripVehicles:", tripVehicles);
 
       ResponseHandler.success(
         res,
@@ -96,7 +96,7 @@ export class TripVehicleController {
 
       const tripVehicle = await this._tripVehicleService.getFinalSelectedVehicle(tripId);
 
-      console.log("getFinalSelectedVehicle:", tripVehicle);
+      // console.log("getFinalSelectedVehicle:", tripVehicle);
 
       ResponseHandler.success(
         res,
@@ -136,7 +136,7 @@ export class TripVehicleController {
         userId,
       );
 
-      console.log("removeVehicleFromTrip:", tripVehicle);
+      // console.log("removeVehicleFromTrip:", tripVehicle);
 
       ResponseHandler.success(
         res,
@@ -172,7 +172,7 @@ export class TripVehicleController {
         userId,
       );
 
-      console.log("voteForVehicle:", tripVehicle);
+      // console.log("voteForVehicle:", tripVehicle);
 
       ResponseHandler.success(
         res,
@@ -204,7 +204,7 @@ export class TripVehicleController {
 
       const tripVehicle = await this._tripVehicleService.removeVote(tripId, tripVehicleId, userId);
 
-      console.log("removeVote:", tripVehicle);
+      // console.log("removeVote:", tripVehicle);
 
       ResponseHandler.success(
         res,
@@ -240,7 +240,7 @@ export class TripVehicleController {
         userId,
       );
 
-      console.log("finalizeVehicle:", tripVehicle);
+      // console.log("finalizeVehicle:", tripVehicle);
 
       ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.VEHICLE_FINALIZED, tripVehicle);
     } catch (error) {
