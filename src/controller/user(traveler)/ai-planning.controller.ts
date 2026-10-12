@@ -44,7 +44,7 @@ export class AIPlanningController {
 
       const result = await this._aiPlanningService.generateResponse(userId, message, threadId);
 
-      console.log(result);
+      // console.log(result);
 
       ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.AI_RESPONSE_GENERATED, {
         threadId: result.threadId,

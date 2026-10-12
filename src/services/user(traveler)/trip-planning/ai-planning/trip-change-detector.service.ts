@@ -13,6 +13,9 @@ export class TripChangeDetectorService {
    * - travel mode changes
    */
   public hasRouteChanged(previousState: TripRequirements, newState: TripRequirements): boolean {
+    console.log("previousState:", previousState);
+    console.log("newState:", newState);
+
     // Check whether the source changed.
     if (previousState.source !== newState.source) {
       return true;

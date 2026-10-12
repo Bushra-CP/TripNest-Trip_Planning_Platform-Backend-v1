@@ -66,7 +66,7 @@ export class TripTalesController {
     try {
       const { postId } = req.params;
 
-      console.log(postId);
+      // console.log(postId);
 
       if (!postId || Array.isArray(postId)) {
         ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_POST_ID);
@@ -75,7 +75,7 @@ export class TripTalesController {
 
       const data = await this._postService.getPostById(postId);
 
-      console.log(data);
+      // console.log(data);
 
       if (!data) {
         ResponseHandler.error(res, STATUS_CODES.NOT_FOUND, "Post not found");

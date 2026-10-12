@@ -76,7 +76,7 @@ export class TripController {
 
       const trip = await this._tripService.convertToGroupTrip(userId, threadId);
 
-      console.log(trip);
+      // console.log(trip);
 
       ResponseHandler.success(res, STATUS_CODES.CREATED, SuccessMessages.GROUP_TRIP_CREATED, trip);
     } catch (error) {

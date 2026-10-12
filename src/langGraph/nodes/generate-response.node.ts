@@ -56,7 +56,7 @@ export const createGenerateResponseNode = () => {
      * not become a hard blocker if the user does not have
      * a budget.
      */
-    const budgetMissing = state.tripRequirements.budget === null;
+    //  const budgetMissing = state.tripRequirements.budget === null;
 
     /*
      * Preferences are useful for itinerary generation,
@@ -69,10 +69,9 @@ export const createGenerateResponseNode = () => {
      * Build a human-readable list of itinerary information
      * that is still missing.
      */
-    const itineraryMissingInformation = [
-      ...state.missingFields,
 
-      ...(budgetMissing && !state.missingFields.includes("budget") ? ["budget"] : []),
+    const itineraryMissingInformation = [
+      ...state.missingFields.filter((field) => field !== "budget"),
 
       ...(preferencesMissing ? ["preferences"] : []),
     ];
@@ -322,8 +321,10 @@ When the user explicitly requests an itinerary:
 12. If travel mode is already known, do NOT ask for it
     again.
 
-13. If budget is null, ask whether the user has an
-    approximate total budget.
+13. If budget is null, budget is optional. Do not ask for
+    it as a required detail. You may briefly mention that the
+    user can provide a budget if they want more budget-aware
+    recommendations, but do not delay itinerary creation because of it.
 
 14. Budget is useful for itinerary optimization but
     is NOT a hard blocker.

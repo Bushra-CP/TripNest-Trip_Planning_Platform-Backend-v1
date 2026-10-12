@@ -56,7 +56,7 @@ export class TripVehicleController {
     try {
       const { tripId } = req.params;
 
-      console.log(tripId);
+      // console.log(tripId);
 
       if (typeof tripId !== "string" || !tripId.trim()) {
         ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ErrorMessages.TRIP_ID_IS_REQUIRED);

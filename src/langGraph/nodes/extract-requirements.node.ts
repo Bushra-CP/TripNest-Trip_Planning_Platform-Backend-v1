@@ -12,6 +12,7 @@ export const createExtractRequirementsNode = (tripExtractionService: TripExtract
 
     return {
       title: extractionResult.title,
+      previousTripRequirements: state.tripRequirements,
       tripRequirements: extractionResult.requirements,
       missingFields: extractionResult.missingFields,
       destinationOrderChanged: extractionResult.destinationOrderChanged,

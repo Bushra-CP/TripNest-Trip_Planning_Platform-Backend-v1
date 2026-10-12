@@ -30,7 +30,7 @@ export class VehicleController {
     try {
       const payload = req.body as CreateVehicleRequestDto;
 
-      console.log(payload);
+      // console.log(payload);
 
       const data = await this._vehicleService.createVehicle(req.user.userId, payload);
 
