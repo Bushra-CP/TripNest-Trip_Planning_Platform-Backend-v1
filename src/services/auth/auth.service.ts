@@ -109,8 +109,6 @@ export class AuthService implements IAuthService {
       throw new AppError(STATUS_CODES.FORBIDDEN, ErrorMessages.ACCOUNT_BLOCKED);
     }
 
-    console.log("user.password:", user.password);
-
     // Verify credentials
     const passwordMatched = await this._passwordService.compare(data.password, user.password!);
 

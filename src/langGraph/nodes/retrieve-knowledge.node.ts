@@ -12,9 +12,9 @@ export const createRetrieveKnowledgeNode = (
     //Get metadata info from user's query
     const metadataField = await knowledgeQueryClassifierService.classify(state.userMessage);
 
-    console.log("Knowledge metadata field:", metadataField);
+    // console.log("Knowledge metadata field:", metadataField);
 
-    console.log("Knowledge destination:", state.currentKnowledgeDestination);
+    // console.log("Knowledge destination:", state.currentKnowledgeDestination);
 
     //Search the knowledge base using the user's current message.
     const results = await knowledgeVectorSearchService.search(

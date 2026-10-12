@@ -26,7 +26,7 @@ import { KnowledgeSufficiencyService } from "@/services/user(traveler)/trip-plan
 import { KnowledgeAcquisitionService } from "@/services/user(traveler)/trip-planning/ai-planning/knowledge-acquisition.service";
 import { knowledgeSufficiencyDecision } from "./knowledge-sufficiency-decision";
 import { createAcquireKnowledgeNode } from "./nodes/create-acquire-knowledge.node";
-import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/ai-planning/itinerary-intent.service";
+import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-intent.service";
 import { createDetectItineraryIntentNode } from "./nodes/detect-itinerary-intent.node";
 
 const TripState = new StateSchema(tripGraphStateSchema);

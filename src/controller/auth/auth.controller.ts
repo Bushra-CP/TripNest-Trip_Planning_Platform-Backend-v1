@@ -97,7 +97,7 @@ export class AuthController {
 
   //////////LOGOUT/////////
   async logout(req: Request, res: Response): Promise<void> {
-    console.log("logout called");
+    // console.log("logout called");
 
     res.clearCookie("refreshToken", refreshTokenCookieOptions);
 
@@ -122,7 +122,7 @@ export class AuthController {
     try {
       const payload = req.body as VerifyResetPasswordRequestDto;
 
-      console.log(`/verify-reset-otp:${payload}`);
+      // console.log(`/verify-reset-otp:${payload}`);
 
       const response = await this._authService.verifyResetOtp(payload);
 

@@ -19,7 +19,7 @@ import { KnowledgeQueryClassifierService } from "../knowledge-query-classifier.s
 import { KnowledgeSourceService } from "../knowledge-source.service";
 import { KnowledgeSufficiencyService } from "../knowledge-sufficiency.service";
 import { KnowledgeAcquisitionService } from "../knowledge-acquisition.service";
-import { ItineraryIntentService } from "../itinerary-intent.service";
+import { ItineraryIntentService } from "../../itinerary/itinerary-intent.service";
 
 @injectable()
 export class TripGraphService {
@@ -122,6 +122,8 @@ export class TripGraphService {
   public async processMessage(userMessage: string, threadId: string): Promise<TripGraphState> {
     await this.checkpointerInitialization;
 
+    console.log("CURRENT THREAD ID:", threadId);
+
     const result = await this.graph.invoke(
       {
         userMessage,
@@ -149,6 +151,8 @@ export class TripGraphService {
    */
   public async getState(threadId: string): Promise<TripGraphState | null> {
     await this.checkpointerInitialization;
+
+    console.log("CURRENT THREAD ID:", threadId);
 
     const state = await this.graph.getState({
       configurable: {

@@ -1,15 +1,30 @@
-import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/ai-planning/itinerary-intent.service";
+import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-intent.service";
 import type { TripGraphState } from "../trip-graph.state";
 
 export const createDetectItineraryIntentNode = (itineraryIntentService: ItineraryIntentService) => {
   return async (state: TripGraphState): Promise<Partial<TripGraphState>> => {
+    console.log("INTENT STATE BEFORE DETECTION:", {
+      userMessage: state.userMessage,
+      itineraryRequested: state.itineraryRequested,
+      itineraryAction: state.itineraryAction,
+    });
+
     const result = await itineraryIntentService.detectIntent(state.userMessage);
+
+    console.log("from createDetectItineraryIntentNode:", result);
 
     /*
      * If the current message contains an itinerary intent,
      * start/update the itinerary action.
      */
+    console.log("PRESERVING ITINERARY FLOW:", {
+      itineraryRequested: state.itineraryRequested,
+      itineraryAction: state.itineraryAction,
+    });
+
     if (result.itineraryRequested) {
+      console.log("RETURNING PRESERVED ITINERARY FLOW");
+
       return {
         itineraryRequested: true,
 

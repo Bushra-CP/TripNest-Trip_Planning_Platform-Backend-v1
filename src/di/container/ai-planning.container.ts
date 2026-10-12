@@ -60,7 +60,7 @@ import { ITripCostService } from "@/interfaces/trip-planning/trip-cost/trip-cost
 import { EVChargingPriceService } from "@/services/user(traveler)/trip-planning/trip-cost/ev-charging-price.service";
 import { IEVChargingPriceService } from "@/interfaces/trip-planning/trip-cost/ev-charging-price.service.interface";
 import { TripCostController } from "@/controller/user(traveler)/trip-cost.controller";
-import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/ai-planning/itinerary-intent.service";
+import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-intent.service";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);

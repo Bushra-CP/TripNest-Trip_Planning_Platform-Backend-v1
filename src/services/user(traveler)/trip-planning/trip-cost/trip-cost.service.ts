@@ -53,7 +53,7 @@ export class TripCostService implements ITripCostService {
     // Get vehicles added to this trip
     const tripVehicles = await this._tripVehicleRepository.findByTripId(tripId);
 
-    console.log(tripVehicles);
+    // console.log(tripVehicles);
 
     const distanceKm = route.distanceMeters / 1000;
 

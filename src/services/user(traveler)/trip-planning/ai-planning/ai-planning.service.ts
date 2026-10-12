@@ -73,7 +73,7 @@ export class AIPlanningService {
       }
     }
 
-    console.log("TRIP:", trip);
+    // console.log("TRIP:", trip);
 
     const result = await this._tripGraphService.processMessage(userMessage, currentThreadId);
 
