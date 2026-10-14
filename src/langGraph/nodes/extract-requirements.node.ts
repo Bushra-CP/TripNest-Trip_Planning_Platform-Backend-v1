@@ -17,6 +17,8 @@ export const createExtractRequirementsNode = (tripExtractionService: TripExtract
       missingFields: extractionResult.missingFields,
       destinationOrderChanged: extractionResult.destinationOrderChanged,
       currentKnowledgeDestination: extractionResult.knowledgeDestination,
+
+      itineraryGeneratedNow: false,
     };
   };
 };

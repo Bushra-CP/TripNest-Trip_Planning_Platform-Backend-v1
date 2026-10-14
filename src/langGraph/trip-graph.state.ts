@@ -14,6 +14,7 @@ import {
   ItineraryAction,
   PendingItineraryChange,
 } from "@/interfaces/trip-planning/itinerary/itinerary.interfaces";
+import { IItineraryDay } from "@/interfaces/IModel/trip-planning/itinerary.model.interfaces";
 
 export interface TripGraphState {
   // User message
@@ -58,6 +59,15 @@ export interface TripGraphState {
   itineraryAction: ItineraryAction;
   confirmationStatus: ConfirmationStatus;
   pendingItineraryChange: PendingItineraryChange | null;
+
+  // Generated itinerary
+  generatedItinerary: {
+    title: string;
+    days: IItineraryDay[];
+  } | null;
+
+  // Indicates whether a new itinerary was generated in this invocation
+  itineraryGeneratedNow: boolean;
 
   response: string;
 }
@@ -187,6 +197,31 @@ export const tripGraphStateSchema = {
     })
     .nullable()
     .default(null),
+
+  generatedItinerary: z
+    .object({
+      title: z.string(),
+      days: z.array(
+        z.object({
+          dayNumber: z.number(),
+          title: z.string(),
+          description: z.string(),
+          stops: z.array(
+            z.object({
+              name: z.string(),
+              description: z.string(),
+              location: z.string().optional(),
+              startTime: z.string().optional(),
+              durationMinutes: z.number().optional(),
+            }),
+          ),
+        }),
+      ),
+    })
+    .nullable()
+    .default(null),
+
+  itineraryGeneratedNow: z.boolean().default(false),
 
   response: z.string().default(""),
 };

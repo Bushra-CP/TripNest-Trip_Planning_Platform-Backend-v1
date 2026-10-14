@@ -114,6 +114,9 @@ export enum ErrorMessages {
   PLEASE_CONTINUE_WITH_GOOGLE_LOGIN = "You have registered with Google. Please try with Google login!",
   FUEL_PRICE_NOT_FOUND = "Fuel price not found",
   FUEL_PRICE_SERVICE_UNAVAILABLE = "Fuel price service is currently unavailable",
+  ITINERARY_ALREADY_EXISTS = "Itinerary already exists",
+  ITINERARY_NOT_FOUND = "Itinerary not found",
+  FAILED_TO_UPDATE_ITINERARY = "Failed to update itinerary",
 }
 
 export enum ValidationMessages {

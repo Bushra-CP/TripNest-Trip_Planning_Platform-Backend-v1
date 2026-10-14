@@ -20,6 +20,8 @@ import { KnowledgeSourceService } from "../knowledge-source.service";
 import { KnowledgeSufficiencyService } from "../knowledge-sufficiency.service";
 import { KnowledgeAcquisitionService } from "../knowledge-acquisition.service";
 import { ItineraryIntentService } from "../../itinerary/itinerary-intent.service";
+import { ItineraryTemplateRetrievalService } from "../../itinerary/itinerary-template-retrieval.service";
+import { ItineraryGenerationService } from "../../itinerary/itinerary-generation.service";
 
 @injectable()
 export class TripGraphService {
@@ -65,6 +67,12 @@ export class TripGraphService {
 
     @inject(TYPES.ItineraryIntentService)
     private readonly _itineraryIntentService: ItineraryIntentService,
+
+    @inject(TYPES.ItineraryTemplateRetrievalService)
+    private readonly _itineraryTemplateRetrievalService: ItineraryTemplateRetrievalService,
+
+    @inject(TYPES.ItineraryGenerationService)
+    private readonly _itineraryGenerationService: ItineraryGenerationService,
   ) {
     /*
      * The LangGraph checkpointer stores the graph state after each
@@ -100,6 +108,8 @@ export class TripGraphService {
       this._knowledgeSufficiencyService,
       this._knowledgeAcquisitionService,
       this._itineraryIntentService,
+      this._itineraryTemplateRetrievalService,
+      this._itineraryGenerationService,
       this.checkpointer,
     );
   }
@@ -131,6 +141,8 @@ export class TripGraphService {
         ragContext: [],
         ragSources: [],
         requestRoute: "none",
+
+        itineraryGeneratedNow: false,
       },
       {
         configurable: {
@@ -165,5 +177,23 @@ export class TripGraphService {
     }
 
     return state.values as TripGraphState;
+  }
+
+  public async updateConversationHistory(
+    threadId: string,
+    conversationHistory: TripGraphState["conversationHistory"],
+  ): Promise<void> {
+    await this.checkpointerInitialization;
+
+    await this.graph.updateState(
+      {
+        configurable: {
+          thread_id: threadId,
+        },
+      },
+      {
+        conversationHistory,
+      },
+    );
   }
 }

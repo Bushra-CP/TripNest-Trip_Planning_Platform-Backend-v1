@@ -56,6 +56,7 @@ export class AIPlanningController {
         canGenerateDraft: result.canGenerateDraft,
         route: result.route,
         ragSources: result.ragSources,
+        generatedItinerary: result.generatedItinerary,
       });
     } catch (error) {
       next(error);
@@ -81,6 +82,8 @@ export class AIPlanningController {
 
       const result = await this._aiPlanningService.getPlanningState(threadId);
 
+      console.log("itinerary from controller:", result?.generatedItinerary);
+
       if (!result) {
         ResponseHandler.error(
           res,
@@ -101,6 +104,7 @@ export class AIPlanningController {
         isComplete: result.isComplete,
         canGenerateDraft: result.canGenerateDraft,
         route: result.route,
+        generatedItinerary: result.generatedItinerary,
       });
     } catch (error) {
       next(error);

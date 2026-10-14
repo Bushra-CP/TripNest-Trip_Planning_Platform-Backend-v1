@@ -28,6 +28,10 @@ import { knowledgeSufficiencyDecision } from "./knowledge-sufficiency-decision";
 import { createAcquireKnowledgeNode } from "./nodes/create-acquire-knowledge.node";
 import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-intent.service";
 import { createDetectItineraryIntentNode } from "./nodes/detect-itinerary-intent.node";
+import { createGenerateItineraryNode } from "./nodes/generate-itinerary.node";
+import { itineraryGenerationDecision } from "./itinerary-generation-decision";
+import { ItineraryTemplateRetrievalService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-template-retrieval.service";
+import { ItineraryGenerationService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-generation.service";
 
 const TripState = new StateSchema(tripGraphStateSchema);
 
@@ -44,6 +48,8 @@ export const createTripGraph = (
   knowledgeSufficiencyService: KnowledgeSufficiencyService,
   knowledgeAcquisitionService: KnowledgeAcquisitionService,
   itineraryIntentService: ItineraryIntentService,
+  itineraryTemplateRetrievalService: ItineraryTemplateRetrievalService,
+  itineraryGenerationService: ItineraryGenerationService,
   checkpointer: MongoDBSaver,
 ) => {
   // Create graph nodes using injected services.
@@ -75,6 +81,11 @@ export const createTripGraph = (
 
   const generateResponse = createGenerateResponseNode();
 
+  const generateItinerary = createGenerateItineraryNode(
+    itineraryTemplateRetrievalService,
+    itineraryGenerationService,
+  );
+
   // Create the trip-planning workflow.
   const graph = new StateGraph(TripState)
 
@@ -102,6 +113,8 @@ export const createTripGraph = (
 
     .addNode("generateResponse", generateResponse)
 
+    .addNode("generateItinerary", generateItinerary)
+
     // START → Extract requirements
     .addEdge(START, "extractRequirements")
 
@@ -116,7 +129,10 @@ export const createTripGraph = (
 
     .addEdge("calculateTripStatus", "detectItineraryIntent")
 
-    .addEdge("detectItineraryIntent", "checkRouteChange")
+    .addConditionalEdges("detectItineraryIntent", itineraryGenerationDecision, {
+      generateItinerary: "generateItinerary",
+      continuePlanning: "checkRouteChange",
+    })
 
     // Decide whether route needs recalculation.
     .addConditionalEdges("checkRouteChange", routeDecision, {
@@ -142,6 +158,8 @@ export const createTripGraph = (
     })
 
     .addEdge("acquireKnowledge", "generateResponse")
+
+    .addEdge("generateItinerary", END)
 
     // Response → END
     .addEdge("generateResponse", END);

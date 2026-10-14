@@ -61,6 +61,21 @@ import { EVChargingPriceService } from "@/services/user(traveler)/trip-planning/
 import { IEVChargingPriceService } from "@/interfaces/trip-planning/trip-cost/ev-charging-price.service.interface";
 import { TripCostController } from "@/controller/user(traveler)/trip-cost.controller";
 import { ItineraryIntentService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-intent.service";
+import { ItineraryChunkRepository } from "@/repositories/user(traveler)/trip-planning/itinerary/itinerary-chunk.repository";
+import { IItineraryChunkRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/itinerary/itinerary-chunk-repo.interface";
+import { ItineraryVectorSearchService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-vector-search.service";
+import { ItineraryTemplateRepository } from "@/repositories/user(traveler)/trip-planning/itinerary/itinerary-template.repository";
+import { ItineraryTemplateRetrievalService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-template-retrieval.service";
+import { IItineraryTemplateRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/itinerary/itinerary-template-repo.interface";
+import { ItineraryGenerationService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-generation.service";
+import { IItineraryRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/itinerary/itinerary.repository.interface";
+import { ItineraryRepository } from "@/repositories/user(traveler)/trip-planning/itinerary/itinerary.repository";
+import { ItineraryService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary.service";
+import { IItineraryService } from "@/interfaces/IServices/user(traveler)/trip-planning/itinerary.service.interface";
+import { ItineraryIngestionService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-ingestion.service";
+import { ItineraryIngestionQueue } from "@/queues/itinerary-ingestion.queue";
+import { IItineraryIngestionQueue } from "@/interfaces/IQueue/itinerary-ingestion-job.interfaces";
+import { ItineraryIngestionWorker } from "@/workers/itinerary-ingestion.worker";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -123,7 +138,6 @@ export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.DocumentHashService).to(DocumentHashService).inSingletonScope();
   container.bind(TYPES.BatchProcessingService).to(BatchProcessingService).inSingletonScope();
   container.bind(TYPES.RetryService).to(RetryService).inSingletonScope();
-  container.bind(TYPES.KnowledgeIngestionWorker).to(KnowledgeIngestionWorker).inSingletonScope();
   container
     .bind(TYPES.KnowledgeDocumentUploadService)
     .to(KnowledgeDocumentUploadService)
@@ -144,10 +158,33 @@ export function registerAIPlanning(container: Container): void {
 
   //Itinerary related
   container.bind(TYPES.ItineraryIntentService).to(ItineraryIntentService);
+  container
+    .bind<IItineraryChunkRepository>(TYPES.ItineraryChunkRepository)
+    .to(ItineraryChunkRepository);
+  container.bind(TYPES.ItineraryVectorSearchService).to(ItineraryVectorSearchService);
+  container
+    .bind<IItineraryTemplateRepository>(TYPES.ItineraryTemplateRepository)
+    .to(ItineraryTemplateRepository);
+  container.bind(TYPES.ItineraryTemplateRetrievalService).to(ItineraryTemplateRetrievalService);
+  container.bind(TYPES.ItineraryGenerationService).to(ItineraryGenerationService);
+  container
+    .bind<IItineraryRepository>(TYPES.ItineraryRepository)
+    .to(ItineraryRepository)
+    .inSingletonScope();
+  container.bind<IItineraryService>(TYPES.ItineraryService).to(ItineraryService);
+  container.bind(TYPES.ItineraryIngestionService).to(ItineraryIngestionService);
+
+  //Worker
+  container.bind(TYPES.KnowledgeIngestionWorker).to(KnowledgeIngestionWorker).inSingletonScope();
+  container.bind(TYPES.ItineraryIngestionWorker).to(ItineraryIngestionWorker).inSingletonScope();
 
   //Queue
   container
     .bind<IKnowledgeIngestionQueue>(TYPES.KnowledgeIngestionQueue)
     .to(KnowledgeIngestionQueue)
+    .inSingletonScope();
+  container
+    .bind<IItineraryIngestionQueue>(TYPES.ItineraryIngestionQueue)
+    .to(ItineraryIngestionQueue)
     .inSingletonScope();
 }

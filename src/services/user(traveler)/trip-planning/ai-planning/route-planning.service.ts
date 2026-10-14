@@ -331,11 +331,41 @@ export class RoutePlanningService {
 
     const response = await fetch(url);
 
-    if (!response.ok) {
-      throw new Error(`Google Geocoding API request failed: ${response.status}`);
+    const responseText = await response.text();
+
+    let data: GoogleGeocodingApiResponse;
+
+    try {
+      data = JSON.parse(responseText) as GoogleGeocodingApiResponse;
+    } catch {
+      console.error("[Google Geocoding] Failed to parse API response:", {
+        httpStatus: response.status,
+        responseBody: responseText,
+      });
+
+      throw new Error("Unable to parse Google Geocoding API response");
     }
 
-    const data = (await response.json()) as GoogleGeocodingApiResponse;
+    // Log Google's actual response.
+    console.log(
+      "[Google Geocoding] API Response:",
+      JSON.stringify(
+        {
+          httpStatus: response.status,
+          httpOk: response.ok,
+          googleStatus: data.status,
+          googleErrorMessage: data.error_message ?? null,
+        },
+        null,
+        2,
+      ),
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Google Geocoding API HTTP error: ${response.status} ${data.error_message ?? responseText}`,
+      );
+    }
 
     if (data.status !== "OK" || !data.results.length) {
       console.error("Google Geocoding API response:", data);
