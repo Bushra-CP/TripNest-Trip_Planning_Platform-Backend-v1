@@ -114,6 +114,16 @@ export const TYPES = {
    * ITINERARY
    * ============================== */
   ItineraryIntentService: Symbol.for("ItineraryIntentService"),
+  ItineraryChunkRepository: Symbol.for("ItineraryChunkRepository"),
+  ItineraryVectorSearchService: Symbol.for("ItineraryVectorSearchService"),
+  ItineraryTemplateRepository: Symbol.for("ItineraryTemplateRepository"),
+  ItineraryTemplateRetrievalService: Symbol.for("ItineraryTemplateRetrievalService"),
+  ItineraryGenerationService: Symbol.for("ItineraryGenerationService"),
+  ItineraryRepository: Symbol.for("ItineraryRepository"),
+  ItineraryService: Symbol.for("ItineraryService"),
+  ItineraryIngestionService: Symbol.for("ItineraryIngestionService"),
+  ItineraryIngestionQueue: Symbol.for("ItineraryIngestionQueue"),
+  ItineraryIngestionWorker: Symbol.for("ItineraryIngestionWorker"),
 
   /* ==============================
    * RAG

@@ -4,6 +4,8 @@ import { injectable } from "inversify";
 
 export type ItineraryAction = "CREATE" | "MODIFY" | null;
 
+export type UserConfirmation = "YES" | "NO" | null;
+
 export interface ItineraryIntentResult {
   itineraryRequested: boolean;
   itineraryAction: ItineraryAction;
@@ -16,32 +18,40 @@ export class ItineraryIntentService {
 
   constructor() {
     this._ai = new GoogleGenAI({
-      apiKey: env.GOOGLE_API_KEY3,
+      apiKey: env.GOOGLE_API_KEY2,
     });
 
     this._model = env.GEMINI_MODEL;
   }
 
+  /**
+   * Detect whether the user wants to create or modify
+   * a travel itinerary.
+   *
+   * @param {string} userMessage
+   * @return {*}  {Promise<ItineraryIntentResult>}
+   * @memberof ItineraryIntentService
+   */
   async detectIntent(userMessage: string): Promise<ItineraryIntentResult> {
     const prompt = `
 You are an intent classification system for a travel planning application.
 
-Your task is to determine whether the user's message is requesting an
-ITINERARY action.
+Determine whether the user's message explicitly requests an itinerary action.
 
-There are only two possible itinerary actions:
+Possible actions:
 
 1. CREATE
-   The user wants to create, generate, prepare, build, or get a new
+   The user wants to create, generate, prepare, build, or receive a new
    day-wise travel itinerary.
 
 2. MODIFY
-   The user wants to change, update, edit, remove, add, replace, reorder,
-   or otherwise modify an existing itinerary.
+   The user wants to change, update, edit, remove, add, replace, or reorder
+   something in an existing itinerary.
 
-If the user is only asking for general travel information, destination
-information, recommendations, attractions, activities, restaurants,
-weather, transportation information, etc., it is NOT an itinerary action.
+3. NONE
+   The user is asking for general travel information, providing trip details,
+   answering a planning question, confirming a pending request, or discussing
+   travel without explicitly requesting itinerary creation or modification.
 
 Examples:
 
@@ -57,34 +67,23 @@ Result: CREATE
 User: "What can I visit in Wayanad?"
 Result: NONE
 
-User: "Tell me about Edakkal Caves"
-Result: NONE
-
-User: "Which places should I visit in Wayanad?"
-Result: NONE
-
 User: "Remove Edakkal Caves from day 2"
 Result: MODIFY
 
 User: "Add Soochipara Falls to my itinerary"
 Result: MODIFY
 
-User: "Change my second day"
-Result: MODIFY
+User: "Yes, please generate it"
+Result: NONE
 
-User: "Replace Banasura Dam with Pookode Lake"
-Result: MODIFY
-
-User: "What is the best time to visit Wayanad?"
+User: "Sure, go ahead"
 Result: NONE
 
 Important:
-- Do not infer an itinerary request just because the conversation is about
-  travel planning.
-- The user must be asking to create or modify an itinerary.
-- Return ONLY valid JSON.
-- Do not include markdown.
-- Do not include explanations.
+- Do not infer an itinerary request merely because the conversation concerns travel.
+- A confirmation or rejection of a pending request is not a new itinerary request.
+- Return only valid JSON.
+- Do not include explanations or markdown.
 
 Required JSON format:
 
@@ -94,7 +93,7 @@ Required JSON format:
 }
 
 User message:
-"${userMessage}"
+${JSON.stringify(userMessage)}
 `;
 
     try {
@@ -113,7 +112,7 @@ User message:
         return this._emptyResult();
       }
 
-      const parsed = JSON.parse(text);
+      const parsed: unknown = JSON.parse(text);
 
       return this._validateResult(parsed);
     } catch (error) {
@@ -123,28 +122,165 @@ User message:
     }
   }
 
-  private _validateResult(result: Partial<ItineraryIntentResult>): ItineraryIntentResult {
-    if (result.itineraryRequested !== true && result.itineraryRequested !== false) {
+  /**
+   * Detect whether the user confirms, rejects, or has not
+   * clearly decided about a pending itinerary action.
+   *
+   * @param {string} userMessage
+   * @return {*}  {Promise<UserConfirmation>}
+   * @memberof ItineraryIntentService
+   */
+  async detectConfirmation(userMessage: string): Promise<UserConfirmation> {
+    const prompt = `
+You are a confirmation classifier for a travel planning application.
+
+The assistant has asked the user to confirm a pending action,
+such as creating or modifying a travel itinerary.
+
+Classify the user's latest message into exactly one category:
+
+YES:
+The user clearly agrees, approves, confirms, or asks the assistant
+to proceed with the pending action.
+
+Examples:
+- "Yes"
+- "Yes, please"
+- "Sure, go ahead"
+- "That sounds good"
+- "Please proceed"
+- "Okay, generate it"
+- "Absolutely, let's do it"
+- "Go ahead and create the itinerary"
+
+NO:
+The user clearly rejects, declines, cancels, or asks not to proceed
+with the pending action.
+
+Examples:
+- "No"
+- "No, thanks"
+- "Don't generate it"
+- "Cancel the request"
+- "I changed my mind"
+- "No, let me make some changes first"
+
+UNCLEAR:
+The user does not clearly confirm or reject the pending action.
+
+Examples:
+- "Maybe"
+- "What will the itinerary include?"
+- "Can you explain more?"
+- "I want to change the destination"
+- "What about the budget?"
+- "I'm not sure yet"
+
+Important rules:
+- Interpret the meaning of the complete message, not just individual words.
+- Do not classify a question as YES merely because it contains a positive word.
+- If the user expresses uncertainty, classify it as UNCLEAR.
+- If the user requests changes before proceeding, classify it as UNCLEAR.
+- If the message contains both agreement and a clear cancellation, classify it as NO.
+- Do not assume confirmation when the meaning is ambiguous.
+- Return only valid JSON.
+- Do not include markdown or explanations.
+
+Required JSON format:
+
+{
+  "confirmation": "YES" | "NO" | "UNCLEAR"
+}
+
+User message:
+${JSON.stringify(userMessage)}
+`;
+
+    try {
+      const response = await this._ai.models.generateContent({
+        model: this._model,
+        contents: prompt,
+        config: {
+          temperature: 0,
+          responseMimeType: "application/json",
+        },
+      });
+
+      const text = response.text?.trim();
+
+      if (!text) {
+        return null;
+      }
+
+      const parsed: unknown = JSON.parse(text);
+
+      if (typeof parsed !== "object" || parsed === null || !("confirmation" in parsed)) {
+        return null;
+      }
+
+      const confirmation = parsed.confirmation;
+
+      if (confirmation === "YES" || confirmation === "NO") {
+        return confirmation;
+      }
+
+      if (confirmation === "UNCLEAR") {
+        return null;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Failed to detect user confirmation:", error);
+
+      return null;
+    }
+  }
+
+  /**
+   * Validate the LLM's itinerary intent result.
+   *
+   * @private
+   * @param {unknown} result
+   * @return {*}  {ItineraryIntentResult}
+   * @memberof ItineraryIntentService
+   */
+  private _validateResult(result: unknown): ItineraryIntentResult {
+    if (
+      typeof result !== "object" ||
+      result === null ||
+      !("itineraryRequested" in result) ||
+      !("itineraryAction" in result)
+    ) {
       return this._emptyResult();
     }
 
-    if (!result.itineraryRequested) {
-      return {
-        itineraryRequested: false,
-        itineraryAction: null,
-      };
+    const parsed = result as Partial<ItineraryIntentResult>;
+
+    if (parsed.itineraryRequested !== true && parsed.itineraryRequested !== false) {
+      return this._emptyResult();
     }
 
-    if (result.itineraryAction !== "CREATE" && result.itineraryAction !== "MODIFY") {
+    if (!parsed.itineraryRequested) {
+      return this._emptyResult();
+    }
+
+    if (parsed.itineraryAction !== "CREATE" && parsed.itineraryAction !== "MODIFY") {
       return this._emptyResult();
     }
 
     return {
       itineraryRequested: true,
-      itineraryAction: result.itineraryAction,
+      itineraryAction: parsed.itineraryAction,
     };
   }
 
+  /**
+   * Return a safe default when intent detection fails.
+   *
+   * @private
+   * @return {*}  {ItineraryIntentResult}
+   * @memberof ItineraryIntentService
+   */
   private _emptyResult(): ItineraryIntentResult {
     return {
       itineraryRequested: false,

@@ -1,3 +1,4 @@
+import { IItineraryDay } from "../IModel/trip-planning/itinerary.model.interfaces";
 import { RoutePlanningResult } from "./route.interfaces";
 import { TripRequirements } from "./trip.interfaces";
 
@@ -30,6 +31,11 @@ export interface AIChatResult {
   threadId: string;
 
   tripId: string;
+
+  generatedItinerary: {
+    title: string;
+    days: IItineraryDay[];
+  } | null;
 }
 
 //To show source of rag knowledge sources

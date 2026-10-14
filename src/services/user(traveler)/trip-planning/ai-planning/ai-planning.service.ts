@@ -10,6 +10,8 @@ import { TripRouteService } from "../trip-route.service";
 import { AppError } from "@/shared/errors/app.error";
 import { STATUS_CODES } from "@/enums/status.codes.enum";
 import { ErrorMessages } from "@/enums/messages.enum";
+import { ItineraryService } from "../itinerary/itinerary.service";
+import { IItineraryIngestionQueue } from "@/interfaces/IQueue/itinerary-ingestion-job.interfaces";
 
 @injectable()
 export class AIPlanningService {
@@ -28,6 +30,12 @@ export class AIPlanningService {
 
     @inject(TYPES.TripRouteService)
     private readonly _tripRouteService: TripRouteService,
+
+    @inject(TYPES.ItineraryService)
+    private readonly _itineraryService: ItineraryService,
+
+    @inject(TYPES.ItineraryIngestionQueue)
+    private readonly _itineraryIngestionQueue: IItineraryIngestionQueue,
   ) {}
 
   public async generateResponse(
@@ -102,8 +110,68 @@ export class AIPlanningService {
       });
     }
 
+    let reply = result.response;
+    let conversationHistory = result.conversationHistory;
+
+    console.log("result.itineraryGeneratedNow:", result.itineraryGeneratedNow);
+    console.log("result.generatedItinerary:", result.generatedItinerary);
+
+    // Save only an itinerary generated during this invocation.
+    if (result.itineraryGeneratedNow && result.generatedItinerary) {
+      const savedItinerary = await this._itineraryService.saveItinerary({
+        tripId: trip._id.toString(),
+        threadId: currentThreadId,
+        userId,
+        requirements: result.tripRequirements,
+        title: result.generatedItinerary.title,
+        days: result.generatedItinerary.days,
+      });
+
+      console.log("Saved itinerary:", savedItinerary);
+
+      // Queue RAG ingestion without waiting for embeddings.
+      // Add the itinerary to the ingestion queue.
+      if (!savedItinerary.templateId) {
+        console.log("Handling over job to Itinerary worker");
+
+        await this._itineraryIngestionQueue.addJob({
+          itineraryId: savedItinerary._id.toString(),
+        });
+      }
+
+      reply =
+        "Your itinerary is ready! You can view it in the Itinerary tab. If you'd like any changes, just tell me here!";
+
+      const lastMessage = result.conversationHistory[result.conversationHistory.length - 1];
+
+      if (lastMessage) {
+        conversationHistory = [
+          ...result.conversationHistory.slice(0, -1),
+          {
+            id: lastMessage.id,
+            role: "assistant",
+            content: reply,
+            ...(lastMessage.ragSources !== undefined && {
+              ragSources: lastMessage.ragSources,
+            }),
+          },
+        ];
+      } else {
+        conversationHistory = [
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: reply,
+          },
+        ];
+      }
+
+      // Save the updated conversation history in LangGraph.
+      await this._tripGraphService.updateConversationHistory(currentThreadId, conversationHistory);
+    }
+
     return {
-      reply: result.response,
+      reply,
       title: result.title,
       requirements: result.tripRequirements,
       missingFields: result.missingFields,
@@ -112,9 +180,10 @@ export class AIPlanningService {
       routeChanged: result.routeChanged,
       route: result.route,
       ragSources: result.ragSources,
-      conversationHistory: result.conversationHistory,
+      conversationHistory,
       threadId: currentThreadId,
       tripId: trip._id.toString(),
+      generatedItinerary: result.generatedItinerary,
     };
   }
 
@@ -131,6 +200,13 @@ export class AIPlanningService {
       return null;
     }
 
+    const itinerary = await this._itineraryService.getItineraryByTripId(
+      trip._id.toString(),
+      threadId,
+    );
+
+    console.log("itinerary:", itinerary);
+
     return {
       reply: state.response,
       title: state.title,
@@ -144,6 +220,12 @@ export class AIPlanningService {
       conversationHistory: state.conversationHistory,
       threadId,
       tripId: trip._id.toString(),
+      generatedItinerary: itinerary
+        ? {
+            title: itinerary.title,
+            days: itinerary.days,
+          }
+        : null,
     };
   }
 }

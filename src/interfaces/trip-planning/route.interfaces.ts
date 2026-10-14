@@ -39,6 +39,7 @@ export interface GoogleGeocodingAddressComponent {
 export interface GoogleGeocodingResult {
   formatted_address: string;
   address_components: GoogleGeocodingAddressComponent[];
+  types: string[];
 }
 
 export interface GoogleGeocodingApiResponse {

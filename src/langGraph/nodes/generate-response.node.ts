@@ -17,7 +17,8 @@ export const createGenerateResponseNode = () => {
   });
 
   return async (state: TripGraphState): Promise<Partial<TripGraphState>> => {
-    const nextMissingField = state.missingFields.length > 0 ? state.missingFields[0] : null;
+    const nextMissingField =
+      state.missingFields.find((field) => field !== "startDate" && field !== "budget") ?? null;
 
     /*
      * Convert retrieved knowledge into a simple text
@@ -42,6 +43,8 @@ export const createGenerateResponseNode = () => {
      * itinerary creation.
      */
     const isItineraryCreateRequest = state.itineraryRequested && state.itineraryAction === "CREATE";
+
+    const isItineraryConfirmed = state.confirmationStatus === "CONFIRMED";
 
     /*
      * Determine whether the user is currently requesting
@@ -71,7 +74,7 @@ export const createGenerateResponseNode = () => {
      */
 
     const itineraryMissingInformation = [
-      ...state.missingFields.filter((field) => field !== "budget"),
+      ...state.missingFields.filter((field) => field !== "budget" && field !== "startDate"),
 
       ...(preferencesMissing ? ["preferences"] : []),
     ];
@@ -271,6 +274,14 @@ or modification:
 
 13. Keep the response concise and conversational.
 
+14. The start date is optional during trip planning.
+
+    If the user says they have not decided on a start date,
+    accept that answer and do not ask for the date again.
+
+    Continue collecting other useful trip information
+    instead of repeatedly asking about the start date.
+
 
 ==================================================
 ITINERARY CREATION REQUEST
@@ -333,15 +344,29 @@ When the user explicitly requests an itinerary:
     budget, accept that and do not repeatedly ask
     for a budget.
 
-16. If preferences are empty, ask about useful travel
+16. The start date is optional for itinerary creation.
+
+17. If the start date is unknown, do NOT ask for it as
+    a required detail and do NOT delay itinerary creation
+    because of it.
+
+18. When the start date is unknown, organize the itinerary
+    using relative day labels such as Day 1, Day 2, and Day 3.
+    Do NOT invent a calendar date.
+
+19. If the user explicitly says they have not decided
+    the start date, accept that and proceed using the
+    available trip information.
+
+20. If preferences are empty, ask about useful travel
     preferences such as nature, sightseeing, adventure,
     food, relaxation, shopping, etc.
 
-17. Do NOT ask for every possible optional field.
+21. Do NOT ask for every possible optional field.
     Only ask for information that is genuinely useful
     for creating the itinerary.
 
-18. Keep the response concise and conversational.
+22. Keep the response concise and conversational.
 
 Example:
 
@@ -397,6 +422,13 @@ budget.
 ==================================================
 ITINERARY CREATION CONFIRMATION
 ==================================================
+
+If ITINERARY CONFIRMED is YES:
+
+1. Do NOT ask the user for confirmation again.
+2. Do NOT claim that the itinerary has already been generated.
+3. Explain that the itinerary generation process has not been implemented yet.
+
 
 If the user explicitly requested itinerary creation
 AND all necessary itinerary information is available:
@@ -537,6 +569,13 @@ ROUTE STATUS:
 
 ${state.route ? "AVAILABLE" : "NOT AVAILABLE"}
 
+CONFIRMATION STATUS:
+
+${state.confirmationStatus ?? "NONE"}
+
+ITINERARY CONFIRMED:
+
+${isItineraryConfirmed ? "YES" : "NO"}
 
 ==================================================
 ITINERARY MISSING INFORMATION
@@ -709,10 +748,16 @@ Never expose internal system processes.
       assistantMessage,
     ];
 
+    const isAwaitingItineraryConfirmation =
+      state.itineraryRequested &&
+      (state.itineraryAction === "CREATE" || state.itineraryAction === "MODIFY") &&
+      uniqueItineraryMissingInformation.length === 0;
+
     return {
       response: response.text,
       conversationHistory: updatedConversationHistory,
       ragSources: state.ragSources,
+      confirmationStatus: isAwaitingItineraryConfirmation ? "PENDING" : state.confirmationStatus,
     };
   };
 };
