@@ -180,4 +180,44 @@ export class TripService implements ITripService {
 
     return updatedTrip;
   }
+
+  /**
+   * Delete a trip
+   *
+   * @param {string} userId
+   * @param {string} tripId
+   * @return {*}  {Promise<void>}
+   * @memberof TripService
+   */
+  async deleteTrip(userId: string, tripId: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(tripId)) {
+      throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid trip ID");
+    }
+
+    const trip = await this._tripRepository.findById(tripId);
+
+    if (!trip) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.TRIP_NOT_FOUND);
+    }
+
+    // Only the owner can delete a trip.
+    if (!trip.ownerId || trip.ownerId.toString() !== userId) {
+      throw new AppError(STATUS_CODES.FORBIDDEN, "You are not authorized to delete this trip");
+    }
+
+    // Delete the trip using an ownership-protected query.
+    const deletedTrip = await this._tripRepository.deleteTripByOwner(tripId, userId);
+
+    if (!deletedTrip) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.TRIP_NOT_FOUND);
+    }
+
+    // Remove associated group members.
+    await this._memberRepository.deleteManyByTripId(trip._id);
+
+    // Remove the associated room if this is a group trip.
+    if (trip.roomId) {
+      await this._roomService.deleteRoom(trip.roomId);
+    }
+  }
 }

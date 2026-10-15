@@ -143,4 +143,10 @@ export class MemberRepository extends BaseRepository<ITripMember> implements IMe
 
     return (members[0] as IPopulatedTripMember | undefined) ?? null;
   }
+
+  async deleteManyByTripId(tripId: Types.ObjectId): Promise<void> {
+    await TripMemberModel.deleteMany({
+      tripId,
+    }).exec();
+  }
 }

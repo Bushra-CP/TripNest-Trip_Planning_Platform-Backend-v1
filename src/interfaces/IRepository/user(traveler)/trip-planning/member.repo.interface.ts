@@ -24,4 +24,6 @@ export interface IMemberRepository extends IBaseRepository<ITripMember> {
   findByTripId(tripId: string): Promise<IPopulatedTripMember[]>;
 
   findByIdWithUser(memberId: string): Promise<IPopulatedTripMember | null>;
+
+  deleteManyByTripId(tripId: Types.ObjectId): Promise<void>;
 }
