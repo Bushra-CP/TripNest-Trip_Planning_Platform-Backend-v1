@@ -7,4 +7,6 @@ export interface ITripRepository extends IBaseRepository<ITrip> {
   findByThreadId(threadId: string): Promise<ITrip | null>;
 
   findByRoomId(roomId: string): Promise<ITrip | null>;
+
+  deleteTripByOwner(tripId: string, ownerId: string): Promise<ITrip | null>;
 }

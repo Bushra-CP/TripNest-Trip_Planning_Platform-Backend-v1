@@ -23,4 +23,6 @@ export interface ITripService {
   getTripByThreadId(threadId: string): Promise<ITrip>;
 
   convertToGroupTrip(userId: string, threadId?: string): Promise<ITrip>;
+
+  deleteTrip(userId: string, tripId: string): Promise<void>;
 }

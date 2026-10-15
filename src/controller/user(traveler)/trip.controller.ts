@@ -108,4 +108,35 @@ export class TripController {
       next(error);
     }
   };
+
+  /**
+   * Delete a trip
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @memberof TripController
+   */
+  deleteTrip = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.user?.userId;
+      const { tripId } = req.params;
+
+      if (!userId) {
+        ResponseHandler.error(res, STATUS_CODES.UNAUTHORIZED, ErrorMessages.UNAUTHORIZED);
+        return;
+      }
+
+      if (!tripId || Array.isArray(tripId)) {
+        ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, "Invalid trip ID");
+        return;
+      }
+
+      await this._tripService.deleteTrip(userId, tripId);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "Trip deleted successfully", null);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

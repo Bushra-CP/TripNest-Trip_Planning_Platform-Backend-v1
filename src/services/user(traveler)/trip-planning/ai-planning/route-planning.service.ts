@@ -111,6 +111,11 @@ export class RoutePlanningService {
     if (!response.ok) {
       const errorMessage = await response.text();
 
+      console.error("[Google Routes API Error]", {
+        status: response.status,
+        response: errorMessage,
+      });
+
       throw new Error(`Google Routes API request failed: ${response.status} ${errorMessage}`);
     }
 

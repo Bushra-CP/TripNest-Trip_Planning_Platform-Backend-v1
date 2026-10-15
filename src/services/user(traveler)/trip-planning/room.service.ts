@@ -58,4 +58,17 @@ export class RoomService implements IRoomService {
 
     return room;
   }
+
+  /**
+   * DELETE ROOM
+   *
+   * @param {string} roomId
+   * @return {*}  {Promise<void>}
+   * @memberof RoomService
+   */
+  async deleteRoom(roomId: string): Promise<void> {
+    await this._roomRepository.deleteOne({
+      roomId,
+    });
+  }
 }

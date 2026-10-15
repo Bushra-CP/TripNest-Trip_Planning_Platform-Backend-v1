@@ -95,6 +95,13 @@ export class TripPlanningRoutes {
       this._tripController.getMyTrips.bind(this._tripController),
     );
 
+    this.router.delete(
+      "/trips/:tripId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripController.deleteTrip.bind(this._tripController),
+    );
+
     this.router.post(
       "/trips/convert-to-group",
       this._authenticateMiddleware.authenticate,

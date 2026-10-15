@@ -63,4 +63,11 @@ export class TripRepository extends BaseRepository<ITrip> implements ITripReposi
       roomId,
     });
   }
+
+  async deleteTripByOwner(tripId: string, ownerId: string): Promise<ITrip | null> {
+    return TripModel.findOneAndDelete({
+      _id: tripId,
+      ownerId,
+    }).exec();
+  }
 }
