@@ -65,6 +65,14 @@ export class TripRequirementsService implements ITripRequirementsService {
 
         preferences: requirements.preferences,
 
+        mustVisitPlaces: requirements.mustVisitPlaces,
+
+        preferredActivities: requirements.preferredActivities,
+
+        excludedPlaces: requirements.excludedPlaces,
+
+        excludedActivityTypes: requirements.excludedActivityTypes,
+
         additionalDetails: requirements.additionalDetails,
       });
 
@@ -99,6 +107,14 @@ export class TripRequirementsService implements ITripRequirementsService {
       tripType: requirements.tripType,
 
       preferences: requirements.preferences,
+
+      mustVisitPlaces: requirements.mustVisitPlaces,
+
+      preferredActivities: requirements.preferredActivities,
+
+      excludedPlaces: requirements.excludedPlaces,
+
+      excludedActivityTypes: requirements.excludedActivityTypes,
 
       additionalDetails: requirements.additionalDetails,
     });

@@ -28,7 +28,7 @@ export interface KnowledgeDocumentResponseDto {
   destination: string | null;
   category: string;
   fileType: KnowledgeDocumentFileType;
-  fileUrl: string;
+  fileUrl: string | null;
   status: KnowledgeDocumentStatus;
   uploadedBy: string;
   uploadedAt: string;

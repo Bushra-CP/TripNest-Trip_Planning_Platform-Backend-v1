@@ -12,6 +12,10 @@ const itineraryStopSchema = new Schema(
       type: String,
       required: true,
     },
+    activityType: {
+      type: String,
+      trim: true,
+    },
     location: {
       type: String,
     },
@@ -88,6 +92,26 @@ const itineraryTemplateSchema = new Schema<IItineraryTemplate>(
     },
 
     preferences: {
+      type: [String],
+      default: [],
+    },
+
+    mustVisitPlaces: {
+      type: [String],
+      default: [],
+    },
+
+    preferredActivities: {
+      type: [String],
+      default: [],
+    },
+
+    excludedPlaces: {
+      type: [String],
+      default: [],
+    },
+
+    excludedActivityTypes: {
       type: [String],
       default: [],
     },

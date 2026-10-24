@@ -57,6 +57,12 @@ const postSchema = new Schema<IPost>(
       type: [postMediaSchema],
       default: [],
     },
+
+    status: {
+      type: String,
+      enum: ["PUBLISHED", "BLOCKED"],
+      default: "PUBLISHED",
+    },
   },
   {
     timestamps: true,

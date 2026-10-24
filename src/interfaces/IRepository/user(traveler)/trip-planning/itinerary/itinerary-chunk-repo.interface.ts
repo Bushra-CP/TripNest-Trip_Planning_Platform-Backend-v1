@@ -15,6 +15,10 @@ export interface ItineraryChunkSearchResult {
     travelMode: string;
     tripType: string;
     preferences: string[];
+    mustVisitPlaces: string[];
+    preferredActivities: string[];
+    excludedPlaces: string[];
+    excludedActivityTypes: string[];
   };
 
   score: number;

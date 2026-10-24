@@ -63,6 +63,26 @@ const itineraryChunkSchema = new Schema<IItineraryChunk>(
         type: [String],
         default: [],
       },
+
+      mustVisitPlaces: {
+        type: [String],
+        default: [],
+      },
+
+      preferredActivities: {
+        type: [String],
+        default: [],
+      },
+
+      excludedPlaces: {
+        type: [String],
+        default: [],
+      },
+
+      excludedActivityTypes: {
+        type: [String],
+        default: [],
+      },
     },
 
     isActive: {

@@ -16,6 +16,7 @@ import { UserMapper } from "@/mapper/users.mapper";
 import { AppError } from "@/shared/errors/app.error";
 import { inject } from "inversify";
 import { UserProfileMapper } from "@/mapper/user-profile.mapper";
+import { ITripRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/trip.repository.interface";
 
 export class UserManagementService implements IUserManagementService {
   constructor(
@@ -27,6 +28,9 @@ export class UserManagementService implements IUserManagementService {
 
     @inject(TYPES.UserManagementRepository)
     private readonly _userManagementRepository: IAdminUserRepository,
+
+    @inject(TYPES.TripRepository)
+    private readonly _tripRepository: ITripRepository,
   ) {}
 
   /*-----------------------
@@ -56,11 +60,14 @@ export class UserManagementService implements IUserManagementService {
   async getUserDetails(userId: string): Promise<UserProfile> {
     const userProfile = await this._travelerProfileRepository.findByUserId(userId);
 
+    const tripCount = (await this._tripRepository.findByUserId(userId)).length;
+    console.log(tripCount);
+
     if (!userProfile) {
       throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
     }
 
-    return UserProfileMapper.toUserProfileDto(userProfile);
+    return UserProfileMapper.toUserProfileDto(userProfile, tripCount);
   }
 
   /*-----------------------

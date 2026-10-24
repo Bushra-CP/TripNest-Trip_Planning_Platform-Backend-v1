@@ -20,6 +20,8 @@ export interface IPopulatedPost extends Omit<IPost, "userId"> {
   userId: IPopulatedPostUser;
 }
 
+export type PostStatus = "PUBLISHED" | "BLOCKED";
+
 export interface IPost extends Document {
   userId: Types.ObjectId;
 
@@ -32,6 +34,8 @@ export interface IPost extends Document {
   tags: string[];
 
   media: IPostMedia[];
+
+  status: PostStatus;
 
   createdAt: Date;
 

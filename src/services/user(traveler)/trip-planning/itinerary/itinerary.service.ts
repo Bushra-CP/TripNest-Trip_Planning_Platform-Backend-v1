@@ -59,6 +59,10 @@ export class ItineraryService implements IItineraryService {
       travelMode: requirements.travelMode ?? "unspecified",
       tripType: requirements.tripType ?? "unspecified",
       preferences: requirements.preferences,
+      mustVisitPlaces: requirements.mustVisitPlaces,
+      preferredActivities: requirements.preferredActivities,
+      excludedPlaces: requirements.excludedPlaces,
+      excludedActivityTypes: requirements.excludedActivityTypes,
 
       budget: requirements.budget,
       startDate: requirements.startDate,

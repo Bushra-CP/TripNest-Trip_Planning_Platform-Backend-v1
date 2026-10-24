@@ -23,6 +23,14 @@ export interface ITripRequirements extends Document {
 
   preferences: TripRequirements["preferences"];
 
+  mustVisitPlaces: TripRequirements["mustVisitPlaces"];
+
+  preferredActivities: TripRequirements["preferredActivities"];
+
+  excludedPlaces: TripRequirements["excludedPlaces"];
+
+  excludedActivityTypes: TripRequirements["excludedActivityTypes"];
+
   additionalDetails: TripRequirements["additionalDetails"];
 
   createdAt: Date;
