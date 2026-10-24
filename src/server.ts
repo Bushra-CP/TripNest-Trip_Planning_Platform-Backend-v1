@@ -8,6 +8,7 @@ import { ChatSocket } from "./socket/chat.socket";
 import { TYPES } from "./di/types";
 import { KnowledgeIngestionWorker } from "./workers/knowledge-ingestion.worker";
 import { ItineraryIngestionWorker } from "./workers/itinerary-ingestion.worker";
+import { TripTalesSocket } from "./socket/tripTales.socket";
 
 const startServer = async (): Promise<void> => {
   try {
@@ -29,6 +30,10 @@ const startServer = async (): Promise<void> => {
     const chatSocket = container.get<ChatSocket>(TYPES.ChatSocket);
 
     chatSocket.initialize(io);
+
+    const tripTalesSocket = container.get<TripTalesSocket>(TYPES.TripTalesSocket);
+
+    tripTalesSocket.initialize(io);
 
     httpServer.listen(env.PORT, () => {
       console.log(`Server running on port ${env.PORT}`);

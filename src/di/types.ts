@@ -93,6 +93,7 @@ export const TYPES = {
    * SOCKET
    * ============================== */
   ChatSocket: Symbol.for("ChatSocket"),
+  TripTalesSocket: Symbol.for("TripTalesSocket"),
 
   /* ==============================
    * AI PLANNING

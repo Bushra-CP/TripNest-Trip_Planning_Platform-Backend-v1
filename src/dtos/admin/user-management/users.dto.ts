@@ -56,6 +56,7 @@ export interface UserWithProfile {
 }
 
 export interface UserProfile {
+  tripCount: number;
   fullName: string;
 
   phone?: string;

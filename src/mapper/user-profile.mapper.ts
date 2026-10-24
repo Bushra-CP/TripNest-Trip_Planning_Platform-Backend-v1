@@ -2,8 +2,10 @@ import { UserProfile } from "@/dtos/admin/user-management/users.dto";
 import { ITravelerProfile } from "@/interfaces/IModel/ITravelerPofile";
 
 export class UserProfileMapper {
-  static toUserProfileDto(profile: ITravelerProfile): UserProfile {
+  static toUserProfileDto(profile: ITravelerProfile, tripCount: number): UserProfile {
     return {
+      tripCount,
+
       fullName: profile.fullName,
 
       ...(profile.phone && {

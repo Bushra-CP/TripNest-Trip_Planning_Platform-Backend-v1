@@ -11,6 +11,7 @@ import {
 } from "@/dtos/user(traveler)/trip-tales/trip-tales.dto";
 import { TripTalesRagService } from "./trip-tales-rag.service";
 import { TripTalesPostMapper } from "@/mapper/trip-tales-post.mapper";
+import { TripTalesSocket } from "@/socket/tripTales.socket";
 
 @injectable()
 export class PostService implements IPostService {
@@ -23,6 +24,9 @@ export class PostService implements IPostService {
 
     @inject(TYPES.TripTalesRagService)
     private readonly _tripTalesRagService: TripTalesRagService,
+
+    @inject(TYPES.TripTalesSocket)
+    private readonly _tripTalesSocket: TripTalesSocket,
   ) {}
 
   /**
@@ -72,6 +76,8 @@ export class PostService implements IPostService {
       // Add the post to the RAG pipeline.
       try {
         await this._tripTalesRagService.addPostToKnowledge(post);
+
+        this._tripTalesSocket.emitNewPostAvailable(post._id.toString());
       } catch (ragError) {
         console.error("Failed to queue TripTales RAG ingestion:", ragError);
       }
