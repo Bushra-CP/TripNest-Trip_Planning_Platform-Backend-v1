@@ -1,9 +1,12 @@
-import { KnowledgeDocument } from "@/interfaces/IModel/knowledge-document.interfaces";
+import type { IKnowledgeDocument } from "@/interfaces/IModel/knowledge-document.interfaces";
 
 import { KnowledgeDocumentResponseDto } from "@/dtos/admin/rag-knowledge-document/knowledge-document.dto";
 
 export class KnowledgeDocumentMapper {
-  static toResponse(document: KnowledgeDocument, chunkCount: number): KnowledgeDocumentResponseDto {
+  static toResponse(
+    document: IKnowledgeDocument,
+    chunkCount: number,
+  ): KnowledgeDocumentResponseDto {
     return {
       id: document._id.toString(),
       title: document.title,

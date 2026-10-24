@@ -154,10 +154,25 @@ Extract the following information:
    Examples: solo, couple, family, friends, business, group.
 
 9. preferences
-   User preferences, interests, restrictions, requirements,
-   or things they want to avoid.
+   General trip preferences that do not belong to one of the
+   specific must-visit, preferred-activity, or exclusion fields.
 
-10. additionalDetails
+10. mustVisitPlaces
+    Places or attractions the user explicitly requires the
+    itinerary to include.
+
+11. preferredActivities
+    Activities the user would like to do where practical.
+
+12. excludedPlaces
+    Places or attractions the user explicitly does not want
+    included.
+
+13. excludedActivityTypes
+    Categories of activity the user explicitly does not want,
+    such as hiking or nightlife.
+
+14. additionalDetails
     Useful travel information that does not belong to the
     predefined fields.
 
@@ -529,6 +544,12 @@ If there are no preferences:
 
 []
 
+For mustVisitPlaces, preferredActivities, excludedPlaces, and
+excludedActivityTypes, keep any previously provided items and add
+new explicit items to their respective arrays. Do not infer
+exclusions or must-visits from general preferences. Return [] when
+none are known.
+
 --------------------------------------------------
 ADDITIONAL DETAILS
 --------------------------------------------------
@@ -659,6 +680,10 @@ Use exactly this structure:
     "travelMode": string | null,
     "tripType": string | null,
     "preferences": string[],
+    "mustVisitPlaces": string[],
+    "preferredActivities": string[],
+    "excludedPlaces": string[],
+    "excludedActivityTypes": string[],
     "additionalDetails": string[]
   },
   "missingFields": string[],
@@ -758,6 +783,10 @@ Return no markdown, explanations, comments, or code fences.`,
       "travelMode",
       "tripType",
       "preferences",
+      "mustVisitPlaces",
+      "preferredActivities",
+      "excludedPlaces",
+      "excludedActivityTypes",
       "additionalDetails",
     ];
 
@@ -791,6 +820,17 @@ Return no markdown, explanations, comments, or code fences.`,
     // preferences must be an array.
     if (!Array.isArray(result.requirements.preferences)) {
       throw new Error("preferences must be an array");
+    }
+
+    for (const field of [
+      "mustVisitPlaces",
+      "preferredActivities",
+      "excludedPlaces",
+      "excludedActivityTypes",
+    ] as const) {
+      if (!Array.isArray(result.requirements[field])) {
+        throw new Error(`${field} must be an array`);
+      }
     }
 
     // additionalDetails must be an array.

@@ -19,6 +19,10 @@ export class TripStateService {
       travelMode: null,
       tripType: null,
       preferences: [],
+      mustVisitPlaces: [],
+      preferredActivities: [],
+      excludedPlaces: [],
+      excludedActivityTypes: [],
       additionalDetails: [],
     };
   }
@@ -58,6 +62,26 @@ export class TripStateService {
 
       // Combine preferences from old and new messages.
       preferences: this.mergeStringArrays(currentState.preferences, newRequirements.preferences),
+
+      mustVisitPlaces: this.mergeStringArrays(
+        currentState.mustVisitPlaces,
+        newRequirements.mustVisitPlaces,
+      ),
+
+      preferredActivities: this.mergeStringArrays(
+        currentState.preferredActivities,
+        newRequirements.preferredActivities,
+      ),
+
+      excludedPlaces: this.mergeStringArrays(
+        currentState.excludedPlaces,
+        newRequirements.excludedPlaces,
+      ),
+
+      excludedActivityTypes: this.mergeStringArrays(
+        currentState.excludedActivityTypes,
+        newRequirements.excludedActivityTypes,
+      ),
 
       // Combine additional details too.
       additionalDetails: this.mergeStringArrays(

@@ -2,17 +2,20 @@ import { GoogleGenAI } from "@google/genai";
 import { injectable } from "inversify";
 import { z } from "zod";
 import { env } from "@/config/env";
+import { STATUS_CODES } from "@/enums/status.codes.enum";
 import type { TripRequirements } from "@/interfaces/trip-planning/trip.interfaces";
 import type {
   IItineraryDay,
   IItineraryTemplate,
 } from "@/interfaces/IModel/trip-planning/itinerary.model.interfaces";
+import { AppError } from "@/shared/errors/app.error";
 
 // Validate each stop in the generated itinerary.
 const itineraryStopSchema = z
   .object({
     name: z.string(),
     description: z.string(),
+    activityType: z.string().optional(),
     location: z.string().optional(),
     startTime: z.string().optional(),
     durationMinutes: z.number().positive().optional(),
@@ -20,6 +23,7 @@ const itineraryStopSchema = z
   .transform((stop) => ({
     name: stop.name,
     description: stop.description,
+    ...(stop.activityType !== undefined && { activityType: stop.activityType }),
     ...(stop.location !== undefined && { location: stop.location }),
     ...(stop.startTime !== undefined && { startTime: stop.startTime }),
     ...(stop.durationMinutes !== undefined && {
@@ -44,6 +48,25 @@ const generatedItinerarySchema = z.object({
 export type GeneratedItinerary = {
   title: string;
   days: IItineraryDay[];
+};
+
+export interface ItineraryValidationResult {
+  isValid: boolean;
+  violations: string[];
+}
+
+const normalizeConstraintValue = (value: string): string =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+
+const containsNormalizedPhrase = (value: string, phrase: string): boolean => {
+  const normalizedValue = normalizeConstraintValue(value);
+  const normalizedPhrase = normalizeConstraintValue(phrase);
+
+  return ` ${normalizedValue} `.includes(` ${normalizedPhrase} `);
 };
 
 @injectable()
@@ -95,6 +118,11 @@ ${JSON.stringify(template.days, null, 2)}
             .join("\n")
         : "No relevant itinerary templates were found. Generate the itinerary from the user's requirements.";
 
+    const activityTypeInstruction =
+      requirements.excludedActivityTypes.length > 0
+        ? "Provide an activityType for every stop so excluded activity types can be validated."
+        : "Include an activityType when it is useful and known.";
+
     const prompt = `
 You are TripNest's AI itinerary generation assistant.
 
@@ -113,7 +141,7 @@ INSTRUCTIONS:
 2. Number the days consecutively, starting from 1.
 3. Respect the starting location and destination order.
 4. Consider the number of travelers, travel mode, trip type,
-   preferences, and additional details.
+   preferences, preferred activities, and additional details.
 5. The budget is optional. If it is null, do not invent a budget.
 6. The start date is optional. If it is null, use relative day
    labels such as Day 1, Day 2, and Day 3.
@@ -132,12 +160,17 @@ INSTRUCTIONS:
    - If no relevant templates are provided, generate the itinerary
      from the user's requirements.
 
-8. Do not claim that opening hours, prices, routes, or availability
+8. Include every must-visit place and do not include any excluded
+   place or excluded activity type.
+9. Treat preferred activities as preferences to include where
+   practical, not as hard requirements.
+10. ${activityTypeInstruction}
+11. Do not claim that opening hours, prices, routes, or availability
    have been verified.
-9. Do not invent precise travel times or durations without reliable
+12. Do not invent precise travel times or durations without reliable
    supporting information.
-10. Include suitable stops for each day.
-11. Return only valid JSON. Do not include markdown.
+13. Include suitable stops for each day.
+14. Return only valid JSON. Do not include markdown.
 
 
 TRAVEL PLANNING RULES:
@@ -164,6 +197,7 @@ Use this JSON structure:
         {
           "name": "Place or activity",
           "description": "Description of the stop",
+          "activityType": "Activity category",
           "location": "Location, if known",
           "startTime": "Suggested time, if appropriate",
           "durationMinutes": 60
@@ -224,6 +258,121 @@ Optional stop properties may be omitted when unavailable.
       throw new Error("Generated itinerary day numbers are not consecutive.");
     }
 
+    const validation = this.validateItinerary(result.data.days, requirements);
+
+    if (!validation.isValid) {
+      throw new AppError(
+        STATUS_CODES.UNPROCESSABLE_ENTITY,
+        `Generated itinerary does not satisfy the trip requirements: ${validation.violations.join("; ")}`,
+      );
+    }
+
     return result.data;
+  }
+
+  public validateItinerary(
+    days: IItineraryDay[],
+    requirements: TripRequirements,
+    candidate?: Pick<IItineraryTemplate, "source" | "destinations" | "totalDays">,
+  ): ItineraryValidationResult {
+    const stops = days.flatMap((day) => day.stops);
+    const violations: string[] = [];
+    if (requirements.totalDays !== null && days.length !== requirements.totalDays) {
+      violations.push(`Expected ${requirements.totalDays} days, but itinerary has ${days.length}`);
+    }
+
+    if (days.some((day, index) => day.dayNumber !== index + 1)) {
+      violations.push("Itinerary day numbers are not consecutive");
+    }
+
+    if (candidate) {
+      if (requirements.totalDays !== null && candidate.totalDays !== requirements.totalDays) {
+        violations.push(
+          `Candidate duration (${candidate.totalDays} days) does not match the requested duration (${requirements.totalDays ?? "unspecified"} days)`,
+        );
+      }
+
+      const candidateDestinations = candidate.destinations.map(normalizeConstraintValue);
+      const requestedDestinations = requirements.destinations.map((destination) =>
+        normalizeConstraintValue(destination.name),
+      );
+
+      if (
+        candidateDestinations.length !== requestedDestinations.length ||
+        candidateDestinations.some(
+          (destination, index) => destination !== requestedDestinations[index],
+        )
+      ) {
+        violations.push("Candidate destinations do not match the requested destination order");
+      }
+
+      if (
+        requirements.source &&
+        normalizeConstraintValue(candidate.source) !== normalizeConstraintValue(requirements.source)
+      ) {
+        violations.push(
+          "Candidate starting location does not match the requested starting location",
+        );
+      }
+    }
+
+    const placeMatches = (stop: IItineraryDay["stops"][number], place: string): boolean => {
+      const normalizedPlace = normalizeConstraintValue(place);
+
+      return [stop.name, stop.location].some(
+        (value) => value !== undefined && normalizeConstraintValue(value) === normalizedPlace,
+      );
+    };
+
+    for (const place of requirements.mustVisitPlaces) {
+      if (!stops.some((stop) => placeMatches(stop, place))) {
+        violations.push(`Must-visit place "${place}" is missing`);
+      }
+    }
+
+    for (const place of requirements.excludedPlaces) {
+      if (
+        stops.some((stop) =>
+          [stop.name, stop.location, stop.description].some(
+            (value) => value !== undefined && containsNormalizedPhrase(value, place),
+          ),
+        )
+      ) {
+        violations.push(`Excluded place "${place}" is included`);
+      }
+    }
+
+    if (requirements.excludedActivityTypes.length > 0) {
+      const untypedStops = stops.filter((stop) => !stop.activityType?.trim());
+
+      if (untypedStops.length > 0) {
+        violations.push(
+          `Activity types are missing for ${untypedStops.length} stop(s), so excluded activity types cannot be verified`,
+        );
+      }
+
+      for (const activityType of requirements.excludedActivityTypes) {
+        const normalizedActivityType = normalizeConstraintValue(activityType);
+
+        if (
+          stops.some((stop) => {
+            const activityDetails = [stop.activityType, stop.name, stop.description].filter(
+              (value): value is string => value !== undefined,
+            );
+
+            return activityDetails.some((value) =>
+              containsNormalizedPhrase(value, normalizedActivityType),
+            );
+          })
+        ) {
+          violations.push(`Excluded activity type "${activityType}" is included`);
+        }
+      }
+    }
+
+    return {
+      isValid: violations.length === 0,
+      violations,
+    };
   }
 }

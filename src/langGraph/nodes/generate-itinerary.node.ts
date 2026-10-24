@@ -49,6 +49,20 @@ export const createGenerateItineraryNode = (
 
       trip.preferences.length > 0 ? `Preferences: ${trip.preferences.join(", ")}.` : null,
 
+      trip.mustVisitPlaces.length > 0
+        ? `Must-visit places: ${trip.mustVisitPlaces.join(", ")}.`
+        : null,
+
+      trip.preferredActivities.length > 0
+        ? `Preferred activities: ${trip.preferredActivities.join(", ")}.`
+        : null,
+
+      trip.excludedPlaces.length > 0 ? `Excluded places: ${trip.excludedPlaces.join(", ")}.` : null,
+
+      trip.excludedActivityTypes.length > 0
+        ? `Excluded activity types: ${trip.excludedActivityTypes.join(", ")}.`
+        : null,
+
       trip.additionalDetails.length > 0
         ? `Additional requirements: ${trip.additionalDetails.join(", ")}.`
         : null,
@@ -71,10 +85,22 @@ export const createGenerateItineraryNode = (
 
     console.log("RETRIEVED ITINERARY TEMPLATES:", templates.length);
 
-    // Generate a personalized itinerary using the requirements and retrieved templates.
-    const generatedItinerary = await itineraryGenerationService.generateItinerary(trip, templates);
+    const suitableTemplate = templates.find(
+      (template) =>
+        itineraryGenerationService.validateItinerary(template.days, trip, template).isValid,
+    );
 
-    console.log("GENERATED ITINERARY:", generatedItinerary);
+    const generatedItinerary = suitableTemplate
+      ? {
+          title: suitableTemplate.title,
+          days: suitableTemplate.days,
+        }
+      : await itineraryGenerationService.generateItinerary(trip, []);
+
+    console.log(
+      suitableTemplate ? "REUSED VALIDATED ITINERARY TEMPLATE:" : "GENERATED ITINERARY:",
+      generatedItinerary,
+    );
 
     return {
       generatedItinerary,

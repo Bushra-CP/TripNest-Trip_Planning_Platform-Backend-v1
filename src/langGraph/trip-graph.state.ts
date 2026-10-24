@@ -93,6 +93,10 @@ export const tripRequirementsSchema = z.object({
   tripType: z.string().nullable(),
 
   preferences: z.array(z.string()),
+  mustVisitPlaces: z.array(z.string()).default([]),
+  preferredActivities: z.array(z.string()).default([]),
+  excludedPlaces: z.array(z.string()).default([]),
+  excludedActivityTypes: z.array(z.string()).default([]),
   additionalDetails: z.array(z.string()),
 });
 
@@ -111,6 +115,10 @@ const emptyTripRequirements = {
   travelMode: null,
   tripType: null,
   preferences: [],
+  mustVisitPlaces: [],
+  preferredActivities: [],
+  excludedPlaces: [],
+  excludedActivityTypes: [],
   additionalDetails: [],
 };
 

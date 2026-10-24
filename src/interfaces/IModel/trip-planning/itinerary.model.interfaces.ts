@@ -12,6 +12,7 @@ export interface IItineraryDay {
 export interface IItineraryStop {
   name: string;
   description: string;
+  activityType?: string | undefined;
   location?: string | undefined;
   startTime?: string | undefined;
   durationMinutes?: number | undefined;
@@ -35,6 +36,10 @@ export interface IItinerary extends Document {
   travelMode: string;
   tripType: string;
   preferences: string[];
+  mustVisitPlaces: string[];
+  preferredActivities: string[];
+  excludedPlaces: string[];
+  excludedActivityTypes: string[];
 
   budget: number | null;
   startDate: string | null;
@@ -56,6 +61,10 @@ export interface IItineraryTemplate extends Document {
   travelMode: string;
   tripType: string;
   preferences: string[];
+  mustVisitPlaces: string[];
+  preferredActivities: string[];
+  excludedPlaces: string[];
+  excludedActivityTypes: string[];
 
   days: IItineraryDay[];
 
@@ -82,6 +91,10 @@ export interface IItineraryChunk extends Document {
     travelMode: string;
     tripType: string;
     preferences: string[];
+    mustVisitPlaces: string[];
+    preferredActivities: string[];
+    excludedPlaces: string[];
+    excludedActivityTypes: string[];
   };
 
   isActive: boolean;

@@ -75,6 +75,26 @@ const tripRequirementsSchema = new Schema<ITripRequirements>(
       default: [],
     },
 
+    mustVisitPlaces: {
+      type: [String],
+      default: [],
+    },
+
+    preferredActivities: {
+      type: [String],
+      default: [],
+    },
+
+    excludedPlaces: {
+      type: [String],
+      default: [],
+    },
+
+    excludedActivityTypes: {
+      type: [String],
+      default: [],
+    },
+
     additionalDetails: {
       type: [String],
       default: [],

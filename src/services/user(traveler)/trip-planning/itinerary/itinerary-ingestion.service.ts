@@ -70,6 +70,10 @@ export class ItineraryIngestionService {
       travelMode: itinerary.travelMode,
       tripType: itinerary.tripType,
       preferences: itinerary.preferences,
+      mustVisitPlaces: itinerary.mustVisitPlaces,
+      preferredActivities: itinerary.preferredActivities,
+      excludedPlaces: itinerary.excludedPlaces,
+      excludedActivityTypes: itinerary.excludedActivityTypes,
       days: itinerary.days,
       version: itinerary.version,
       isActive: true,
@@ -99,7 +103,7 @@ export class ItineraryIngestionService {
       const stops = day.stops
         .map(
           (stop) =>
-            `${stop.name}: ${stop.description}${
+            `${stop.name}${stop.activityType ? ` (${stop.activityType})` : ""}: ${stop.description}${
               stop.location ? ` Location: ${stop.location}` : ""
             }`,
         )
@@ -113,6 +117,10 @@ export class ItineraryIngestionService {
         `Travel mode: ${itinerary.travelMode}`,
         `Trip type: ${itinerary.tripType}`,
         `Preferences: ${itinerary.preferences.join(", ")}`,
+        `Must-visit places: ${itinerary.mustVisitPlaces.join(", ")}`,
+        `Preferred activities: ${itinerary.preferredActivities.join(", ")}`,
+        `Excluded places: ${itinerary.excludedPlaces.join(", ")}`,
+        `Excluded activity types: ${itinerary.excludedActivityTypes.join(", ")}`,
         `Day ${day.dayNumber}: ${day.title}`,
         day.description,
         `Stops:\n${stops}`,
@@ -156,6 +164,10 @@ export class ItineraryIngestionService {
           travelMode: template.travelMode,
           tripType: template.tripType,
           preferences: template.preferences,
+          mustVisitPlaces: template.mustVisitPlaces,
+          preferredActivities: template.preferredActivities,
+          excludedPlaces: template.excludedPlaces,
+          excludedActivityTypes: template.excludedActivityTypes,
         },
         isActive: true,
       };

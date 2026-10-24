@@ -19,6 +19,11 @@ export interface TripRequirements {
   // Information that doesn't fit the fixed fields.
   preferences: string[];
 
+  mustVisitPlaces: string[];
+  preferredActivities: string[];
+  excludedPlaces: string[];
+  excludedActivityTypes: string[];
+
   // Other useful information provided by the user.
   additionalDetails: string[];
 }
