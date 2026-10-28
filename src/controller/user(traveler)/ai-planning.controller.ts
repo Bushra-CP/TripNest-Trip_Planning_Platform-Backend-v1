@@ -27,7 +27,6 @@ export class AIPlanningController {
 
       if (typeof message !== "string" || message.trim().length === 0) {
         ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ErrorMessages.MESSAGE_REQUIRED);
-
         return;
       }
 
@@ -36,24 +35,22 @@ export class AIPlanningController {
         (typeof threadId !== "string" || threadId.trim().length === 0)
       ) {
         ResponseHandler.error(res, STATUS_CODES.BAD_REQUEST, ErrorMessages.INVALID_THREAD_ID);
-
         return;
       }
 
-      const userId = req.user?.userId;
+      const userId = req.user?.userId ?? null;
 
       const result = await this._aiPlanningService.generateResponse(userId, message, threadId);
-
-      // console.log(result);
 
       ResponseHandler.success(res, STATUS_CODES.OK, SuccessMessages.AI_RESPONSE_GENERATED, {
         threadId: result.threadId,
         tripId: result.tripId,
         reply: result.reply,
-        tripRequirements: result.requirements,
+        requirements: result.requirements,
         missingFields: result.missingFields,
         isComplete: result.isComplete,
         canGenerateDraft: result.canGenerateDraft,
+        routeChanged: result.routeChanged,
         route: result.route,
         ragSources: result.ragSources,
         generatedItinerary: result.generatedItinerary,

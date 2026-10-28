@@ -76,6 +76,8 @@ import { ItineraryIngestionService } from "@/services/user(traveler)/trip-planni
 import { ItineraryIngestionQueue } from "@/queues/itinerary-ingestion.queue";
 import { IItineraryIngestionQueue } from "@/interfaces/IQueue/itinerary-ingestion-job.interfaces";
 import { ItineraryIngestionWorker } from "@/workers/itinerary-ingestion.worker";
+import { ItineraryModificationValidationService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-validation.service";
+import { ItineraryModificationFeasibilityService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-feasibility.service";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -173,6 +175,12 @@ export function registerAIPlanning(container: Container): void {
     .inSingletonScope();
   container.bind<IItineraryService>(TYPES.ItineraryService).to(ItineraryService);
   container.bind(TYPES.ItineraryIngestionService).to(ItineraryIngestionService);
+  container
+    .bind(TYPES.ItineraryModificationValidationService)
+    .to(ItineraryModificationValidationService);
+  container
+    .bind(TYPES.ItineraryModificationFeasibilityService)
+    .to(ItineraryModificationFeasibilityService);
 
   //Worker
   container.bind(TYPES.KnowledgeIngestionWorker).to(KnowledgeIngestionWorker).inSingletonScope();

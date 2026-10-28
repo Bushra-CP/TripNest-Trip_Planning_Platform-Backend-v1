@@ -15,6 +15,7 @@ import {
   PendingItineraryChange,
 } from "@/interfaces/trip-planning/itinerary/itinerary.interfaces";
 import { IItineraryDay } from "@/interfaces/IModel/trip-planning/itinerary.model.interfaces";
+import { ModificationFeasibilityResult } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-feasibility.service";
 
 export interface TripGraphState {
   // User message
@@ -60,6 +61,8 @@ export interface TripGraphState {
   confirmationStatus: ConfirmationStatus;
   pendingItineraryChange: PendingItineraryChange | null;
 
+  modificationFeasibility: ModificationFeasibilityResult | null;
+
   // Generated itinerary
   generatedItinerary: {
     title: string;
@@ -70,6 +73,9 @@ export interface TripGraphState {
   itineraryGeneratedNow: boolean;
 
   response: string;
+
+  threadId: string;
+  tripId: string;
 }
 
 /*
@@ -187,21 +193,42 @@ export const tripGraphStateSchema = {
 
   pendingItineraryChange: z
     .object({
-      removePlaces: z.array(z.string()).default([]),
+      removePlaces: z.array(
+        z.object({
+          name: z.string(),
+          dayNumber: z.number().int().positive().optional(),
+        }),
+      ),
+      addPlaces: z.array(
+        z.object({
+          name: z.string().min(1),
+          dayNumber: z.number().int().positive().optional(),
+          insertBefore: z.string().min(1).optional(),
+          insertAfter: z.string().min(1).optional(),
+          preferredTime: z.string().min(1).optional(),
+        }),
+      ),
 
-      addPlaces: z.array(z.string()).default([]),
-
-      replacePlaces: z
-        .array(
-          z.object({
-            remove: z.string(),
-
-            add: z.string(),
-          }),
-        )
-        .default([]),
-
+      replacePlaces: z.array(
+        z.object({
+          remove: z.string().min(1),
+          add: z.string().min(1),
+          dayNumber: z.number().int().positive().optional(),
+          preferredTime: z.string().min(1).optional(),
+        }),
+      ),
       description: z.string(),
+    })
+    .nullable()
+    .default(null),
+
+  modificationFeasibility: z
+    .object({
+      status: z.enum(["FEASIBLE", "NEEDS_CONFIRMATION", "NOT_FEASIBLE"]),
+      summary: z.string(),
+      concerns: z.array(z.string()),
+      proposedChanges: z.array(z.string()),
+      requiresAdditionalDays: z.boolean(),
     })
     .nullable()
     .default(null),
@@ -232,4 +259,7 @@ export const tripGraphStateSchema = {
   itineraryGeneratedNow: z.boolean().default(false),
 
   response: z.string().default(""),
+
+  threadId: z.string().default(""),
+  tripId: z.string(),
 };

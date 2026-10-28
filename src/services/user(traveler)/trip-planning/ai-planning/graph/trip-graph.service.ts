@@ -22,6 +22,9 @@ import { KnowledgeAcquisitionService } from "../knowledge-acquisition.service";
 import { ItineraryIntentService } from "../../itinerary/itinerary-intent.service";
 import { ItineraryTemplateRetrievalService } from "../../itinerary/itinerary-template-retrieval.service";
 import { ItineraryGenerationService } from "../../itinerary/itinerary-generation.service";
+import { ItineraryModificationValidationService } from "../../itinerary/itinerary-modification-validation.service";
+import { ItineraryModificationFeasibilityService } from "../../itinerary/itinerary-modification-feasibility.service";
+import type { IItineraryService } from "@/interfaces/IServices/user(traveler)/trip-planning/itinerary.service.interface";
 
 @injectable()
 export class TripGraphService {
@@ -73,6 +76,15 @@ export class TripGraphService {
 
     @inject(TYPES.ItineraryGenerationService)
     private readonly _itineraryGenerationService: ItineraryGenerationService,
+
+    @inject(TYPES.ItineraryModificationValidationService)
+    private readonly _itineraryModificationValidationService: ItineraryModificationValidationService,
+
+    @inject(TYPES.ItineraryService)
+    private readonly _itineraryService: IItineraryService,
+
+    @inject(TYPES.ItineraryModificationFeasibilityService)
+    private readonly _itineraryModificationFeasibilityService: ItineraryModificationFeasibilityService,
   ) {
     /*
      * The LangGraph checkpointer stores the graph state after each
@@ -110,6 +122,9 @@ export class TripGraphService {
       this._itineraryIntentService,
       this._itineraryTemplateRetrievalService,
       this._itineraryGenerationService,
+      this._itineraryModificationValidationService,
+      this._itineraryService,
+      this._itineraryModificationFeasibilityService,
       this.checkpointer,
     );
   }
@@ -129,14 +144,20 @@ export class TripGraphService {
    * @return {*}  {Promise<TripGraphState>}
    * @memberof TripGraphService
    */
-  public async processMessage(userMessage: string, threadId: string): Promise<TripGraphState> {
+  public async processMessage(
+    userMessage: string,
+    threadId: string,
+    tripId: string,
+  ): Promise<TripGraphState> {
     await this.checkpointerInitialization;
 
-    console.log("CURRENT THREAD ID:", threadId);
+    // console.log("CURRENT THREAD ID:", threadId);
 
     const result = await this.graph.invoke(
       {
         userMessage,
+        threadId,
+        tripId,
 
         ragContext: [],
         ragSources: [],

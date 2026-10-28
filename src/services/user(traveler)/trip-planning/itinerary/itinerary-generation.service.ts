@@ -375,4 +375,183 @@ Optional stop properties may be omitted when unavailable.
       violations,
     };
   }
+
+  public async generateStopDetails(
+    placeName: string,
+    destination: string,
+    dayNumber: number,
+    travelMode: string,
+    tripType: string,
+    preferences: string[],
+    existingStops: { name: string; startTime?: string }[] = [],
+    preferredTime?: string,
+  ): Promise<IItineraryDay["stops"][number]> {
+    const prompt = `
+You are TripNest's travel attraction and itinerary scheduling assistant.
+
+Generate useful details for one attraction or activity being added
+to an existing travel itinerary.
+
+PLACE NAME:
+${placeName}
+
+TRIP DESTINATION:
+${destination}
+
+TARGET DAY:
+Day ${dayNumber}
+
+TRAVEL MODE:
+${travelMode}
+
+TRIP TYPE:
+${tripType}
+
+TRAVEL PREFERENCES:
+${JSON.stringify(preferences)}
+
+EXISTING STOPS ON THE TARGET DAY:
+${JSON.stringify(existingStops, null, 2)}
+
+USER'S PREFERRED VISITING TIME:
+${preferredTime?.trim() || "Not specified"}
+
+YOUR TASK:
+
+Generate a meaningful description and an appropriate visiting-time label
+for the requested attraction.
+
+RULES:
+
+1. Preserve the supplied place name. Do not replace it with another attraction.
+
+2. Write a useful, specific description explaining what the attraction is
+   and what travelers may experience there.
+
+3. Do not use generic descriptions such as "Added at your request".
+
+4. Do not invent opening hours, ticket prices, travel durations, or verified
+   travel information.
+
+5. Provide an appropriate activityType when reasonably known.
+
+6. Provide a location only when reasonably known. Do not fabricate a precise
+   address or coordinates.
+
+7. Generate startTime as a natural-language visiting-time label, for example
+   "Morning", "Late Afternoon", or "Around 10 AM".
+
+8. Do not restrict startTime to a predefined list of time slots.
+
+9. If the user specified a preferred visiting time, respect that preference.
+   Preserve its meaning and do not silently substitute a different time.
+
+10. If the preferred time is not specified, suggest a reasonable visiting-time
+    label after considering the existing stops, their start times, the trip type,
+    travel mode, and preferences.
+
+11. Existing stop information provides context, but it does not establish
+    verified travel durations or opening hours.
+
+12. Do not claim that a schedule has been verified or that travel between
+    attractions will take a particular duration unless that information is
+    supplied.
+
+13. Do not change the user's requested day.
+
+14. Return only valid JSON without Markdown or additional text.
+
+REQUIRED JSON STRUCTURE:
+
+{
+  "name": "${placeName}",
+  "description": "A meaningful description of the attraction.",
+  "activityType": "Nature",
+  "location": "Location, if reasonably known",
+  "startTime": "Morning"
+}
+
+The activityType and location fields may be omitted when unknown.
+The startTime field is required and must be a non-empty string.
+`;
+
+    const response = await this._ai.models.generateContent({
+      model: this._model,
+      contents: prompt,
+      config: {
+        temperature: 0.3,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            name: {
+              type: "STRING",
+            },
+            description: {
+              type: "STRING",
+            },
+            activityType: {
+              type: "STRING",
+            },
+            location: {
+              type: "STRING",
+            },
+            startTime: {
+              type: "STRING",
+            },
+          },
+          required: ["name", "description", "startTime"],
+        },
+      },
+    });
+
+    const responseText = response.text?.trim();
+
+    if (!responseText) {
+      throw new Error(`Gemini returned an empty description for "${placeName}".`);
+    }
+
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(responseText);
+    } catch {
+      throw new Error(`Gemini returned invalid JSON for "${placeName}".`);
+    }
+
+    const stopSchema = z.object({
+      name: z.string().trim().min(1),
+      description: z.string().trim().min(1),
+      activityType: z.string().trim().min(1).optional(),
+      location: z.string().trim().min(1).optional(),
+      startTime: z.string().trim().min(1),
+    });
+
+    const result = stopSchema.safeParse(parsed);
+
+    if (!result.success) {
+      throw new Error(`Invalid stop details for "${placeName}": ${result.error.message}`);
+    }
+
+    // The model must not silently substitute another destination.
+    if (result.data.name.trim().toLowerCase() !== placeName.trim().toLowerCase()) {
+      throw new Error(`Gemini returned a different place name instead of "${placeName}".`);
+    }
+
+    // Preserve the user's explicit preference rather than relying on the
+    // model to reproduce it exactly.
+    const finalStartTime = preferredTime?.trim() || result.data.startTime;
+
+    return {
+      name: placeName.trim(),
+      description: result.data.description,
+      startTime: finalStartTime,
+      ...(result.data.activityType !== undefined && {
+        activityType: result.data.activityType,
+      }),
+      ...(result.data.location !== undefined && {
+        location: result.data.location,
+      }),
+    };
+  }
 }

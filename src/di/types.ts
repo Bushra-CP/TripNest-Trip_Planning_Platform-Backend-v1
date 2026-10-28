@@ -125,6 +125,8 @@ export const TYPES = {
   ItineraryIngestionService: Symbol.for("ItineraryIngestionService"),
   ItineraryIngestionQueue: Symbol.for("ItineraryIngestionQueue"),
   ItineraryIngestionWorker: Symbol.for("ItineraryIngestionWorker"),
+  ItineraryModificationValidationService: Symbol.for("ItineraryModificationValidationService"),
+  ItineraryModificationFeasibilityService: Symbol.for("ItineraryModificationFeasibilityService"),
 
   /* ==============================
    * RAG
