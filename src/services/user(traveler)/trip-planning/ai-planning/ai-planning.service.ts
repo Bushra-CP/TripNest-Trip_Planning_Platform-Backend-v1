@@ -1,17 +1,20 @@
 import { inject, injectable } from "inversify";
+import { Types } from "mongoose";
+import { randomUUID } from "node:crypto";
+
 import { TYPES } from "@/di/types";
 import type { AIChatResult } from "@/interfaces/trip-planning/ai-planning.interfaces";
+import type { ChatMessage } from "@/interfaces/trip-planning/ai-planning.interfaces";
 import { TripGraphService } from "./graph/trip-graph.service";
 import { UUIDUtil } from "@/shared/utils/uuid.util";
-import { ITripRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/trip.repository.interface";
-import { Types } from "mongoose";
+import type { ITripRepository } from "@/interfaces/IRepository/user(traveler)/trip-planning/trip.repository.interface";
 import { TripRequirementsService } from "../trip-requirements.service";
 import { TripRouteService } from "../trip-route.service";
 import { AppError } from "@/shared/errors/app.error";
 import { STATUS_CODES } from "@/enums/status.codes.enum";
 import { ErrorMessages } from "@/enums/messages.enum";
 import { ItineraryService } from "../itinerary/itinerary.service";
-import { IItineraryIngestionQueue } from "@/interfaces/IQueue/itinerary-ingestion-job.interfaces";
+import type { IItineraryIngestionQueue } from "@/interfaces/IQueue/itinerary-ingestion-job.interfaces";
 
 @injectable()
 export class AIPlanningService {
@@ -46,7 +49,7 @@ export class AIPlanningService {
     let currentThreadId = threadId;
     let trip;
 
-    // First message: Create a new Trip and a new LangGraph thread.
+    // Create a new trip and conversation thread for the first message.
     if (!currentThreadId) {
       currentThreadId = this._uuidUtil.generate();
 
@@ -58,18 +61,14 @@ export class AIPlanningService {
         roomId: null,
       });
     } else {
-      // Existing conversation: Find the Trip using the threadId.
       trip = await this._tripRepository.findByThreadId(currentThreadId);
 
       if (!trip) {
         throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.TRIP_NOT_FOUND);
       }
 
-      // If the trip was created by a guest and the user is now logged in,
-      // associate the trip with that user.
+      // Associate a previously guest-owned trip with the logged-in user.
       if (userId && !trip.ownerId) {
-        console.log("Assigning trip to user:", userId);
-
         await this._tripRepository.updateOne(
           { threadId: currentThreadId },
           {
@@ -81,28 +80,30 @@ export class AIPlanningService {
       }
     }
 
-    // console.log("TRIP:", trip);
-
-    const result = await this._tripGraphService.processMessage(userMessage, currentThreadId);
+    const result = await this._tripGraphService.processMessage(
+      userMessage,
+      currentThreadId,
+      trip._id.toString(),
+    );
 
     console.info("TRIP STATE:", JSON.stringify(result.tripRequirements, null, 2));
 
-    console.info("TITLE:", JSON.stringify(result.title));
+    console.info("TITLE:", result.title);
 
-    // Update Trip title if the AI generated one.
+    // Update the trip title when the graph provides one.
     if (result.title) {
       await this._tripRepository.updateById(trip._id.toString(), {
         title: result.title,
       });
     }
 
-    // Create or update TripRequirements.
+    // Persist the latest trip requirements.
     await this._tripRequirementsService.saveRequirements({
       tripId: trip._id.toString(),
       requirements: result.tripRequirements,
     });
 
-    // Create or update TripRoute only when LangGraph has calculated a route.
+    // Persist the route only when the graph provides one.
     if (result.route) {
       await this._tripRouteService.saveRoute({
         tripId: trip._id.toString(),
@@ -111,12 +112,16 @@ export class AIPlanningService {
     }
 
     let reply = result.response;
-    let conversationHistory = result.conversationHistory;
+    const conversationHistory: ChatMessage[] = [...(result.conversationHistory ?? [])];
 
     console.log("result.itineraryGeneratedNow:", result.itineraryGeneratedNow);
+
     console.log("result.generatedItinerary:", result.generatedItinerary);
 
-    // Save only an itinerary generated during this invocation.
+    /*
+     * Save an itinerary only when this graph invocation generated one.
+     * This does not run for an ordinary modification request.
+     */
     if (result.itineraryGeneratedNow && result.generatedItinerary) {
       const savedItinerary = await this._itineraryService.saveItinerary({
         tripId: trip._id.toString(),
@@ -129,11 +134,8 @@ export class AIPlanningService {
 
       console.log("Saved itinerary:", savedItinerary);
 
-      // Queue RAG ingestion without waiting for embeddings.
-      // Add the itinerary to the ingestion queue.
+      // Queue ingestion without waiting for the worker to finish.
       if (!savedItinerary.templateId) {
-        console.log("Handling over job to Itinerary worker");
-
         await this._itineraryIngestionQueue.addJob({
           itineraryId: savedItinerary._id.toString(),
         });
@@ -141,34 +143,64 @@ export class AIPlanningService {
 
       reply =
         "Your itinerary is ready! You can view it in the Itinerary tab. If you'd like any changes, just tell me here!";
+    }
 
-      const lastMessage = result.conversationHistory[result.conversationHistory.length - 1];
+    /*
+     * Ensure this turn is represented in conversation history.
+     *
+     * Some graph nodes append the user and assistant messages themselves.
+     * Other nodes, such as itinerary modification nodes, may only return
+     * a response. Handle both cases without duplicating the current turn.
+     */
 
-      if (lastMessage) {
-        conversationHistory = [
-          ...result.conversationHistory.slice(0, -1),
-          {
-            id: lastMessage.id,
-            role: "assistant",
-            content: reply,
-            ...(lastMessage.ragSources !== undefined && {
-              ragSources: lastMessage.ragSources,
-            }),
-          },
-        ];
-      } else {
-        conversationHistory = [
-          {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: reply,
-          },
-        ];
+    const lastMessage = conversationHistory[conversationHistory.length - 1];
+
+    const previousMessage = conversationHistory[conversationHistory.length - 2];
+
+    const currentTurnAlreadyHasAssistantResponse =
+      lastMessage?.role === "assistant" &&
+      previousMessage?.role === "user" &&
+      previousMessage.content === userMessage;
+
+    if (currentTurnAlreadyHasAssistantResponse) {
+      // Keep the existing assistant ID and any attached RAG sources.
+      conversationHistory[conversationHistory.length - 1] = {
+        ...lastMessage,
+        content: reply,
+      };
+    } else {
+      const lastUserMessage = [...conversationHistory]
+        .reverse()
+        .find((message) => message.role === "user");
+
+      if (lastUserMessage?.content !== userMessage) {
+        conversationHistory.push({
+          id: randomUUID(),
+          role: "user",
+          content: userMessage,
+        });
       }
 
-      // Save the updated conversation history in LangGraph.
-      await this._tripGraphService.updateConversationHistory(currentThreadId, conversationHistory);
+      conversationHistory.push({
+        id: randomUUID(),
+        role: "assistant",
+        content: reply,
+        ...(result.ragSources.length > 0 ? { ragSources: result.ragSources } : {}),
+      });
     }
+
+    /*
+     * IMPORTANT:
+     * Save history for every response type, including:
+     * - Normal trip-planning messages
+     * - Itinerary creation
+     * - Itinerary modification feasibility responses
+     * - Modification confirmation responses
+     * - Successful modification responses
+     */
+    await this._tripGraphService.updateConversationHistory(currentThreadId, conversationHistory);
+
+    console.log("PERSISTED CONVERSATION HISTORY:", JSON.stringify(conversationHistory, null, 2));
 
     return {
       reply,
@@ -205,7 +237,10 @@ export class AIPlanningService {
       threadId,
     );
 
-    console.log("itinerary:", itinerary);
+    console.log(
+      "RESTORED CONVERSATION HISTORY:",
+      JSON.stringify(state.conversationHistory, null, 2),
+    );
 
     return {
       reply: state.response,
@@ -216,8 +251,8 @@ export class AIPlanningService {
       canGenerateDraft: state.canGenerateDraft,
       routeChanged: state.routeChanged,
       route: state.route,
-      ragSources: state.ragSources,
-      conversationHistory: state.conversationHistory,
+      ragSources: state.ragSources ?? [],
+      conversationHistory: state.conversationHistory ?? [],
       threadId,
       tripId: trip._id.toString(),
       generatedItinerary: itinerary

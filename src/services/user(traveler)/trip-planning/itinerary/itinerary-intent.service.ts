@@ -1,6 +1,8 @@
 import { env } from "@/config/env";
+import { PendingItineraryChange } from "@/interfaces/trip-planning/itinerary/itinerary.interfaces";
 import { GoogleGenAI } from "@google/genai";
 import { injectable } from "inversify";
+import z from "zod";
 
 export type ItineraryAction = "CREATE" | "MODIFY" | null;
 
@@ -234,6 +236,287 @@ ${JSON.stringify(userMessage)}
 
       return null;
     }
+  }
+
+  /**
+   * extractModification
+   *
+   * @param {string} userMessage
+   * @return {*}  {(Promise<PendingItineraryChange | null>)}
+   * @memberof ItineraryIntentService
+   */
+  public async extractModification(userMessage: string): Promise<PendingItineraryChange> {
+    const prompt = `
+You are TripNest's itinerary modification request extractor.
+
+Extract the user's requested changes to an existing travel itinerary.
+
+USER MESSAGE:
+${JSON.stringify(userMessage)}
+
+YOUR TASK:
+Extract additions, removals, and replacements.
+
+Return all three arrays, even when an array is empty.
+
+1. ADD PLACES
+
+For every requested addition, extract:
+- name: destination name.
+- dayNumber: explicitly specified day number, otherwise null.
+- insertBefore: destination the new place must appear immediately before, otherwise null.
+- insertAfter: destination the new place must appear immediately after, otherwise null.
+- preferredTime: the requested visiting time expressed as a natural-language string, otherwise null.
+
+Examples:
+- "Add Cheeyappara Waterfalls before Munnar Tea Gardens in the morning."
+  -> name: "Cheeyappara Waterfalls"
+  -> insertBefore: "Munnar Tea Gardens"
+  -> preferredTime: "Morning"
+
+- "Add Echo Point after Mattupetty Dam in the late afternoon."
+  -> name: "Echo Point"
+  -> insertAfter: "Mattupetty Dam"
+  -> preferredTime: "Late Afternoon"
+
+- "Add Pookode Lake to day 2."
+  -> dayNumber: 2
+  -> insertBefore: null
+  -> insertAfter: null
+  -> preferredTime: null
+
+- "Add a waterfall visit before lunch."
+  Extract the requested place only if the user identifies a specific destination.
+  Do not invent a destination name.
+
+IMPORTANT:
+- Do not invent a day, insertion position, or preferred time.
+- Do not convert a missing preference into a default time.
+- Do not use a predefined list of permitted time labels.
+- Extract the user's requested time in natural language.
+- If the user specifies both insertBefore and insertAfter, preserve both values.
+  Do not silently choose one over the other.
+- A position may refer to an existing destination by its name.
+
+2. REMOVE PLACES
+
+For every requested removal, extract:
+- name: destination to remove.
+- dayNumber: explicitly specified day number, otherwise null.
+
+Do not invent a day number.
+
+3. REPLACE PLACES
+
+For every requested replacement, extract:
+- remove: existing destination to replace.
+- add: replacement destination.
+- dayNumber: explicitly specified day number, otherwise null.
+- preferredTime: requested visiting time for the replacement, otherwise null.
+
+A replacement should preserve the original destination's position unless the user explicitly requests a different position.
+
+Do not treat a simple addition as a replacement.
+
+4. DESCRIPTION
+
+Provide a concise, natural-language description of the requested modifications.
+
+5. EXTRACTION RULES
+
+- Extract only changes explicitly requested by the user.
+- Use null for unspecified optional values.
+- Do not add explanations or recommendations.
+- If a user requests multiple changes, extract all of them.
+- Do not treat examples in these instructions as actual requested changes.
+- Do not invent destination names.
+- Return valid JSON only.
+
+REQUIRED JSON STRUCTURE:
+
+{
+  "addPlaces": [
+    {
+      "name": "Cheeyappara Waterfalls",
+      "dayNumber": null,
+      "insertBefore": "Munnar Tea Gardens",
+      "insertAfter": null,
+      "preferredTime": "Morning"
+    }
+  ],
+  "removePlaces": [],
+  "replacePlaces": [],
+  "description": "Add Cheeyappara Waterfalls before Munnar Tea Gardens in the morning."
+}
+
+The example above illustrates the structure only. Your output must reflect the actual user message.
+
+Return only valid JSON without Markdown or code fences.
+`;
+
+    const response = await this._ai.models.generateContent({
+      model: this._model,
+      contents: prompt,
+      config: {
+        temperature: 0.1,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            addPlaces: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  name: { type: "STRING" },
+                  dayNumber: {
+                    type: "INTEGER",
+                    nullable: true,
+                  },
+                  insertBefore: {
+                    type: "STRING",
+                    nullable: true,
+                  },
+                  insertAfter: {
+                    type: "STRING",
+                    nullable: true,
+                  },
+                  preferredTime: {
+                    type: "STRING",
+                    nullable: true,
+                  },
+                },
+                required: ["name", "dayNumber", "insertBefore", "insertAfter", "preferredTime"],
+              },
+            },
+            removePlaces: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  name: { type: "STRING" },
+                  dayNumber: {
+                    type: "INTEGER",
+                    nullable: true,
+                  },
+                },
+                required: ["name", "dayNumber"],
+              },
+            },
+            replacePlaces: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  remove: { type: "STRING" },
+                  add: { type: "STRING" },
+                  dayNumber: {
+                    type: "INTEGER",
+                    nullable: true,
+                  },
+                  preferredTime: {
+                    type: "STRING",
+                    nullable: true,
+                  },
+                },
+                required: ["remove", "add", "dayNumber", "preferredTime"],
+              },
+            },
+            description: { type: "STRING" },
+          },
+          required: ["addPlaces", "removePlaces", "replacePlaces", "description"],
+        },
+      },
+    });
+
+    const responseText = response.text?.trim();
+
+    if (!responseText) {
+      throw new Error("Gemini returned an empty itinerary modification response.");
+    }
+
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(responseText);
+    } catch {
+      throw new Error("Gemini returned invalid JSON for the itinerary modification.");
+    }
+
+    const nullableString = z.string().trim().min(1).nullable();
+
+    const schema = z.object({
+      addPlaces: z.array(
+        z.object({
+          name: z.string().trim().min(1),
+          dayNumber: z.number().int().positive().nullable(),
+          insertBefore: nullableString,
+          insertAfter: nullableString,
+          preferredTime: nullableString,
+        }),
+      ),
+      removePlaces: z.array(
+        z.object({
+          name: z.string().trim().min(1),
+          dayNumber: z.number().int().positive().nullable(),
+        }),
+      ),
+      replacePlaces: z.array(
+        z.object({
+          remove: z.string().trim().min(1),
+          add: z.string().trim().min(1),
+          dayNumber: z.number().int().positive().nullable(),
+          preferredTime: nullableString,
+        }),
+      ),
+      description: z.string(),
+    });
+
+    const result = schema.safeParse(parsed);
+
+    if (!result.success) {
+      console.error(
+        "Invalid Gemini itinerary modification response:",
+        JSON.stringify(parsed, null, 2),
+      );
+
+      throw new Error(`Invalid itinerary modification response: ${result.error.message}`);
+    }
+
+    const modification = result.data;
+
+    const hasChanges =
+      modification.addPlaces.length > 0 ||
+      modification.removePlaces.length > 0 ||
+      modification.replacePlaces.length > 0;
+
+    if (!hasChanges) {
+      throw new Error("No valid itinerary modifications could be extracted from the request.");
+    }
+
+    return {
+      addPlaces: modification.addPlaces.map((place) => ({
+        name: place.name,
+        ...(place.dayNumber !== null ? { dayNumber: place.dayNumber } : {}),
+        ...(place.insertBefore !== null ? { insertBefore: place.insertBefore } : {}),
+        ...(place.insertAfter !== null ? { insertAfter: place.insertAfter } : {}),
+        ...(place.preferredTime !== null ? { preferredTime: place.preferredTime } : {}),
+      })),
+
+      removePlaces: modification.removePlaces.map((place) => ({
+        name: place.name,
+        ...(place.dayNumber !== null ? { dayNumber: place.dayNumber } : {}),
+      })),
+
+      replacePlaces: modification.replacePlaces.map((place) => ({
+        remove: place.remove,
+        add: place.add,
+        ...(place.dayNumber !== null ? { dayNumber: place.dayNumber } : {}),
+        ...(place.preferredTime !== null ? { preferredTime: place.preferredTime } : {}),
+      })),
+
+      description: modification.description.trim(),
+    };
   }
 
   /**

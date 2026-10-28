@@ -116,6 +116,18 @@ export class ItineraryService implements IItineraryService {
       updateData.days = days;
     }
 
+    console.log(
+      "DAYS SENT TO REPOSITORY:",
+      JSON.stringify(
+        updateData.days?.map((day) => ({
+          dayNumber: day.dayNumber,
+          stops: day.stops.map((stop) => stop.name),
+        })),
+        null,
+        2,
+      ),
+    );
+
     const updatedItinerary = await this._itineraryRepository.updateByTripId(tripId, updateData);
 
     if (!updatedItinerary) {
@@ -124,6 +136,18 @@ export class ItineraryService implements IItineraryService {
         ErrorMessages.FAILED_TO_UPDATE_ITINERARY,
       );
     }
+
+    console.log(
+      "DAYS RETURNED FROM REPOSITORY:",
+      JSON.stringify(
+        updatedItinerary.days.map((day) => ({
+          dayNumber: day.dayNumber,
+          stops: day.stops.map((stop) => stop.name),
+        })),
+        null,
+        2,
+      ),
+    );
 
     return updatedItinerary;
   }
