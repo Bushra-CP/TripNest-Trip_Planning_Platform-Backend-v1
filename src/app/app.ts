@@ -13,6 +13,7 @@ import { env } from "@/config/env";
 import { TripPlanningRoutes } from "@/routes/user(traveler)/trip-planning.routes";
 import { KnowledgeDocumentRoutes } from "@/routes/admin/knowledge-document.routes";
 import { TripTalesRoutes } from "@/routes/user(traveler)/trip-tales.routes";
+import { AdminTripTalesRoutes } from "@/routes/admin/admin-trip-tales.routes";
 
 const app = express();
 
@@ -29,6 +30,8 @@ const knowledgeDocumentRoutes = container.get<KnowledgeDocumentRoutes>(
 const tripPlanningRoute = container.get<TripPlanningRoutes>(TYPES.TripPlanningRoutes);
 
 const tripTalesRoute = container.get<TripTalesRoutes>(TYPES.TripTalesRoutes);
+
+const adminTripTalesRoute = container.get<AdminTripTalesRoutes>(TYPES.AdminTripTalesRoutes);
 
 const errorMiddleware = container.get<ErrorMiddleware>(TYPES.ErrorMiddleware);
 
@@ -49,7 +52,7 @@ app.use("/trip-planning", tripPlanningRoute.router);
 app.use("/trip-tales", tripTalesRoute.router);
 app.use("/admin", userManagementRoute.router);
 app.use("/admin", knowledgeDocumentRoutes.router);
-
+app.use("/admin", adminTripTalesRoute.router);
 // Route not found
 app.use(notFoundMiddleware);
 

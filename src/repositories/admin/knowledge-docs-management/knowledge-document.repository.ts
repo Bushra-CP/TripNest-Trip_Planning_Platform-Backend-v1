@@ -1,6 +1,7 @@
 import {
   IKnowledgeDocument,
   KnowledgeDocumentStatus,
+  KnowledgeSourceType,
 } from "@/interfaces/IModel/knowledge-document.interfaces";
 import {
   IKnowledgeDocumentRepository,
@@ -117,5 +118,17 @@ export class KnowledgeDocumentRepository
     }
 
     return this.model.countDocuments(filter).exec();
+  }
+
+  public async findBySource(
+    sourceType: KnowledgeSourceType,
+    sourceId: string,
+  ): Promise<IKnowledgeDocument | null> {
+    return this.model
+      .findOne({
+        sourceType,
+        sourceId,
+      })
+      .exec();
   }
 }

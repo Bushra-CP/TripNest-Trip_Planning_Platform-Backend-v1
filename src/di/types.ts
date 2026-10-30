@@ -161,4 +161,8 @@ export const TYPES = {
   TripTalesRoutes: Symbol.for("TripTalesRoutes"),
   TripTalesRagService: Symbol.for("TripTalesRagService"),
   TripTalesMediaUnderstandingService: Symbol.for("TripTalesMediaUnderstandingService"),
+  TripTalesRepository: Symbol.for("TripTalesRepository"),
+  AdminTripTalesService: Symbol.for("AdminTripTalesService"),
+  AdminTripTalesController: Symbol.for("AdminTripTalesController"),
+  AdminTripTalesRoutes: Symbol.for("AdminTripTalesRoutes"),
 } as const;

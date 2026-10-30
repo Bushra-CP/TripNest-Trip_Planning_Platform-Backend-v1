@@ -36,6 +36,9 @@ export class KnowledgeChunkRepository
           queryVector: queryEmbedding,
           numCandidates: 100,
           limit: candidateLimit,
+          filter: {
+            isRetrievable: true,
+          },
         },
       },
     ];
@@ -96,5 +99,23 @@ export class KnowledgeChunkRepository
       .exec();
 
     return result.deletedCount > 0;
+  }
+
+  public async setRetrievableByDocumentId(
+    documentId: Types.ObjectId,
+    isRetrievable: boolean,
+  ): Promise<void> {
+    await this.model
+      .updateMany(
+        {
+          documentId,
+        },
+        {
+          $set: {
+            isRetrievable,
+          },
+        },
+      )
+      .exec();
   }
 }

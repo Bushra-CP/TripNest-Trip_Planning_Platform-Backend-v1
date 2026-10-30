@@ -107,6 +107,12 @@ const knowledgeChunkSchema = new Schema<IKnowledgeChunk>(
       type: [Number],
       required: true,
     },
+
+    isRetrievable: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
   },
   {
     timestamps: true,

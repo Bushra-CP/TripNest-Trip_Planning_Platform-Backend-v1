@@ -107,7 +107,7 @@ export class PostService implements IPostService {
    * @memberof PostService
    */
   async getPosts(): Promise<CreatePostResponseDto[]> {
-    const posts = await this._postRepository.findAllWithUser();
+    const posts = await this._postRepository.findPublishedWithUser();
 
     return posts.map((post) => TripTalesPostMapper.toPostResponse(post));
   }
