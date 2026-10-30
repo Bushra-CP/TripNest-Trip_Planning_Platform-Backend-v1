@@ -23,4 +23,6 @@ export interface IKnowledgeChunkRepository extends IBaseRepository<IKnowledgeChu
   findChunksByDocument(documentId: Types.ObjectId): Promise<IKnowledgeChunk[]>;
 
   deleteByDocumentId(documentId: Types.ObjectId): Promise<boolean>;
+
+  setRetrievableByDocumentId(documentId: Types.ObjectId, isRetrievable: boolean): Promise<void>;
 }

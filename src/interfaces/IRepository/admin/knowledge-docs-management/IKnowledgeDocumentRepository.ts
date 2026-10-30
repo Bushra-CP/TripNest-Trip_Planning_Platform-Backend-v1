@@ -1,4 +1,7 @@
-import type { IKnowledgeDocument } from "@/interfaces/IModel/knowledge-document.interfaces";
+import type {
+  IKnowledgeDocument,
+  KnowledgeSourceType,
+} from "@/interfaces/IModel/knowledge-document.interfaces";
 import { IBaseRepository } from "../../IBaseRepository";
 
 export interface KnowledgeDocumentWithChunkCount extends IKnowledgeDocument {
@@ -14,4 +17,9 @@ export interface IKnowledgeDocumentRepository extends IBaseRepository<IKnowledge
   ): Promise<KnowledgeDocumentWithChunkCount[]>;
 
   countWithFilters(search?: string, status?: string): Promise<number>;
+
+  findBySource(
+    sourceType: KnowledgeSourceType,
+    sourceId: string,
+  ): Promise<IKnowledgeDocument | null>;
 }

@@ -11,9 +11,9 @@ export class PostRepository extends BaseRepository<IPost> implements IPostReposi
   }
 
   // Get all posts with user information.
-  async findAllWithUser(): Promise<IPopulatedPost[]> {
+  async findPublishedWithUser(): Promise<IPopulatedPost[]> {
     return this.model
-      .find()
+      .find({ status: "PUBLISHED" })
       .populate({
         path: "userId",
         populate: {

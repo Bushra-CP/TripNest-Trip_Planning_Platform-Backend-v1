@@ -8,6 +8,10 @@ import { TripTalesController } from "@/controller/user(traveler)/trip-tales.cont
 import { TripTalesRoutes } from "@/routes/user(traveler)/trip-tales.routes";
 import { TripTalesRagService } from "@/services/user(traveler)/trip-tales/trip-tales-rag.service";
 import { TripTalesMediaUnderstandingService } from "@/services/user(traveler)/trip-tales/trip-tales-media-understanding.service";
+import { TripTalesRepository } from "@/repositories/admin/trip-tales/trip-tales.repository";
+import { AdminTripTalesService } from "@/services/admin/trip-tales/admin-trip-tales.service";
+import { AdminTripTalesController } from "@/controller/admin/admin-trip-tales.controller";
+import { AdminTripTalesRoutes } from "@/routes/admin/admin-trip-tales.routes";
 
 export function registerTripTales(container: Container): void {
   container.bind<IPostRepository>(TYPES.PostRepository).to(PostRepository);
@@ -16,4 +20,8 @@ export function registerTripTales(container: Container): void {
   container.bind(TYPES.TripTalesRoutes).to(TripTalesRoutes);
   container.bind(TYPES.TripTalesRagService).to(TripTalesRagService);
   container.bind(TYPES.TripTalesMediaUnderstandingService).to(TripTalesMediaUnderstandingService);
+  container.bind(TYPES.TripTalesRepository).to(TripTalesRepository);
+  container.bind(TYPES.AdminTripTalesService).to(AdminTripTalesService);
+  container.bind(TYPES.AdminTripTalesController).to(AdminTripTalesController);
+  container.bind(TYPES.AdminTripTalesRoutes).to(AdminTripTalesRoutes);
 }

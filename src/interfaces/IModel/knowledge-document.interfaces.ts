@@ -48,6 +48,7 @@ export interface IKnowledgeChunk extends Document, IChunkMetadata {
   destination: string | null;
   category: string;
   embedding: number[];
+  isRetrievable: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
