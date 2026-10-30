@@ -12,6 +12,14 @@ import {
 import { TripTalesRagService } from "./trip-tales-rag.service";
 import { TripTalesPostMapper } from "@/mapper/trip-tales-post.mapper";
 import { TripTalesSocket } from "@/socket/tripTales.socket";
+import { MyPostsQueryDto, MyPostsResponseDto } from "@/dtos/user(traveler)/trip-tales/my-posts.dto";
+import {
+  MyPostDetailsResponseDto,
+  UpdateMyPostDto,
+} from "@/dtos/user(traveler)/trip-tales/update-my-posts.dto";
+import { AppError } from "@/shared/errors/app.error";
+import { STATUS_CODES } from "@/enums/status.codes.enum";
+import { IPost } from "@/interfaces/IModel/trip-tales/posts.model.interface";
 
 @injectable()
 export class PostService implements IPostService {
@@ -127,5 +135,197 @@ export class PostService implements IPostService {
     }
 
     return TripTalesPostMapper.toPostResponse(post);
+  }
+
+  /**
+   * GET MY POSTS
+   *
+   * Fetch authenticated user's posts with pagination,
+   * search, status filtering and sorting.
+   *
+   * @param {string} userId
+   * @param {MyPostsQueryDto} query
+   * @return {*}  {Promise<MyPostsResponseDto>}
+   * @memberof PostService
+   */
+  async getMyPosts(userId: string, query: MyPostsQueryDto): Promise<MyPostsResponseDto> {
+    const { page, limit, search, sort, status } = query;
+
+    const [posts, totalPosts] = await Promise.all([
+      this._postRepository.findMyPosts(userId, page, limit, search, status, sort),
+
+      this._postRepository.countMyPosts(userId, search, status),
+    ]);
+
+    const totalPages = Math.ceil(totalPosts / limit);
+
+    return {
+      posts: posts.map((post) => TripTalesPostMapper.toMyPostResponse(post)),
+
+      pagination: {
+        currentPage: page,
+
+        totalPages,
+
+        totalPosts,
+
+        limit,
+
+        hasNextPage: page < totalPages,
+
+        hasPreviousPage: page > 1,
+      },
+    };
+  }
+
+  async getMyPostById(postId: string, userId: string): Promise<MyPostDetailsResponseDto | null> {
+    const post = await this._postRepository.findMyPostById(postId, userId);
+
+    if (!post) {
+      return null;
+    }
+
+    const populatedPost = await this._postRepository.findByIdWithUser(postId);
+
+    if (!populatedPost) {
+      return null;
+    }
+
+    return TripTalesPostMapper.toMyPostDetailsResponse(populatedPost);
+  }
+
+  async updateMyPost(
+    postId: string,
+    userId: string,
+    payload: UpdateMyPostDto,
+    files: Express.Multer.File[],
+  ): Promise<MyPostDetailsResponseDto> {
+    const existingPost = await this._postRepository.findMyPostById(postId, userId);
+
+    if (!existingPost) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, "TripTales post not found");
+    }
+
+    const existingMedia = existingPost.media ?? [];
+
+    // Retain only the existing media selected by the user.
+    const keepMediaKeys = payload.keepMediaKeys ?? [];
+
+    const retainedMedia = existingMedia.filter((media) => keepMediaKeys.includes(media.key));
+
+    // Upload newly selected files.
+    const uploadedMedia: typeof existingMedia = [];
+
+    try {
+      for (const file of files) {
+        const isImage = file.mimetype.startsWith("image/");
+
+        const folder = isImage ? MediaFolder.POST_IMAGES : MediaFolder.VIDEOS;
+
+        const uploadedFile = await this._s3Service.uploadFile(file, folder);
+
+        uploadedMedia.push({
+          key: uploadedFile.key,
+          url: uploadedFile.url,
+          type: isImage ? "image" : "video",
+        });
+      }
+
+      const updatedPayload: Partial<IPost> = {
+        media: [...retainedMedia, ...uploadedMedia],
+      };
+
+      if (payload.title !== undefined) {
+        updatedPayload.title = payload.title;
+      }
+
+      if (payload.destination !== undefined) {
+        updatedPayload.destination = payload.destination;
+      }
+
+      if (payload.content !== undefined) {
+        updatedPayload.content = payload.content;
+      }
+
+      if (payload.tags !== undefined) {
+        updatedPayload.tags = payload.tags;
+      }
+
+      const updatedPost = await this._postRepository.updateMyPost(postId, userId, updatedPayload);
+
+      if (!updatedPost) {
+        throw new AppError(STATUS_CODES.NOT_FOUND, "TripTales post not found");
+      }
+
+      // Delete media removed by the user.
+      const retainedKeys = new Set([...retainedMedia, ...uploadedMedia].map((media) => media.key));
+
+      const removedMedia = existingMedia.filter((media) => !retainedKeys.has(media.key));
+
+      for (const media of removedMedia) {
+        try {
+          await this._s3Service.deleteFile(media.key);
+        } catch (error) {
+          console.error(`Failed to delete removed TripTales media: ${media.key}`, error);
+        }
+      }
+
+      // Update the RAG knowledge document.
+      try {
+        await this._tripTalesRagService.updatePostKnowledge(updatedPost);
+      } catch (ragError) {
+        console.error("Failed to queue updated TripTales RAG ingestion:", ragError);
+      }
+
+      const populatedPost = await this._postRepository.findByIdWithUser(postId);
+
+      if (!populatedPost) {
+        throw new Error("Failed to fetch updated TripTales post");
+      }
+
+      return TripTalesPostMapper.toMyPostDetailsResponse(populatedPost);
+    } catch (error) {
+      // Clean up newly uploaded files if the update fails.
+      for (const media of uploadedMedia) {
+        try {
+          await this._s3Service.deleteFile(media.key);
+        } catch (cleanupError) {
+          console.error(`Failed to clean up uploaded media: ${media.key}`, cleanupError);
+        }
+      }
+
+      throw error;
+    }
+  }
+
+  async deleteMyPost(postId: string, userId: string): Promise<void> {
+    const existingPost = await this._postRepository.findMyPostById(postId, userId);
+
+    if (!existingPost) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, "TripTales post not found");
+    }
+
+    // Delete the post from the database.
+    const deletedPost = await this._postRepository.deleteMyPost(postId, userId);
+
+    if (!deletedPost) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, "TripTales post not found");
+    }
+
+    // Remove associated knowledge document and chunks.
+    try {
+      await this._tripTalesRagService.removePostKnowledge(postId);
+    } catch (error) {
+      console.error("Failed to remove TripTales RAG knowledge:", error);
+    }
+
+    // Delete associated S3 media.
+    for (const media of deletedPost.media ?? []) {
+      try {
+        await this._s3Service.deleteFile(media.key);
+      } catch (error) {
+        console.error(`Failed to delete TripTales media: ${media.key}`, error);
+      }
+    }
   }
 }

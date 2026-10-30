@@ -3,6 +3,7 @@ import { UpdateProfilePictureResponseDto } from "@/dtos/user(traveler)/profile/U
 import {
   TravelerProfilePayload,
   TravelerProfileResponseDto,
+  TripTalesProfileResponseDto,
 } from "@/dtos/user(traveler)/profile/TravelerProfileResponseDto.js";
 import {
   UpdateTravelerProfileRequestDto,
@@ -31,4 +32,6 @@ export interface ITravelerProfileService {
   updateProfile(
     payload: UpdateTravelerProfileRequestDto,
   ): Promise<UpdateTravelerProfileResponseDto>;
+
+  getTripTalesProfile(payload: TravelerProfilePayload): Promise<TripTalesProfileResponseDto>;
 }

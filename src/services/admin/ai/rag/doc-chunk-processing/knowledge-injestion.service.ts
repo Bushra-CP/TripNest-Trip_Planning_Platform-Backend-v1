@@ -175,7 +175,10 @@ export class KnowledgeIngestionService {
         });
       }
 
-      // Save the chunks.
+      // Remove previous chunks before inserting updated chunks.
+      await this._knowledgeChunkRepository.deleteByDocumentId(document._id);
+
+      // Save the newly generated chunks.
       await this._knowledgeChunkRepository.insertMany(chunkDocuments);
 
       // Update the document processing status.

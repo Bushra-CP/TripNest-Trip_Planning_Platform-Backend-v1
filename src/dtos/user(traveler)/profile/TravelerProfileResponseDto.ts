@@ -23,3 +23,22 @@ export interface TravelerProfileResponseDto {
 
   referenceId: string;
 }
+
+// TripTales profile response
+export interface TripTalesProfileResponseDto {
+  profile: {
+    userId: string;
+    fullName: string;
+    profileImageUrl: string;
+    bio: string;
+    country: string;
+    state: string;
+    city: string;
+  };
+
+  stats: {
+    posts: number;
+    followers: number;
+    following: number;
+  };
+}

@@ -72,5 +72,12 @@ export class TravelerProfileRoutes {
       validate(updateTravelerProfileSchema),
       this._travelerProfileController.updateProfile.bind(this._travelerProfileController),
     );
+
+    this.router.get(
+      "/my-profile",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._travelerProfileController.getTripTalesProfile.bind(this._travelerProfileController),
+    );
   }
 }
