@@ -165,4 +165,6 @@ export const TYPES = {
   AdminTripTalesService: Symbol.for("AdminTripTalesService"),
   AdminTripTalesController: Symbol.for("AdminTripTalesController"),
   AdminTripTalesRoutes: Symbol.for("AdminTripTalesRoutes"),
+  LikesRepository: Symbol.for("LikesRepository"),
+  LikesService: Symbol.for("LikesService"),
 } as const;

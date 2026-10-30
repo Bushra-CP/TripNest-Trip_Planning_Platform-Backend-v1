@@ -20,6 +20,7 @@ import {
 import { AppError } from "@/shared/errors/app.error";
 import { STATUS_CODES } from "@/enums/status.codes.enum";
 import { IPost } from "@/interfaces/IModel/trip-tales/posts.model.interface";
+import { ILikesService } from "@/interfaces/IServices/user(traveler)/trip-tales/likes.service.interface";
 
 @injectable()
 export class PostService implements IPostService {
@@ -35,6 +36,9 @@ export class PostService implements IPostService {
 
     @inject(TYPES.TripTalesSocket)
     private readonly _tripTalesSocket: TripTalesSocket,
+
+    @inject(TYPES.LikesService)
+    private readonly _likesService: ILikesService,
   ) {}
 
   /**
@@ -114,10 +118,22 @@ export class PostService implements IPostService {
    * @return {*}  {Promise<CreatePostResponseDto[]>}
    * @memberof PostService
    */
-  async getPosts(): Promise<CreatePostResponseDto[]> {
+  async getPosts(userId?: string): Promise<CreatePostResponseDto[]> {
     const posts = await this._postRepository.findPublishedWithUser();
 
-    return posts.map((post) => TripTalesPostMapper.toPostResponse(post));
+    const postIds = posts.map((post) => post._id.toString());
+
+    const likeStats = await this._likesService.getPostLikeStats(postIds, userId);
+
+    return posts.map((post) => {
+      const stats = likeStats.get(post._id.toString());
+
+      return TripTalesPostMapper.toPostResponse(
+        post,
+        stats?.likesCount ?? 0,
+        stats?.isLikedByCurrentUser ?? false,
+      );
+    });
   }
 
   /**
@@ -127,14 +143,22 @@ export class PostService implements IPostService {
    * @return {*}  {(Promise<CreatePostResponseDto | null>)}
    * @memberof PostService
    */
-  async getPostById(postId: string): Promise<CreatePostResponseDto | null> {
+  async getPostById(postId: string, userId?: string): Promise<CreatePostResponseDto | null> {
     const post = await this._postRepository.findByIdWithUser(postId);
 
-    if (!post) {
+    if (!post || post.status !== "PUBLISHED") {
       return null;
     }
 
-    return TripTalesPostMapper.toPostResponse(post);
+    const likeStats = await this._likesService.getPostLikeStats([postId], userId);
+
+    const stats = likeStats.get(postId);
+
+    return TripTalesPostMapper.toPostResponse(
+      post,
+      stats?.likesCount ?? 0,
+      stats?.isLikedByCurrentUser ?? false,
+    );
   }
 
   /**
@@ -153,26 +177,32 @@ export class PostService implements IPostService {
 
     const [posts, totalPosts] = await Promise.all([
       this._postRepository.findMyPosts(userId, page, limit, search, status, sort),
-
       this._postRepository.countMyPosts(userId, search, status),
     ]);
+
+    const postIds = posts.map((post) => post._id.toString());
+
+    const likeStats = await this._likesService.getPostLikeStats(postIds, userId);
 
     const totalPages = Math.ceil(totalPosts / limit);
 
     return {
-      posts: posts.map((post) => TripTalesPostMapper.toMyPostResponse(post)),
+      posts: posts.map((post) => {
+        const stats = likeStats.get(post._id.toString());
+
+        return TripTalesPostMapper.toMyPostResponse(
+          post,
+          stats?.likesCount ?? 0,
+          stats?.isLikedByCurrentUser ?? false,
+        );
+      }),
 
       pagination: {
         currentPage: page,
-
         totalPages,
-
         totalPosts,
-
         limit,
-
         hasNextPage: page < totalPages,
-
         hasPreviousPage: page > 1,
       },
     };
@@ -191,7 +221,15 @@ export class PostService implements IPostService {
       return null;
     }
 
-    return TripTalesPostMapper.toMyPostDetailsResponse(populatedPost);
+    const likeStats = await this._likesService.getPostLikeStats([postId], userId);
+
+    const stats = likeStats.get(postId);
+
+    return TripTalesPostMapper.toMyPostDetailsResponse(
+      populatedPost,
+      stats?.likesCount ?? 0,
+      stats?.isLikedByCurrentUser ?? false,
+    );
   }
 
   async updateMyPost(
@@ -283,7 +321,15 @@ export class PostService implements IPostService {
         throw new Error("Failed to fetch updated TripTales post");
       }
 
-      return TripTalesPostMapper.toMyPostDetailsResponse(populatedPost);
+      const likeStats = await this._likesService.getPostLikeStats([postId], userId);
+
+      const stats = likeStats.get(postId);
+
+      return TripTalesPostMapper.toMyPostDetailsResponse(
+        populatedPost,
+        stats?.likesCount ?? 0,
+        stats?.isLikedByCurrentUser ?? false,
+      );
     } catch (error) {
       // Clean up newly uploaded files if the update fails.
       for (const media of uploadedMedia) {
@@ -311,6 +357,8 @@ export class PostService implements IPostService {
     if (!deletedPost) {
       throw new AppError(STATUS_CODES.NOT_FOUND, "TripTales post not found");
     }
+
+    await this._likesService.deleteLikesByPostId(postId);
 
     // Remove associated knowledge document and chunks.
     try {

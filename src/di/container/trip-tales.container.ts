@@ -12,6 +12,8 @@ import { TripTalesRepository } from "@/repositories/admin/trip-tales/trip-tales.
 import { AdminTripTalesService } from "@/services/admin/trip-tales/admin-trip-tales.service";
 import { AdminTripTalesController } from "@/controller/admin/admin-trip-tales.controller";
 import { AdminTripTalesRoutes } from "@/routes/admin/admin-trip-tales.routes";
+import { LikesRepository } from "@/repositories/user(traveler)/trip-tales/likes.repository";
+import { LikesService } from "@/services/user(traveler)/trip-tales/likes.service";
 
 export function registerTripTales(container: Container): void {
   container.bind<IPostRepository>(TYPES.PostRepository).to(PostRepository);
@@ -24,4 +26,6 @@ export function registerTripTales(container: Container): void {
   container.bind(TYPES.AdminTripTalesService).to(AdminTripTalesService);
   container.bind(TYPES.AdminTripTalesController).to(AdminTripTalesController);
   container.bind(TYPES.AdminTripTalesRoutes).to(AdminTripTalesRoutes);
+  container.bind(TYPES.LikesRepository).to(LikesRepository);
+  container.bind(TYPES.LikesService).to(LikesService);
 }

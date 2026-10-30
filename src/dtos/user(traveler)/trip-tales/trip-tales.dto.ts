@@ -28,5 +28,8 @@ export interface CreatePostResponseDto {
     type: "image" | "video";
   }[];
 
+  likesCount: number;
+  isLikedByCurrentUser: boolean;
+
   createdAt: Date;
 }
