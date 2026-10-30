@@ -27,6 +27,7 @@ import { MediaFolder } from "@/enums/media.enums";
 import {
   TravelerProfilePayload,
   TravelerProfileResponseDto,
+  TripTalesProfileResponseDto,
 } from "@/dtos/user(traveler)/profile/TravelerProfileResponseDto";
 import { ProfileMapper } from "@/mapper/profile.mapper";
 import {
@@ -34,8 +35,9 @@ import {
   UpdateTravelerProfileResponseDto,
 } from "@/dtos/user(traveler)/profile/UpdateTravelerProfileRequestDto";
 import { ITravelerProfileService } from "@/interfaces/IServices/user(traveler)/ITravelerProfileService";
+import { IPostRepository } from "@/interfaces/IRepository/user(traveler)/trip-tales/posts.repository.interface";
 
-injectable();
+@injectable()
 export class TravelerProfileService implements ITravelerProfileService {
   constructor(
     @inject(TYPES.UserRepository)
@@ -64,6 +66,9 @@ export class TravelerProfileService implements ITravelerProfileService {
 
     @inject(TYPES.S3Service)
     private readonly _s3Service: IS3Service,
+
+    @inject(TYPES.PostRepository)
+    private readonly _postRepository: IPostRepository,
   ) {}
 
   /*-----------------------
@@ -400,5 +405,22 @@ export class TravelerProfileService implements ITravelerProfileService {
     }
 
     return { message: SuccessMessages.PROFILE_UPDATED_SUCCESSFULLY };
+  }
+
+  /*-----------------------
+  GET MY TRIPTALES PROFILE
+  ------------------------*/
+  async getTripTalesProfile(payload: TravelerProfilePayload): Promise<TripTalesProfileResponseDto> {
+    const { userId } = payload;
+
+    const profile = await this._travelerProfileRepository.findByUserId(userId);
+
+    if (!profile) {
+      throw new AppError(STATUS_CODES.NOT_FOUND, ErrorMessages.PROFILE_NOT_FOUND);
+    }
+
+    const postCount = await this._postRepository.countByUserId(userId);
+
+    return ProfileMapper.toMyTripTalesProfileResponse(profile, postCount);
   }
 }

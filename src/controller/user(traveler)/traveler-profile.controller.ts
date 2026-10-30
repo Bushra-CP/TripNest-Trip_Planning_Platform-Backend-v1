@@ -149,4 +149,26 @@ export class TravelerProfileController {
       next(error);
     }
   }
+
+  /*-----------------------
+GET MY TRIPTALES PROFILE
+------------------------*/
+  async getTripTalesProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const payload: TravelerProfilePayload = {
+        userId: req.user.userId,
+      };
+
+      const response = await this._travelerProfileService.getTripTalesProfile(payload);
+
+      ResponseHandler.success(
+        res,
+        STATUS_CODES.OK,
+        "My TripTales profile fetched successfully",
+        response,
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
 }

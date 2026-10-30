@@ -1,5 +1,7 @@
 import { AdminTripTalesPostDto } from "@/dtos/admin/trip-tales/admin-trip-tales.dto";
+import { MyPostResponseDto } from "@/dtos/user(traveler)/trip-tales/my-posts.dto";
 import { CreatePostResponseDto } from "@/dtos/user(traveler)/trip-tales/trip-tales.dto";
+import { MyPostDetailsResponseDto } from "@/dtos/user(traveler)/trip-tales/update-my-posts.dto";
 import { IPopulatedPost } from "@/interfaces/IModel/trip-tales/posts.model.interface";
 
 export class TripTalesPostMapper {
@@ -28,6 +30,24 @@ export class TripTalesPostMapper {
       media: post.media,
 
       createdAt: post.createdAt,
+    };
+  }
+
+  static toMyPostResponse(post: IPopulatedPost): MyPostResponseDto {
+    return {
+      ...this.toPostResponse(post),
+
+      status: post.status,
+
+      updatedAt: post.updatedAt,
+    };
+  }
+
+  static toMyPostDetailsResponse(post: IPopulatedPost): MyPostDetailsResponseDto {
+    return {
+      ...this.toPostResponse(post),
+      status: post.status,
+      updatedAt: post.updatedAt,
     };
   }
 
