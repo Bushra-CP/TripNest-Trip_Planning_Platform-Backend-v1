@@ -1,8 +1,10 @@
 import { MyPostsQueryDto, MyPostsResponseDto } from "@/dtos/user(traveler)/trip-tales/my-posts.dto";
+
 import {
   CreatePostRequestDto,
   CreatePostResponseDto,
 } from "@/dtos/user(traveler)/trip-tales/trip-tales.dto";
+
 import {
   MyPostDetailsResponseDto,
   UpdateMyPostDto,
@@ -15,9 +17,9 @@ export interface IPostService {
     files: Express.Multer.File[],
   ): Promise<CreatePostResponseDto>;
 
-  getPosts(): Promise<CreatePostResponseDto[]>;
+  getPosts(userId?: string): Promise<CreatePostResponseDto[]>;
 
-  getPostById(postId: string): Promise<CreatePostResponseDto | null>;
+  getPostById(postId: string, userId?: string): Promise<CreatePostResponseDto | null>;
 
   getMyPosts(userId: string, query: MyPostsQueryDto): Promise<MyPostsResponseDto>;
 

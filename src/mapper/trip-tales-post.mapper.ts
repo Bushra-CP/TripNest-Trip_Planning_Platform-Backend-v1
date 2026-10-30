@@ -5,7 +5,11 @@ import { MyPostDetailsResponseDto } from "@/dtos/user(traveler)/trip-tales/updat
 import { IPopulatedPost } from "@/interfaces/IModel/trip-tales/posts.model.interface";
 
 export class TripTalesPostMapper {
-  static toPostResponse(post: IPopulatedPost): CreatePostResponseDto {
+  static toPostResponse(
+    post: IPopulatedPost,
+    likesCount = 0,
+    isLikedByCurrentUser = false,
+  ): CreatePostResponseDto {
     const travelerProfile = post.userId.travelerProfile;
 
     return {
@@ -29,13 +33,20 @@ export class TripTalesPostMapper {
 
       media: post.media,
 
+      likesCount: likesCount,
+      isLikedByCurrentUser: isLikedByCurrentUser,
+
       createdAt: post.createdAt,
     };
   }
 
-  static toMyPostResponse(post: IPopulatedPost): MyPostResponseDto {
+  static toMyPostResponse(
+    post: IPopulatedPost,
+    likesCount = 0,
+    isLikedByCurrentUser = false,
+  ): MyPostResponseDto {
     return {
-      ...this.toPostResponse(post),
+      ...this.toPostResponse(post, likesCount, isLikedByCurrentUser),
 
       status: post.status,
 
@@ -43,9 +54,13 @@ export class TripTalesPostMapper {
     };
   }
 
-  static toMyPostDetailsResponse(post: IPopulatedPost): MyPostDetailsResponseDto {
+  static toMyPostDetailsResponse(
+    post: IPopulatedPost,
+    likesCount = 0,
+    isLikedByCurrentUser = false,
+  ): MyPostDetailsResponseDto {
     return {
-      ...this.toPostResponse(post),
+      ...this.toPostResponse(post, likesCount, isLikedByCurrentUser),
       status: post.status,
       updatedAt: post.updatedAt,
     };

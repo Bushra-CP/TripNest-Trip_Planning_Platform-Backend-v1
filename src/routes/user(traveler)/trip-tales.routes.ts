@@ -45,10 +45,16 @@ export class TripTalesRoutes {
     );
 
     // Public feed
-    this.router.get("/posts", this._tripTalesController.getPosts.bind(this._tripTalesController));
+    this.router.get(
+      "/posts",
+      this._authenticateMiddleware.optionalAuthenticate,
+      this._tripTalesController.getPosts.bind(this._tripTalesController),
+    );
 
+    // Get one published post.
     this.router.get(
       "/posts/:postId",
+      this._authenticateMiddleware.optionalAuthenticate,
       this._tripTalesController.getPostById.bind(this._tripTalesController),
     );
 
@@ -75,6 +81,29 @@ export class TripTalesRoutes {
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._tripTalesController.deleteMyPost.bind(this._tripTalesController),
+    );
+
+    // Like a TripTales post.
+    this.router.post(
+      "/posts/:postId/like",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripTalesController.likePost.bind(this._tripTalesController),
+    );
+
+    // Unlike a TripTales post.
+    this.router.delete(
+      "/posts/:postId/like",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._tripTalesController.unlikePost.bind(this._tripTalesController),
+    );
+
+    // Get users who liked a post.
+    this.router.get(
+      "/posts/:postId/likes",
+      this._authenticateMiddleware.optionalAuthenticate,
+      this._tripTalesController.getPostLikes.bind(this._tripTalesController),
     );
   }
 }

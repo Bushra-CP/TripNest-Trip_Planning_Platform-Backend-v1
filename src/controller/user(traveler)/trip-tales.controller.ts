@@ -11,12 +11,16 @@ import { MyPostsQueryDto } from "@/dtos/user(traveler)/trip-tales/my-posts.dto";
 import { PostSortOption } from "@/dtos/user(traveler)/trip-tales/my-posts.dto";
 import { Types } from "mongoose";
 import { UpdateMyPostDto } from "@/dtos/user(traveler)/trip-tales/update-my-posts.dto";
+import { ILikesService } from "@/interfaces/IServices/user(traveler)/trip-tales/likes.service.interface";
 
 @injectable()
 export class TripTalesController {
   constructor(
     @inject(TYPES.PostService)
     private readonly _postService: IPostService,
+
+    @inject(TYPES.LikesService)
+    private readonly _likesService: ILikesService,
   ) {}
 
   /**
@@ -51,7 +55,7 @@ export class TripTalesController {
    */
   async getPosts(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const data = await this._postService.getPosts();
+      const data = await this._postService.getPosts(req.user?.userId);
 
       ResponseHandler.success(res, STATUS_CODES.OK, "Posts fetched successfully", data);
     } catch (error) {
@@ -79,7 +83,7 @@ export class TripTalesController {
         return;
       }
 
-      const data = await this._postService.getPostById(postId);
+      const data = await this._postService.getPostById(postId, req.user?.userId);
 
       // console.log(data);
 
@@ -313,6 +317,96 @@ export class TripTalesController {
         success: true,
         message: "TripTales post deleted successfully",
       });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * LIKE A POST
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @memberof TripTalesController
+   */
+  public likePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { postId } = req.params;
+
+      if (typeof postId !== "string" || !Types.ObjectId.isValid(postId)) {
+        throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid post ID");
+      }
+
+      const data = await this._likesService.likePost(postId, req.user.userId);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "Post liked successfully", data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * UNLIKE A POST
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @memberof TripTalesController
+   */
+  public unlikePost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { postId } = req.params;
+
+      if (typeof postId !== "string" || !Types.ObjectId.isValid(postId)) {
+        throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid post ID");
+      }
+
+      const data = await this._likesService.unlikePost(postId, req.user.userId);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "Post unliked successfully", data);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * GET USERS WHO LIKED A POST
+   *
+   * @param {Request} req
+   * @param {Response} res
+   * @param {NextFunction} next
+   * @memberof TripTalesController
+   */
+  public getPostLikes = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { postId } = req.params;
+
+      if (typeof postId !== "string" || !Types.ObjectId.isValid(postId)) {
+        throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid post ID");
+      }
+
+      const pageValue = req.query.page;
+      const limitValue = req.query.limit;
+
+      if (Array.isArray(pageValue) || Array.isArray(limitValue)) {
+        throw new AppError(STATUS_CODES.BAD_REQUEST, "Invalid pagination parameters");
+      }
+
+      const page = pageValue === undefined ? 1 : Number(pageValue);
+      const limit = limitValue === undefined ? 10 : Number(limitValue);
+
+      if (!Number.isInteger(page) || page < 1) {
+        throw new AppError(STATUS_CODES.BAD_REQUEST, "Page must be a positive integer");
+      }
+
+      if (!Number.isInteger(limit) || limit < 1 || limit > 50) {
+        throw new AppError(STATUS_CODES.BAD_REQUEST, "Limit must be between 1 and 50");
+      }
+
+      const data = await this._likesService.getPostLikes(postId, page, limit);
+
+      ResponseHandler.success(res, STATUS_CODES.OK, "Post likes fetched successfully", data);
     } catch (error) {
       next(error);
     }
