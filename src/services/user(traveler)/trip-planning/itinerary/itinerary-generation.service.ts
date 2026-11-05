@@ -55,18 +55,70 @@ export interface ItineraryValidationResult {
   violations: string[];
 }
 
+/**
+ * Normalize text for requirement comparison.
+ *
+ * This function is generic and does not contain destination-specific
+ * or activity-specific rules.
+ *
+ * Example:
+ * "House boat" and "Houseboat" normalize to comparable text.
+ */
 const normalizeConstraintValue = (value: string): string =>
   value
     .toLowerCase()
+    .normalize("NFKC")
     .trim()
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 
+/**
+ * Check whether a complete normalized phrase exists in a value.
+ */
 const containsNormalizedPhrase = (value: string, phrase: string): boolean => {
   const normalizedValue = normalizeConstraintValue(value);
   const normalizedPhrase = normalizeConstraintValue(phrase);
 
+  if (!normalizedValue || !normalizedPhrase) {
+    return false;
+  }
+
   return ` ${normalizedValue} `.includes(` ${normalizedPhrase} `);
+};
+
+/**
+ * Check whether a requirement is represented in an itinerary stop.
+ *
+ * All relevant stop fields are considered because an attraction
+ * may be mentioned in its description or activity type rather
+ * than its name.
+ *
+ * The matching is generic and works for different destinations
+ * and activity requirements.
+ */
+const placeMatches = (stop: IItineraryDay["stops"][number], place: string): boolean => {
+  const searchableFields = [stop.name, stop.location, stop.description, stop.activityType].filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  );
+
+  // First, check for a complete phrase match in any field.
+  if (searchableFields.some((field) => containsNormalizedPhrase(field, place))) {
+    return true;
+  }
+
+  // If the complete phrase does not match, check whether all
+  // meaningful words from the requirement appear in the same stop.
+  const requiredWords = normalizeConstraintValue(place).split(/\s+/).filter(Boolean);
+
+  if (requiredWords.length === 0) {
+    return false;
+  }
+
+  return searchableFields.some((field) => {
+    const fieldWords = normalizeConstraintValue(field).split(/\s+/).filter(Boolean);
+
+    return requiredWords.every((requiredWord) => fieldWords.includes(requiredWord));
+  });
 };
 
 @injectable()
@@ -138,13 +190,19 @@ ${templateContext}
 INSTRUCTIONS:
 
 1. Generate exactly ${requirements.totalDays} days.
+
 2. Number the days consecutively, starting from 1.
+
 3. Respect the starting location and destination order.
+
 4. Consider the number of travelers, travel mode, trip type,
    preferences, preferred activities, and additional details.
+
 5. The budget is optional. If it is null, do not invent a budget.
+
 6. The start date is optional. If it is null, use relative day
    labels such as Day 1, Day 2, and Day 3.
+
 7. TEMPLATE REUSE AND PERSONALIZATION:
 
    - When relevant reference templates are provided, use them as
@@ -160,20 +218,42 @@ INSTRUCTIONS:
    - If no relevant templates are provided, generate the itinerary
      from the user's requirements.
 
-8. Include every must-visit place and do not include any excluded
-   place or excluded activity type.
-9. Treat preferred activities as preferences to include where
-   practical, not as hard requirements.
-10. ${activityTypeInstruction}
-11. Do not claim that opening hours, prices, routes, or availability
-   have been verified.
-12. Do not invent precise travel times or durations without reliable
-   supporting information.
-13. Include suitable stops for each day.
-14. Return only valid JSON. Do not include markdown.
+8. MUST-VISIT REQUIREMENTS (HARD CONSTRAINTS):
+
+   - Every item in mustVisitPlaces MUST be included in the itinerary.
+   - Do not silently ignore or replace a requested place or activity.
+   - A must-visit requirement can be represented in a stop's name,
+     description, location, or activityType.
+   - Use clear and explicit wording so the requested experience
+     is identifiable in the generated itinerary.
+   - If the user requests a particular type of stay or experience,
+     include that actual experience, not merely a related activity.
+   - For example, an overnight accommodation request must be
+     represented as an overnight stay, not just a short visit
+     or sightseeing activity.
+   - Do not claim that a requirement is fulfilled unless the
+     itinerary actually includes it.
+
+9. Do not include any excluded place or excluded activity type.
+
+10. Treat preferred activities as preferences to include where
+    practical, not as hard requirements.
+
+11. ${activityTypeInstruction}
+
+12. Do not claim that opening hours, prices, routes, or availability
+    have been verified.
+
+13. Do not invent precise travel times or durations without reliable
+    supporting information.
+
+14. Include suitable stops for each day.
+
+15. Return only valid JSON. Do not include markdown.
 
 
 TRAVEL PLANNING RULES:
+
 - Consider realistic travel times between destinations.
 - Do not invent precise travel durations when reliable information is unavailable.
 - Do not assume a long-distance road journey can be completed within a few hours.
@@ -258,6 +338,7 @@ Optional stop properties may be omitted when unavailable.
       throw new Error("Generated itinerary day numbers are not consecutive.");
     }
 
+    // Validate all trip requirements before returning the itinerary.
     const validation = this.validateItinerary(result.data.days, requirements);
 
     if (!validation.isValid) {
@@ -277,14 +358,18 @@ Optional stop properties may be omitted when unavailable.
   ): ItineraryValidationResult {
     const stops = days.flatMap((day) => day.stops);
     const violations: string[] = [];
+
+    // Validate trip duration.
     if (requirements.totalDays !== null && days.length !== requirements.totalDays) {
       violations.push(`Expected ${requirements.totalDays} days, but itinerary has ${days.length}`);
     }
 
+    // Validate consecutive day numbering.
     if (days.some((day, index) => day.dayNumber !== index + 1)) {
       violations.push("Itinerary day numbers are not consecutive");
     }
 
+    // Validate retrieved template compatibility.
     if (candidate) {
       if (requirements.totalDays !== null && candidate.totalDays !== requirements.totalDays) {
         violations.push(
@@ -293,6 +378,7 @@ Optional stop properties may be omitted when unavailable.
       }
 
       const candidateDestinations = candidate.destinations.map(normalizeConstraintValue);
+
       const requestedDestinations = requirements.destinations.map((destination) =>
         normalizeConstraintValue(destination.name),
       );
@@ -316,21 +402,17 @@ Optional stop properties may be omitted when unavailable.
       }
     }
 
-    const placeMatches = (stop: IItineraryDay["stops"][number], place: string): boolean => {
-      const normalizedPlace = normalizeConstraintValue(place);
+    // Validate must-visit requirements.
+    for (const place of requirements.mustVisitPlaces ?? []) {
+      const isIncluded = stops.some((stop) => placeMatches(stop, place));
 
-      return [stop.name, stop.location].some(
-        (value) => value !== undefined && normalizeConstraintValue(value) === normalizedPlace,
-      );
-    };
-
-    for (const place of requirements.mustVisitPlaces) {
-      if (!stops.some((stop) => placeMatches(stop, place))) {
+      if (!isIncluded) {
         violations.push(`Must-visit place "${place}" is missing`);
       }
     }
 
-    for (const place of requirements.excludedPlaces) {
+    // Validate excluded places.
+    for (const place of requirements.excludedPlaces ?? []) {
       if (
         stops.some((stop) =>
           [stop.name, stop.location, stop.description].some(
@@ -342,7 +424,8 @@ Optional stop properties may be omitted when unavailable.
       }
     }
 
-    if (requirements.excludedActivityTypes.length > 0) {
+    // Validate excluded activity types.
+    if ((requirements.excludedActivityTypes ?? []).length > 0) {
       const untypedStops = stops.filter((stop) => !stop.activityType?.trim());
 
       if (untypedStops.length > 0) {
@@ -538,8 +621,8 @@ The startTime field is required and must be a non-empty string.
       throw new Error(`Gemini returned a different place name instead of "${placeName}".`);
     }
 
-    // Preserve the user's explicit preference rather than relying on the
-    // model to reproduce it exactly.
+    // Preserve the user's explicit preference rather than relying on
+    // the model to reproduce it exactly.
     const finalStartTime = preferredTime?.trim() || result.data.startTime;
 
     return {

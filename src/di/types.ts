@@ -167,4 +167,7 @@ export const TYPES = {
   AdminTripTalesRoutes: Symbol.for("AdminTripTalesRoutes"),
   LikesRepository: Symbol.for("LikesRepository"),
   LikesService: Symbol.for("LikesService"),
+  CommentsRepository: Symbol.for("CommentsRepository"),
+  CommentsService: Symbol.for("CommentsService"),
+  CommentsController: Symbol.for("CommentsController"),
 } as const;

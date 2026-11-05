@@ -9,6 +9,7 @@ export class TripTalesPostMapper {
     post: IPopulatedPost,
     likesCount = 0,
     isLikedByCurrentUser = false,
+    commentsCount = 0,
   ): CreatePostResponseDto {
     const travelerProfile = post.userId.travelerProfile;
 
@@ -36,6 +37,8 @@ export class TripTalesPostMapper {
       likesCount: likesCount,
       isLikedByCurrentUser: isLikedByCurrentUser,
 
+      commentsCount,
+
       createdAt: post.createdAt,
     };
   }
@@ -44,9 +47,10 @@ export class TripTalesPostMapper {
     post: IPopulatedPost,
     likesCount = 0,
     isLikedByCurrentUser = false,
+    commentsCount = 0,
   ): MyPostResponseDto {
     return {
-      ...this.toPostResponse(post, likesCount, isLikedByCurrentUser),
+      ...this.toPostResponse(post, likesCount, isLikedByCurrentUser, commentsCount),
 
       status: post.status,
 
@@ -58,9 +62,10 @@ export class TripTalesPostMapper {
     post: IPopulatedPost,
     likesCount = 0,
     isLikedByCurrentUser = false,
+    commentsCount = 0,
   ): MyPostDetailsResponseDto {
     return {
-      ...this.toPostResponse(post, likesCount, isLikedByCurrentUser),
+      ...this.toPostResponse(post, likesCount, isLikedByCurrentUser, commentsCount),
       status: post.status,
       updatedAt: post.updatedAt,
     };

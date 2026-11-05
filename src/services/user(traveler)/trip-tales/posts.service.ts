@@ -21,6 +21,7 @@ import { AppError } from "@/shared/errors/app.error";
 import { STATUS_CODES } from "@/enums/status.codes.enum";
 import { IPost } from "@/interfaces/IModel/trip-tales/posts.model.interface";
 import { ILikesService } from "@/interfaces/IServices/user(traveler)/trip-tales/likes.service.interface";
+import { ICommentsService } from "@/interfaces/IServices/user(traveler)/trip-tales/comments.service.interface";
 
 @injectable()
 export class PostService implements IPostService {
@@ -39,6 +40,9 @@ export class PostService implements IPostService {
 
     @inject(TYPES.LikesService)
     private readonly _likesService: ILikesService,
+
+    @inject(TYPES.CommentsService)
+    private readonly _commentsService: ICommentsService,
   ) {}
 
   /**
@@ -123,7 +127,10 @@ export class PostService implements IPostService {
 
     const postIds = posts.map((post) => post._id.toString());
 
-    const likeStats = await this._likesService.getPostLikeStats(postIds, userId);
+    const [likeStats, commentCounts] = await Promise.all([
+      this._likesService.getPostLikeStats(postIds, userId),
+      this._commentsService.getCommentCounts(postIds),
+    ]);
 
     return posts.map((post) => {
       const stats = likeStats.get(post._id.toString());
@@ -132,6 +139,7 @@ export class PostService implements IPostService {
         post,
         stats?.likesCount ?? 0,
         stats?.isLikedByCurrentUser ?? false,
+        commentCounts.get(post._id.toString()) ?? 0,
       );
     });
   }
@@ -150,7 +158,10 @@ export class PostService implements IPostService {
       return null;
     }
 
-    const likeStats = await this._likesService.getPostLikeStats([postId], userId);
+    const [likeStats, commentCounts] = await Promise.all([
+      this._likesService.getPostLikeStats([postId], userId),
+      this._commentsService.getCommentCounts([postId]),
+    ]);
 
     const stats = likeStats.get(postId);
 
@@ -158,6 +169,7 @@ export class PostService implements IPostService {
       post,
       stats?.likesCount ?? 0,
       stats?.isLikedByCurrentUser ?? false,
+      commentCounts.get(postId) ?? 0,
     );
   }
 
@@ -182,7 +194,10 @@ export class PostService implements IPostService {
 
     const postIds = posts.map((post) => post._id.toString());
 
-    const likeStats = await this._likesService.getPostLikeStats(postIds, userId);
+    const [likeStats, commentCounts] = await Promise.all([
+      this._likesService.getPostLikeStats(postIds, userId),
+      this._commentsService.getCommentCounts(postIds),
+    ]);
 
     const totalPages = Math.ceil(totalPosts / limit);
 
@@ -194,6 +209,7 @@ export class PostService implements IPostService {
           post,
           stats?.likesCount ?? 0,
           stats?.isLikedByCurrentUser ?? false,
+          commentCounts.get(post._id.toString()) ?? 0,
         );
       }),
 
@@ -221,7 +237,10 @@ export class PostService implements IPostService {
       return null;
     }
 
-    const likeStats = await this._likesService.getPostLikeStats([postId], userId);
+    const [likeStats, commentCounts] = await Promise.all([
+      this._likesService.getPostLikeStats([postId], userId),
+      this._commentsService.getCommentCounts([postId]),
+    ]);
 
     const stats = likeStats.get(postId);
 
@@ -229,6 +248,7 @@ export class PostService implements IPostService {
       populatedPost,
       stats?.likesCount ?? 0,
       stats?.isLikedByCurrentUser ?? false,
+      commentCounts.get(postId) ?? 0,
     );
   }
 
@@ -321,7 +341,10 @@ export class PostService implements IPostService {
         throw new Error("Failed to fetch updated TripTales post");
       }
 
-      const likeStats = await this._likesService.getPostLikeStats([postId], userId);
+      const [likeStats, commentCounts] = await Promise.all([
+        this._likesService.getPostLikeStats([postId], userId),
+        this._commentsService.getCommentCounts([postId]),
+      ]);
 
       const stats = likeStats.get(postId);
 
@@ -329,6 +352,7 @@ export class PostService implements IPostService {
         populatedPost,
         stats?.likesCount ?? 0,
         stats?.isLikedByCurrentUser ?? false,
+        commentCounts.get(postId) ?? 0,
       );
     } catch (error) {
       // Clean up newly uploaded files if the update fails.
@@ -359,6 +383,8 @@ export class PostService implements IPostService {
     }
 
     await this._likesService.deleteLikesByPostId(postId);
+
+    await this._commentsService.deleteCommentsByPostId(postId);
 
     // Remove associated knowledge document and chunks.
     try {

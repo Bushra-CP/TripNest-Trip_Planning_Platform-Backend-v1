@@ -31,5 +31,7 @@ export interface CreatePostResponseDto {
   likesCount: number;
   isLikedByCurrentUser: boolean;
 
+  commentsCount: number;
+
   createdAt: Date;
 }
