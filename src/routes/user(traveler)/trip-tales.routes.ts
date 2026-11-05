@@ -8,6 +8,7 @@ import { createPostSchema } from "@/validation/user(traveler)/trip-tales/create-
 import { TripTalesController } from "@/controller/user(traveler)/trip-tales.controller";
 import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
 import { UserRole } from "@/enums/user-role.enum";
+import { CommentsController } from "@/controller/user(traveler)/comments.controller";
 
 @injectable()
 export class TripTalesRoutes {
@@ -22,6 +23,9 @@ export class TripTalesRoutes {
 
     @inject(TYPES.AuthorizeMiddleware)
     private readonly _authorizeMiddleware: AuthorizeMiddleware,
+
+    @inject(TYPES.CommentsController)
+    private readonly _commentsController: CommentsController,
   ) {
     this.router = Router();
 
@@ -104,6 +108,45 @@ export class TripTalesRoutes {
       "/posts/:postId/likes",
       this._authenticateMiddleware.optionalAuthenticate,
       this._tripTalesController.getPostLikes.bind(this._tripTalesController),
+    );
+
+    // CREATE COMMENT
+    this.router.post(
+      "/posts/:postId/comments",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._commentsController.createComment.bind(this._commentsController),
+    );
+
+    // CREATE REPLY
+    this.router.post(
+      "/comments/:commentId/replies",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._commentsController.createReply.bind(this._commentsController),
+    );
+
+    // GET COMMENTS
+    this.router.get(
+      "/posts/:postId/comments",
+      this._authenticateMiddleware.optionalAuthenticate,
+      this._commentsController.getComments.bind(this._commentsController),
+    );
+
+    // UPDATE COMMENT
+    this.router.patch(
+      "/comments/:commentId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._commentsController.updateComment.bind(this._commentsController),
+    );
+
+    // DELETE COMMENT
+    this.router.delete(
+      "/comments/:commentId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._commentsController.deleteComment.bind(this._commentsController),
     );
   }
 }
