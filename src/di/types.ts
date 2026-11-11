@@ -170,4 +170,7 @@ export const TYPES = {
   CommentsRepository: Symbol.for("CommentsRepository"),
   CommentsService: Symbol.for("CommentsService"),
   CommentsController: Symbol.for("CommentsController"),
+  PostReportRepository: Symbol.for("PostReportRepository"),
+  PostReportService: Symbol.for("PostReportService"),
+  PostReportController: Symbol.for("PostReportController"),
 } as const;

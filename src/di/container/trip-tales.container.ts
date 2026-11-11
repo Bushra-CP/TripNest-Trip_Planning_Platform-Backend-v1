@@ -17,6 +17,9 @@ import { LikesService } from "@/services/user(traveler)/trip-tales/likes.service
 import { CommentsRepository } from "@/repositories/user(traveler)/trip-tales/comments.repository";
 import { CommentsService } from "@/services/user(traveler)/trip-tales/comments.service";
 import { CommentsController } from "@/controller/user(traveler)/comments.controller";
+import { PostReportRepository } from "@/repositories/user(traveler)/trip-tales/post-report.repository";
+import { PostReportService } from "@/services/user(traveler)/trip-tales/post-report.service";
+import { PostReportController } from "@/controller/user(traveler)/post-report.controller";
 
 export function registerTripTales(container: Container): void {
   container.bind<IPostRepository>(TYPES.PostRepository).to(PostRepository);
@@ -34,4 +37,7 @@ export function registerTripTales(container: Container): void {
   container.bind(TYPES.CommentsRepository).to(CommentsRepository);
   container.bind(TYPES.CommentsService).to(CommentsService);
   container.bind(TYPES.CommentsController).to(CommentsController);
+  container.bind(TYPES.PostReportRepository).to(PostReportRepository);
+  container.bind(TYPES.PostReportService).to(PostReportService);
+  container.bind(TYPES.PostReportController).to(PostReportController);
 }
