@@ -9,6 +9,7 @@ import { TripTalesController } from "@/controller/user(traveler)/trip-tales.cont
 import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
 import { UserRole } from "@/enums/user-role.enum";
 import { CommentsController } from "@/controller/user(traveler)/comments.controller";
+import { PostReportController } from "@/controller/user(traveler)/post-report.controller";
 
 @injectable()
 export class TripTalesRoutes {
@@ -26,6 +27,9 @@ export class TripTalesRoutes {
 
     @inject(TYPES.CommentsController)
     private readonly _commentsController: CommentsController,
+
+    @inject(TYPES.PostReportController)
+    private readonly _postReportController: PostReportController,
   ) {
     this.router = Router();
 
@@ -147,6 +151,38 @@ export class TripTalesRoutes {
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize(UserRole.TRAVELER),
       this._commentsController.deleteComment.bind(this._commentsController),
+    );
+
+    // CREATE POST REPORT
+    this.router.post(
+      "/posts/:postId/reports",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._postReportController.createReport.bind(this._postReportController),
+    );
+
+    // GET MY REPORTS WITH FILTERS AND PAGINATION
+    this.router.get(
+      "/my-reports",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._postReportController.getMyReports.bind(this._postReportController),
+    );
+
+    // GET SINGLE REPORT DETAILS
+    this.router.get(
+      "/my-reports/:reportId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._postReportController.getReportById.bind(this._postReportController),
+    );
+
+    // CANCEL REPORT
+    this.router.delete(
+      "/my-reports/:reportId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.TRAVELER),
+      this._postReportController.cancelReport.bind(this._postReportController),
     );
   }
 }
