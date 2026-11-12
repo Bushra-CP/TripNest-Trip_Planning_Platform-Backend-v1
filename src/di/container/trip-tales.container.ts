@@ -20,6 +20,9 @@ import { CommentsController } from "@/controller/user(traveler)/comments.control
 import { PostReportRepository } from "@/repositories/user(traveler)/trip-tales/post-report.repository";
 import { PostReportService } from "@/services/user(traveler)/trip-tales/post-report.service";
 import { PostReportController } from "@/controller/user(traveler)/post-report.controller";
+import { AdminPostReportsRepository } from "@/repositories/admin/trip-tales/admin-post-reports.repository";
+import { AdminPostReportsService } from "@/services/admin/trip-tales/admin-post-reports.service";
+import { AdminPostReportsController } from "@/controller/admin/admin-post-reports.controller";
 
 export function registerTripTales(container: Container): void {
   container.bind<IPostRepository>(TYPES.PostRepository).to(PostRepository);
@@ -40,4 +43,8 @@ export function registerTripTales(container: Container): void {
   container.bind(TYPES.PostReportRepository).to(PostReportRepository);
   container.bind(TYPES.PostReportService).to(PostReportService);
   container.bind(TYPES.PostReportController).to(PostReportController);
+  container.bind(TYPES.AdminPostReportsRepository).to(AdminPostReportsRepository);
+  container.bind(TYPES.AdminPostReportsService).to(AdminPostReportsService);
+  container.bind(TYPES.AdminPostReportsController).to(AdminPostReportsController);
+  // container.bind(TYPES.AdminPostReportsRoutes).to(AdminPostReportsRoutes);
 }

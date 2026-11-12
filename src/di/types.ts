@@ -173,4 +173,8 @@ export const TYPES = {
   PostReportRepository: Symbol.for("PostReportRepository"),
   PostReportService: Symbol.for("PostReportService"),
   PostReportController: Symbol.for("PostReportController"),
+  AdminPostReportsRepository: Symbol.for("AdminPostReportsRepository"),
+  AdminPostReportsService: Symbol.for("AdminPostReportsService"),
+  AdminPostReportsController: Symbol.for("AdminPostReportsController"),
+  AdminPostReportsRoutes: Symbol.for("AdminPostReportsRoutes"),
 } as const;
