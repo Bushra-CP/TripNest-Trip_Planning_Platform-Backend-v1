@@ -1,10 +1,14 @@
 import { Router } from "express";
 import { inject, injectable } from "inversify";
+
 import { TYPES } from "@/di/types";
 import { UserRole } from "@/enums/user-role.enum";
+
 import { AuthenticateMiddleware } from "@/middleware/authenticate.middleware";
 import { AuthorizeMiddleware } from "@/middleware/authorize.middleware";
+
 import { AdminTripTalesController } from "@/controller/admin/admin-trip-tales.controller";
+import { AdminPostReportsController } from "@/controller/admin/admin-post-reports.controller";
 
 @injectable()
 export class AdminTripTalesRoutes {
@@ -13,6 +17,9 @@ export class AdminTripTalesRoutes {
   constructor(
     @inject(TYPES.AdminTripTalesController)
     private readonly _adminTripTalesController: AdminTripTalesController,
+
+    @inject(TYPES.AdminPostReportsController)
+    private readonly _adminPostReportsController: AdminPostReportsController,
 
     @inject(TYPES.AuthenticateMiddleware)
     private readonly _authenticateMiddleware: AuthenticateMiddleware,
@@ -25,6 +32,10 @@ export class AdminTripTalesRoutes {
   }
 
   private initializeRoutes(): void {
+    // ==========================================
+    // TRIP TALES MANAGEMENT - SPECIFIC ROUTES
+    // ==========================================
+
     this.router.get(
       "/trip-tales/stats",
       this._authenticateMiddleware.authenticate,
@@ -38,6 +49,42 @@ export class AdminTripTalesRoutes {
       this._authorizeMiddleware.authorize(UserRole.ADMIN),
       this._adminTripTalesController.getPosts.bind(this._adminTripTalesController),
     );
+
+    // ==========================================
+    // POST REPORT MANAGEMENT
+    // ==========================================
+
+    this.router.get(
+      "/trip-tales/reports/stats",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.ADMIN),
+      this._adminPostReportsController.getStats,
+    );
+
+    this.router.get(
+      "/trip-tales/reports",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.ADMIN),
+      this._adminPostReportsController.getReports,
+    );
+
+    this.router.get(
+      "/trip-tales/reports/:reportId",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.ADMIN),
+      this._adminPostReportsController.getReportById,
+    );
+
+    this.router.patch(
+      "/trip-tales/reports/:reportId/status",
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize(UserRole.ADMIN),
+      this._adminPostReportsController.updateReportStatus,
+    );
+
+    // ==========================================
+    // TRIP TALES MANAGEMENT - DYNAMIC ROUTES
+    // ==========================================
 
     this.router.get(
       "/trip-tales/:postId",

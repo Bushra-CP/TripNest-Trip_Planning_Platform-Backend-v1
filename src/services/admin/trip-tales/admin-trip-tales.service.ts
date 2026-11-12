@@ -7,7 +7,7 @@ import type {
   AdminTripTalesStatsDto,
   PaginatedAdminTripTalesResponseDto,
 } from "@/dtos/admin/trip-tales/admin-trip-tales.dto";
-import { IAdminTripTalesService } from "@/interfaces/IServices/admin/admin-trip-tales.service.interface";
+import { IAdminTripTalesService } from "@/interfaces/IServices/admin/trip-tales/admin-trip-tales.service.interface";
 import { ITripTalesRepository } from "@/interfaces/IRepository/admin/trip-tales/trip-tales.repo.interface";
 import { TripTalesPostMapper } from "@/mapper/trip-tales-post.mapper";
 import { IPostRepository } from "@/interfaces/IRepository/user(traveler)/trip-tales/posts.repository.interface";

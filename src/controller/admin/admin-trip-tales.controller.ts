@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@/di/types";
-import { IAdminTripTalesService } from "@/interfaces/IServices/admin/admin-trip-tales.service.interface";
+import { IAdminTripTalesService } from "@/interfaces/IServices/admin/trip-tales/admin-trip-tales.service.interface";
 import { AdminTripTalesQueryDto } from "@/dtos/admin/trip-tales/admin-trip-tales.dto";
 import { ResponseHandler } from "@/shared/http/responseHandler";
 import { STATUS_CODES } from "@/enums/status.codes.enum";
