@@ -20,6 +20,7 @@ import { ItineraryTemplateRetrievalService } from "@/services/user(traveler)/tri
 import { ItineraryGenerationService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-generation.service";
 import { ItineraryModificationValidationService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-validation.service";
 import { ItineraryModificationFeasibilityService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-feasibility.service";
+import { ItineraryModificationBuilderService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-builder.service";
 
 import type { IItineraryService } from "@/interfaces/IServices/user(traveler)/trip-planning/itinerary.service.interface";
 
@@ -41,11 +42,15 @@ import { createGenerateItineraryNode } from "./nodes/generate-itinerary.node";
 import { createValidateItineraryModificationNode } from "./nodes/validate-itinerary-modification.node";
 import { createCheckItineraryModificationFeasibilityNode } from "./nodes/check-itinerary-modification-feasibility.node";
 import { createApplyItineraryModificationNode } from "./nodes/apply-itinerary-modification.node";
+import { createAnswerModificationClarificationNode } from "./nodes/answer-modification-clarification.node";
+
+import { createGenerateAttractionRecommendationsNode } from "./nodes/generate-attraction-recommendations.node";
 
 import { routeDecision } from "./route-decision";
 import { knowledgeRouteDecision } from "./knowledge-route-decision";
 import { knowledgeSufficiencyDecision } from "./knowledge-sufficiency-decision";
 import { itineraryGenerationDecision } from "./itinerary-generation-decision";
+import { ItineraryScheduleService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-schedule.service";
 
 const TripState = new StateSchema(tripGraphStateSchema);
 
@@ -61,20 +66,33 @@ export const createTripGraph = (
   routeRequestService: RouteRequestService,
   knowledgeSufficiencyService: KnowledgeSufficiencyService,
   knowledgeAcquisitionService: KnowledgeAcquisitionService,
+
+  // Itinerary services.
   itineraryIntentService: ItineraryIntentService,
   itineraryTemplateRetrievalService: ItineraryTemplateRetrievalService,
   itineraryGenerationService: ItineraryGenerationService,
+  itineraryScheduleService: ItineraryScheduleService,
   itineraryModificationValidationService: ItineraryModificationValidationService,
   itineraryService: IItineraryService,
   itineraryModificationFeasibilityService: ItineraryModificationFeasibilityService,
+  itineraryModificationBuilderService: ItineraryModificationBuilderService,
+
   checkpointer: MongoDBSaver,
 ) => {
-  // Existing trip-planning nodes.
+  // ============================================================
+  // EXISTING TRIP-PLANNING NODES
+  // ============================================================
+
   const extractRequirements = createExtractRequirementsNode(tripExtractionService);
+
   const resolveDate = createResolveDateNode(tripDateService);
+
   const updateTripState = createUpdateTripStateNode(tripStateService);
+
   const checkRouteChange = createCheckRouteChangeNode(tripChangeDetectorService);
+
   const calculateRoute = createCalculateRouteNode(routePlanningService);
+
   const routeRequest = createRouteRequestNode(routeRequestService);
 
   const retrieveKnowledge = createRetrieveKnowledgeNode(
@@ -89,12 +107,16 @@ export const createTripGraph = (
 
   const acquireKnowledge = createAcquireKnowledgeNode(knowledgeAcquisitionService);
 
-  // Itinerary nodes.
+  // ============================================================
+  // ITINERARY NODES
+  // ============================================================
+
   const detectItineraryIntent = createDetectItineraryIntentNode(itineraryIntentService);
 
   const generateItinerary = createGenerateItineraryNode(
     itineraryTemplateRetrievalService,
     itineraryGenerationService,
+    itineraryScheduleService,
   );
 
   const validateItineraryModification = createValidateItineraryModificationNode(
@@ -104,59 +126,142 @@ export const createTripGraph = (
   const checkItineraryModificationFeasibility = createCheckItineraryModificationFeasibilityNode(
     itineraryService,
     itineraryModificationFeasibilityService,
+    itineraryModificationBuilderService,
   );
 
   const applyItineraryModification = createApplyItineraryModificationNode(
     itineraryService,
     itineraryModificationValidationService,
+  );
+
+  // Answer questions about a proposed itinerary modification.
+  const answerModificationClarification = createAnswerModificationClarificationNode();
+
+  // ============================================================
+  // ATTRACTION RECOMMENDATION NODE
+  // ============================================================
+
+  const generateAttractionRecommendations = createGenerateAttractionRecommendationsNode(
+    itineraryService,
     itineraryGenerationService,
   );
 
+  // ============================================================
+  // RESPONSE NODE
+  // ============================================================
+
   const generateResponse = createGenerateResponseNode();
 
-  // Build the workflow.
+  // ============================================================
+  // BUILD THE WORKFLOW
+  // ============================================================
+
   const graph = new StateGraph(TripState)
+
+    // Register existing trip-planning nodes.
     .addNode("extractRequirements", extractRequirements)
     .addNode("resolveDate", resolveDate)
     .addNode("updateTripState", updateTripState)
     .addNode("calculateTripStatus", calculateTripStatus)
+
+    // Register itinerary nodes.
     .addNode("detectItineraryIntent", detectItineraryIntent)
+    .addNode("generateItinerary", generateItinerary)
     .addNode("validateItineraryModification", validateItineraryModification)
     .addNode("checkItineraryModificationFeasibility", checkItineraryModificationFeasibility)
     .addNode("applyItineraryModification", applyItineraryModification)
+    .addNode("answerModificationClarification", answerModificationClarification)
+
+    // Register recommendation node.
+    .addNode("generateAttractionRecommendations", generateAttractionRecommendations)
+
+    // Register route-planning nodes.
     .addNode("checkRouteChange", checkRouteChange)
     .addNode("routeRequest", routeRequest)
     .addNode("calculateRoute", calculateRoute)
+
+    // Register knowledge nodes.
     .addNode("retrieveKnowledge", retrieveKnowledge)
     .addNode("checkKnowledgeSufficiency", checkKnowledgeSufficiency)
     .addNode("acquireKnowledge", acquireKnowledge)
-    .addNode("generateResponse", generateResponse)
-    .addNode("generateItinerary", generateItinerary)
 
-    // Start the trip-planning workflow.
+    // Register response node.
+    .addNode("generateResponse", generateResponse)
+
+    // ============================================================
+    // MAIN WORKFLOW
+    // ============================================================
+
     .addEdge(START, "extractRequirements")
     .addEdge("extractRequirements", "resolveDate")
     .addEdge("resolveDate", "updateTripState")
     .addEdge("updateTripState", "calculateTripStatus")
     .addEdge("calculateTripStatus", "detectItineraryIntent")
 
-    // Route itinerary requests.
+    // ============================================================
+    // ITINERARY ROUTING
+    // ============================================================
+
     .addConditionalEdges("detectItineraryIntent", itineraryGenerationDecision, {
       generateItinerary: "generateItinerary",
+
       validateItineraryModification: "validateItineraryModification",
+
       applyItineraryModification: "applyItineraryModification",
+
+      answerModificationClarification: "answerModificationClarification",
+
+      generateAttractionRecommendations: "generateAttractionRecommendations",
+
       continuePlanning: "checkRouteChange",
+
       end: END,
     })
 
-    // Validate changes and assess feasibility before asking for confirmation.
-    .addEdge("validateItineraryModification", "checkItineraryModificationFeasibility")
+    // ============================================================
+    // MODIFICATION WORKFLOW
+    // ============================================================
+
+    // First validate the requested modification.
+    // Continue to feasibility assessment only if validation succeeds.
+    .addConditionalEdges(
+      "validateItineraryModification",
+      (state) => {
+        if (
+          state.itineraryRequested &&
+          state.itineraryAction === "MODIFY" &&
+          state.pendingItineraryChange
+        ) {
+          return "checkFeasibility";
+        }
+
+        return "end";
+      },
+      {
+        checkFeasibility: "checkItineraryModificationFeasibility",
+        end: END,
+      },
+    )
+
+    // Feasibility node returns the proposal and asks for confirmation.
     .addEdge("checkItineraryModificationFeasibility", END)
 
-    // Save confirmed itinerary modifications.
+    // Apply only after user confirmation.
     .addEdge("applyItineraryModification", END)
 
-    // Existing route-planning flow.
+    // Answer clarification questions without changing the proposal.
+    .addEdge("answerModificationClarification", END)
+
+    // ============================================================
+    // RECOMMENDATION WORKFLOW
+    // ============================================================
+
+    .addEdge("generateAttractionRecommendations", END)
+
+    // ============================================================
+    // ROUTE-PLANNING WORKFLOW
+    // ============================================================
+
     .addConditionalEdges("checkRouteChange", routeDecision, {
       calculateRoute: "calculateRoute",
       generateResponse: "routeRequest",
@@ -164,7 +269,10 @@ export const createTripGraph = (
 
     .addEdge("calculateRoute", "routeRequest")
 
-    // Knowledge retrieval flow.
+    // ============================================================
+    // KNOWLEDGE RETRIEVAL WORKFLOW
+    // ============================================================
+
     .addConditionalEdges("routeRequest", knowledgeRouteDecision, {
       retrieveKnowledge: "retrieveKnowledge",
       generateResponse: "generateResponse",
@@ -179,7 +287,10 @@ export const createTripGraph = (
 
     .addEdge("acquireKnowledge", "generateResponse")
 
-    // Preserve existing itinerary creation behavior.
+    // ============================================================
+    // FINAL EDGES
+    // ============================================================
+
     .addEdge("generateItinerary", END)
     .addEdge("generateResponse", END);
 

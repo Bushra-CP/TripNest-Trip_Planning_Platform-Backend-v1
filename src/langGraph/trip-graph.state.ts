@@ -63,6 +63,13 @@ export interface TripGraphState {
 
   modificationFeasibility: ModificationFeasibilityResult | null;
 
+  // Tracks clarification questions about a pending modification.
+  modificationClarificationRequested: boolean;
+
+  // Proposed itinerary modification
+  proposedItineraryDays: IItineraryDay[];
+  affectedDayNumbers: number[];
+
   // Generated itinerary
   generatedItinerary: {
     title: string;
@@ -71,11 +78,22 @@ export interface TripGraphState {
 
   // Indicates whether a new itinerary was generated in this invocation
   itineraryGeneratedNow: boolean;
+  reusedExistingTemplate: boolean;
 
   response: string;
 
   threadId: string;
   tripId: string;
+
+  // Attraction recommendation state
+  recommendationRequested: boolean;
+
+  recommendationDayNumber: number | null;
+
+  recommendedAttractions: {
+    name: string;
+    reason: string;
+  }[];
 }
 
 /*
@@ -104,6 +122,22 @@ export const tripRequirementsSchema = z.object({
   excludedPlaces: z.array(z.string()).default([]),
   excludedActivityTypes: z.array(z.string()).default([]),
   additionalDetails: z.array(z.string()),
+});
+
+const itineraryStopSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  activityType: z.string().optional(),
+  location: z.string().optional(),
+  startTime: z.string().optional(),
+  durationMinutes: z.number().optional(),
+});
+
+const itineraryDaySchema = z.object({
+  dayNumber: z.number(),
+  title: z.string(),
+  description: z.string(),
+  stops: z.array(itineraryStopSchema),
 });
 
 /*
@@ -199,6 +233,7 @@ export const tripGraphStateSchema = {
           dayNumber: z.number().int().positive().optional(),
         }),
       ),
+
       addPlaces: z.array(
         z.object({
           name: z.string().min(1),
@@ -217,6 +252,17 @@ export const tripGraphStateSchema = {
           preferredTime: z.string().min(1).optional(),
         }),
       ),
+
+      movePlaces: z.array(
+        z.object({
+          name: z.string().min(1),
+          fromDayNumber: z.number().int().positive(),
+          toDayNumber: z.number().int().positive(),
+          insertBefore: z.string().min(1).optional(),
+          insertAfter: z.string().min(1).optional(),
+        }),
+      ),
+
       description: z.string(),
     })
     .nullable()
@@ -233,33 +279,40 @@ export const tripGraphStateSchema = {
     .nullable()
     .default(null),
 
+  modificationClarificationRequested: z.boolean().default(false),
+
+  // Proposed itinerary modification
+  proposedItineraryDays: z.array(itineraryDaySchema).default([]),
+
+  affectedDayNumbers: z.array(z.number().int().positive()).default([]),
+
   generatedItinerary: z
     .object({
       title: z.string(),
-      days: z.array(
-        z.object({
-          dayNumber: z.number(),
-          title: z.string(),
-          description: z.string(),
-          stops: z.array(
-            z.object({
-              name: z.string(),
-              description: z.string(),
-              location: z.string().optional(),
-              startTime: z.string().optional(),
-              durationMinutes: z.number().optional(),
-            }),
-          ),
-        }),
-      ),
+      days: z.array(itineraryDaySchema),
     })
     .nullable()
     .default(null),
 
   itineraryGeneratedNow: z.boolean().default(false),
 
+  reusedExistingTemplate: z.boolean().default(false),
+
   response: z.string().default(""),
 
   threadId: z.string().default(""),
   tripId: z.string(),
+
+  recommendationRequested: z.boolean().default(false),
+
+  recommendationDayNumber: z.number().int().positive().nullable().default(null),
+
+  recommendedAttractions: z
+    .array(
+      z.object({
+        name: z.string(),
+        reason: z.string(),
+      }),
+    )
+    .default([]),
 };

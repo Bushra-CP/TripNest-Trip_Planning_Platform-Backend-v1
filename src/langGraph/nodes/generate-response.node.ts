@@ -750,7 +750,7 @@ Never expose internal system processes.
 
     const isAwaitingItineraryConfirmation =
       state.itineraryRequested &&
-      (state.itineraryAction === "CREATE" || state.itineraryAction === "MODIFY") &&
+      state.itineraryAction === "CREATE" &&
       uniqueItineraryMissingInformation.length === 0;
 
     return {

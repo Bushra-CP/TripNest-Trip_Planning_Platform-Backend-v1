@@ -135,10 +135,15 @@ export class AIPlanningService {
       console.log("Saved itinerary:", savedItinerary);
 
       // Queue ingestion without waiting for the worker to finish.
-      if (!savedItinerary.templateId) {
+      // Ingest only when a completely new itinerary was generated.
+      if (!result.reusedExistingTemplate && !savedItinerary.templateId) {
+        console.log("[Itinerary] New itinerary generated. Starting RAG ingestion.");
+
         await this._itineraryIngestionQueue.addJob({
           itineraryId: savedItinerary._id.toString(),
         });
+      } else {
+        console.log("[Itinerary] Existing RAG template reused. Skipping ingestion.");
       }
 
       reply =

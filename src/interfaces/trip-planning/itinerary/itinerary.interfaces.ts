@@ -5,7 +5,11 @@ export type ConfirmationStatus = "PENDING" | "CONFIRMED" | "REJECTED" | null;
 
 // Pending itinerary change
 export interface PendingItineraryChange {
-  removePlaces: { name: string; dayNumber?: number | undefined }[];
+  removePlaces: {
+    name: string;
+    dayNumber?: number | undefined;
+  }[];
+
   addPlaces: {
     name: string;
     dayNumber?: number | undefined;
@@ -13,11 +17,21 @@ export interface PendingItineraryChange {
     insertAfter?: string | undefined;
     preferredTime?: string | undefined;
   }[];
+
   replacePlaces: {
     remove: string;
     add: string;
     dayNumber?: number | undefined;
     preferredTime?: string | undefined;
   }[];
+
+  movePlaces: {
+    name: string;
+    fromDayNumber: number;
+    toDayNumber: number;
+    insertBefore?: string | undefined;
+    insertAfter?: string | undefined;
+  }[];
+
   description: string;
 }

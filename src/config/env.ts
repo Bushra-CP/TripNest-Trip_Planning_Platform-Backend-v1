@@ -26,6 +26,7 @@ export const env = {
   GOOGLE_API_KEY2: process.env.GOOGLE_API_KEY2!,
   GOOGLE_API_KEY3: process.env.GOOGLE_API_KEY3!,
   GOOGLE_API_KEY4: process.env.GOOGLE_API_KEY4!,
+  GOOGLE_API_KEY5: process.env.GOOGLE_API_KEY5!,
   GEMINI_MODEL: process.env.GEMINI_MODEL!,
   GROQ_API_KEY: process.env.GROQ_API_KEY!,
   GROQ_API_KEY2: process.env.GROQ_API_KEY2!,
