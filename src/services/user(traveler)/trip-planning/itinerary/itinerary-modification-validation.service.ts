@@ -24,9 +24,8 @@ export class ItineraryModificationValidationService {
     changes: PendingItineraryChange,
   ): Promise<ItineraryModificationValidationResult> {
     const itinerary = await this._itineraryService.getItineraryByTripId(tripId, threadId);
-    console.log("VALIDATION SERVICE - RAW ITINERARY:", JSON.stringify(itinerary, null, 2));
 
-    console.log("VALIDATION SERVICE - FIRST STOP:", itinerary?.days?.[0]?.stops?.[0]);
+    console.log("VALIDATION SERVICE - RAW ITINERARY:", JSON.stringify(itinerary, null, 2));
 
     if (!itinerary) {
       return {
@@ -40,6 +39,7 @@ export class ItineraryModificationValidationService {
 
     const normalize = (name: string): string => name.trim().toLowerCase().replace(/\s+/g, " ");
 
+    // Find an attraction in the itinerary.
     const findPlace = (name: string, dayNumber?: number) =>
       itinerary.days.flatMap((day) =>
         day.stops
@@ -54,13 +54,17 @@ export class ItineraryModificationValidationService {
           })),
       );
 
+    // Validate whether a requested day exists.
     const validateDayNumber = (dayNumber: number | undefined, context: string): void => {
       if (dayNumber !== undefined && !itinerary.days.some((day) => day.dayNumber === dayNumber)) {
         errors.push(`Day ${dayNumber} specified for ${context} does not exist in this itinerary.`);
       }
     };
 
-    // Validate removals.
+    // ==================================================
+    // VALIDATE REMOVALS
+    // ==================================================
+
     for (const place of changes.removePlaces) {
       const matches = findPlace(place.name, place.dayNumber);
 
@@ -79,7 +83,10 @@ export class ItineraryModificationValidationService {
       validateDayNumber(place.dayNumber, `"${place.name}"`);
     }
 
-    // Validate additions and their requested insertion positions.
+    // ==================================================
+    // VALIDATE ADDITIONS
+    // ==================================================
+
     for (const place of changes.addPlaces) {
       const existingMatches = findPlace(place.name);
 
@@ -98,8 +105,6 @@ export class ItineraryModificationValidationService {
       const hasInsertBefore = Boolean(place.insertBefore?.trim());
       const hasInsertAfter = Boolean(place.insertAfter?.trim());
 
-      // Reject contradictory placement instructions.
-      // The user should clarify the intended insertion position.
       if (hasInsertBefore && hasInsertAfter) {
         errors.push(
           `The requested position for "${place.name}" specifies both before "${place.insertBefore}" and after "${place.insertAfter}". Please clarify the intended insertion position.`,
@@ -161,7 +166,10 @@ export class ItineraryModificationValidationService {
       }
     }
 
-    // Validate replacements.
+    // ==================================================
+    // VALIDATE REPLACEMENTS
+    // ==================================================
+
     for (const replacement of changes.replacePlaces) {
       const originalMatches = findPlace(replacement.remove, replacement.dayNumber);
 
@@ -190,44 +198,218 @@ export class ItineraryModificationValidationService {
       validateDayNumber(replacement.dayNumber, `replacement "${replacement.remove}"`);
     }
 
-    // Prevent the same existing stop from being removed or replaced
-    // multiple times in one modification request.
-    const affectedPlaces = new Map<string, string>();
+    // ==================================================
+    // VALIDATE MOVES
+    // ==================================================
+
+    for (const move of changes.movePlaces) {
+      const { name, fromDayNumber, toDayNumber } = move;
+
+      // Source and destination must be different.
+      if (fromDayNumber === toDayNumber) {
+        errors.push(
+          `"${name}" is already on Day ${fromDayNumber}. Please select a different destination day.`,
+        );
+
+        continue;
+      }
+
+      // Validate source day.
+      validateDayNumber(fromDayNumber, `the source of "${name}"`);
+
+      // Validate destination day.
+      validateDayNumber(toDayNumber, `the destination of "${name}"`);
+
+      // Check whether the attraction exists on the source day.
+      const sourceMatches = findPlace(name, fromDayNumber);
+
+      if (sourceMatches.length === 0) {
+        errors.push(`"${name}" was not found on Day ${fromDayNumber}.`);
+      } else if (sourceMatches.length > 1) {
+        errors.push(
+          `"${name}" appears more than once on Day ${fromDayNumber}. Please clarify which occurrence you want to move.`,
+        );
+      }
+
+      // Ensure the destination day exists before checking its anchors.
+      const destinationDayExists = itinerary.days.some((day) => day.dayNumber === toDayNumber);
+
+      const hasInsertBefore = Boolean(move.insertBefore?.trim());
+      const hasInsertAfter = Boolean(move.insertAfter?.trim());
+
+      // Both insertion positions cannot be specified together.
+      if (hasInsertBefore && hasInsertAfter) {
+        errors.push(
+          `The requested position for "${name}" specifies both before "${move.insertBefore}" and after "${move.insertAfter}". Please clarify the intended position.`,
+        );
+
+        continue;
+      }
+
+      // Validate insertBefore.
+      if (hasInsertBefore && move.insertBefore && destinationDayExists) {
+        const anchors = findPlace(move.insertBefore, toDayNumber);
+
+        if (anchors.length === 0) {
+          errors.push(
+            `The destination anchor "${move.insertBefore}" was not found on Day ${toDayNumber}.`,
+          );
+        } else if (anchors.length > 1) {
+          errors.push(
+            `The destination anchor "${move.insertBefore}" appears more than once on Day ${toDayNumber}.`,
+          );
+        }
+
+        if (normalize(name) === normalize(move.insertBefore)) {
+          errors.push(`"${name}" cannot be moved before itself.`);
+        }
+      }
+
+      // Validate insertAfter.
+      if (hasInsertAfter && move.insertAfter && destinationDayExists) {
+        const anchors = findPlace(move.insertAfter, toDayNumber);
+
+        if (anchors.length === 0) {
+          errors.push(
+            `The destination anchor "${move.insertAfter}" was not found on Day ${toDayNumber}.`,
+          );
+        } else if (anchors.length > 1) {
+          errors.push(
+            `The destination anchor "${move.insertAfter}" appears more than once on Day ${toDayNumber}.`,
+          );
+        }
+
+        if (normalize(name) === normalize(move.insertAfter)) {
+          errors.push(`"${name}" cannot be moved after itself.`);
+        }
+      }
+
+      console.log("[MOVE VALIDATION]", {
+        name,
+        fromDayNumber,
+        toDayNumber,
+        sourceMatches: sourceMatches.length,
+        insertBefore: move.insertBefore,
+        insertAfter: move.insertAfter,
+      });
+    }
+
+    // ==================================================
+    // VALIDATE CONFLICTING OPERATIONS
+    // ==================================================
+
+    type AffectedOperation = {
+      name: string;
+      dayNumber?: number | undefined;
+      operation: string;
+    };
+
+    const affectedOperations: AffectedOperation[] = [];
 
     for (const place of changes.removePlaces) {
-      const key = `${normalize(place.name)}::${place.dayNumber ?? "*"}`;
-      const previous = affectedPlaces.get(key);
-
-      if (previous) {
-        errors.push(
-          `"${place.name}" is requested for both ${previous} and removal. Resolve the conflicting operations before continuing.`,
-        );
-      } else {
-        affectedPlaces.set(key, "removal");
-      }
+      affectedOperations.push({
+        name: place.name,
+        dayNumber: place.dayNumber,
+        operation: "removal",
+      });
     }
 
     for (const replacement of changes.replacePlaces) {
-      const key = `${normalize(replacement.remove)}::${replacement.dayNumber ?? "*"}`;
-      const previous = affectedPlaces.get(key);
+      affectedOperations.push({
+        name: replacement.remove,
+        dayNumber: replacement.dayNumber,
+        operation: "replacement",
+      });
+    }
 
-      if (previous) {
-        errors.push(
-          `"${replacement.remove}" has conflicting modification operations: ${previous} and replacement.`,
-        );
-      } else {
-        affectedPlaces.set(key, "replacement");
+    for (const move of changes.movePlaces) {
+      affectedOperations.push({
+        name: move.name,
+        dayNumber: move.fromDayNumber,
+        operation: "move",
+      });
+    }
+
+    // The same attraction cannot be removed, replaced or moved
+    // multiple times in one modification request.
+    for (let i = 0; i < affectedOperations.length; i++) {
+      const current = affectedOperations[i];
+
+      if (!current) {
+        continue;
+      }
+
+      for (let j = i + 1; j < affectedOperations.length; j++) {
+        const other = affectedOperations[j];
+
+        if (!other) {
+          continue;
+        }
+
+        const sameName = normalize(current.name) === normalize(other.name);
+
+        const sameOccurrence =
+          current.dayNumber === undefined ||
+          other.dayNumber === undefined ||
+          current.dayNumber === other.dayNumber;
+
+        if (sameName && sameOccurrence) {
+          errors.push(
+            `"${current.name}" has conflicting operations: ${current.operation} and ${other.operation}. Please separate or clarify these changes.`,
+          );
+        }
       }
     }
+
+    // ==================================================
+    // VALIDATE MOVE ANCHORS AGAINST OTHER OPERATIONS
+    // ==================================================
+
+    for (const move of changes.movePlaces) {
+      const anchors = [move.insertBefore, move.insertAfter].filter((anchor): anchor is string =>
+        Boolean(anchor?.trim()),
+      );
+
+      for (const anchor of anchors) {
+        const affectedAnchor = affectedOperations.find(
+          (operation) =>
+            normalize(operation.name) === normalize(anchor) &&
+            (operation.dayNumber === undefined || operation.dayNumber === move.toDayNumber),
+        );
+
+        if (affectedAnchor) {
+          errors.push(
+            `The destination anchor "${anchor}" is also being ${affectedAnchor.operation} in this request. Please choose a different anchor or separate the modifications.`,
+          );
+        }
+      }
+    }
+
+    // ==================================================
+    // VALIDATE WHETHER ANY CHANGES EXIST
+    // ==================================================
 
     const hasChanges =
       changes.addPlaces.length > 0 ||
       changes.removePlaces.length > 0 ||
-      changes.replacePlaces.length > 0;
+      changes.replacePlaces.length > 0 ||
+      changes.movePlaces.length > 0;
 
     if (!hasChanges) {
       errors.push("No itinerary changes were identified.");
     }
+
+    console.log(
+      "[ITINERARY MODIFICATION VALIDATION RESULT]",
+      JSON.stringify(
+        {
+          isValid: errors.length === 0,
+          errors,
+        },
+        null,
+        2,
+      ),
+    );
 
     return {
       isValid: errors.length === 0,

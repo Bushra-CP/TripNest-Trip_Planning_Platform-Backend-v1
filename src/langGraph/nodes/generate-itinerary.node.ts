@@ -3,10 +3,12 @@ import { ItineraryTemplateRetrievalService } from "@/services/user(traveler)/tri
 import type { TripGraphState } from "../trip-graph.state";
 
 import { ItineraryGenerationService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-generation.service";
+import { ItineraryScheduleService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-schedule.service";
 
 export const createGenerateItineraryNode = (
   itineraryTemplateRetrievalService: ItineraryTemplateRetrievalService,
   itineraryGenerationService: ItineraryGenerationService,
+  itineraryScheduleService: ItineraryScheduleService,
 ) => {
   return async (state: TripGraphState): Promise<Partial<TripGraphState>> => {
     console.log("\n========== GENERATE ITINERARY NODE STARTED ==========\n");
@@ -147,6 +149,7 @@ export const createGenerateItineraryNode = (
       // STEP 5: Reuse template or generate a fresh itinerary
 
       let generatedItinerary;
+      let reusedExistingTemplate = false;
 
       if (suitableTemplate) {
         console.log("\nSTEP 5: REUSING VALIDATED TEMPLATE");
@@ -156,11 +159,15 @@ export const createGenerateItineraryNode = (
           days: suitableTemplate.days,
         };
 
+        reusedExistingTemplate = true;
+
         console.log("VALIDATED TEMPLATE SELECTED:", suitableTemplate.title);
+
+        console.log("REUSED EXISTING TEMPLATE: true");
       } else {
         console.log("\nSTEP 5: NO SUITABLE TEMPLATE FOUND");
 
-        console.log("STARTING FRESH ITINERARY GENERATION USING GROQ...");
+        console.log("STARTING FRESH ITINERARY GENERATION...");
 
         const generationStartTime = Date.now();
 
@@ -170,6 +177,8 @@ export const createGenerateItineraryNode = (
           console.log("\nFRESH ITINERARY GENERATED SUCCESSFULLY");
 
           console.log("ITINERARY GENERATION TIME:", Date.now() - generationStartTime, "ms");
+
+          console.log("REUSED EXISTING TEMPLATE: false");
         } catch (error) {
           console.error("\nFRESH ITINERARY GENERATION FAILED");
 
@@ -185,23 +194,105 @@ export const createGenerateItineraryNode = (
         }
       }
 
-      // STEP 6: Log final itinerary
+      // STEP 6: Schedule each day using travel times and operating hours
 
-      console.log("\nSTEP 6: FINAL GENERATED ITINERARY");
+      console.log("\nSTEP 6: STARTING ITINERARY SCHEDULING");
+
+      const scheduledDays = [];
+
+      for (const day of generatedItinerary.days) {
+        console.log(`\n========== SCHEDULING DAY ${day.dayNumber} ==========`);
+
+        // Calculate the travel date for this itinerary day.
+
+        let travelDate: string | undefined;
+
+        if (trip.startDate) {
+          const [year, month, date] = trip.startDate.split("-").map(Number);
+
+          const dayDate = new Date(Date.UTC(year!, month! - 1, date!));
+
+          dayDate.setUTCDate(dayDate.getUTCDate() + day.dayNumber - 1);
+
+          travelDate = dayDate.toISOString().slice(0, 10);
+        }
+
+        console.log("TRAVEL DATE:", travelDate ?? "Not provided");
+
+        // Retrieve travel-time and operating-hours information.
+
+        const analysis = await itineraryScheduleService.analyzeDayWithTravel(
+          day,
+          trip.travelMode!,
+          travelDate,
+        );
+
+        console.log("DAY SCHEDULE ANALYSIS:");
+        console.log(JSON.stringify(analysis, null, 2));
+
+        // Prepare the information for the existing rescheduleDay method.
+
+        const scheduledDay = await itineraryGenerationService.rescheduleDay({
+          day,
+          travelMode: trip.travelMode!,
+          tripType: trip.tripType!,
+          preferences: trip.preferences,
+
+          travelLegs: analysis.travelLegs.map((leg) => ({
+            from: leg.from,
+            to: leg.to,
+            durationMinutes: leg.durationMinutes,
+            status: leg.status,
+          })),
+
+          operatingHours: analysis.operatingHoursAnalysis.map((hours) => ({
+            stopName: hours.stopName,
+            status: hours.status,
+            operatingHoursStatus: hours.operatingHoursStatus,
+            openingTime: hours.openingTime,
+            closingTime: hours.closingTime,
+            lastEntryTime: hours.lastEntryTime,
+            operatingPeriods: hours.operatingPeriods,
+            issues: hours.issues,
+          })),
+        });
+
+        scheduledDays.push(scheduledDay);
+
+        console.log(`DAY ${day.dayNumber} SCHEDULED SUCCESSFULLY`);
+
+        console.log(JSON.stringify(scheduledDay, null, 2));
+      }
+
+      // Replace the original days with scheduled days.
+
+      generatedItinerary = {
+        ...generatedItinerary,
+        days: scheduledDays,
+      };
+
+      console.log("\nALL ITINERARY DAYS SCHEDULED SUCCESSFULLY");
+
+      // STEP 7: Log final itinerary
+
+      console.log("\nSTEP 7: FINAL GENERATED ITINERARY");
 
       console.log(JSON.stringify(generatedItinerary, null, 2));
 
-      // STEP 7: Return generated itinerary to graph state
+      // STEP 8: Return generated itinerary to graph state
 
-      console.log("\nSTEP 7: UPDATING GRAPH STATE");
+      console.log("\nSTEP 8: UPDATING GRAPH STATE");
 
       console.log("ITINERARY GENERATION COMPLETED SUCCESSFULLY");
+
+      console.log("FINAL TEMPLATE REUSE STATUS:", reusedExistingTemplate);
 
       console.log("\n========== GENERATE ITINERARY NODE FINISHED ==========\n");
 
       return {
         generatedItinerary,
         itineraryGeneratedNow: true,
+        reusedExistingTemplate,
         response: "Itinerary generated successfully.",
       };
     } catch (error) {
@@ -218,6 +309,7 @@ export const createGenerateItineraryNode = (
       console.error("========== END OF GENERATION ERROR ==========\n");
 
       // Allow LangGraph's error handling to handle the exception.
+
       throw error;
     }
   };

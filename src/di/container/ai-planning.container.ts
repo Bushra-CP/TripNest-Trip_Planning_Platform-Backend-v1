@@ -78,6 +78,11 @@ import { IItineraryIngestionQueue } from "@/interfaces/IQueue/itinerary-ingestio
 import { ItineraryIngestionWorker } from "@/workers/itinerary-ingestion.worker";
 import { ItineraryModificationValidationService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-validation.service";
 import { ItineraryModificationFeasibilityService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-feasibility.service";
+import { ItineraryScheduleService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-schedule.service";
+import { ItineraryTravelTimeService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-travel-time.service";
+import { ItineraryModificationBuilderService } from "@/services/user(traveler)/trip-planning/itinerary/itinerary-modification-builder.service";
+import { AttractionOperatingHoursService } from "@/services/user(traveler)/trip-planning/itinerary/attraction-operating-hours.service";
+import { AttractionOperatingHoursSearchService } from "@/services/user(traveler)/trip-planning/itinerary/attraction-operating-hours-search.service";
 
 export function registerAIPlanning(container: Container): void {
   container.bind(TYPES.AIPlanningService).to(AIPlanningService);
@@ -181,6 +186,13 @@ export function registerAIPlanning(container: Container): void {
   container
     .bind(TYPES.ItineraryModificationFeasibilityService)
     .to(ItineraryModificationFeasibilityService);
+  container.bind(TYPES.ItineraryScheduleService).to(ItineraryScheduleService);
+  container.bind(TYPES.ItineraryTravelTimeService).to(ItineraryTravelTimeService);
+  container.bind(TYPES.ItineraryModificationBuilderService).to(ItineraryModificationBuilderService);
+  container.bind(TYPES.AttractionOperatingHoursService).to(AttractionOperatingHoursService);
+  container
+    .bind(TYPES.AttractionOperatingHoursSearchService)
+    .to(AttractionOperatingHoursSearchService);
 
   //Worker
   container.bind(TYPES.KnowledgeIngestionWorker).to(KnowledgeIngestionWorker).inSingletonScope();

@@ -8,9 +8,27 @@ export type ItineraryAction = "CREATE" | "MODIFY" | null;
 
 export type UserConfirmation = "YES" | "NO" | null;
 
+export type ModificationConfirmationIntent = "CONFIRM" | "REJECT" | "MODIFY" | "CLARIFY";
+
+export interface ModificationConfirmationResult {
+  intent: ModificationConfirmationIntent;
+  message: string;
+  updatedRequest: string | null;
+}
+
 export interface ItineraryIntentResult {
   itineraryRequested: boolean;
   itineraryAction: ItineraryAction;
+}
+
+export interface AttractionRecommendationIntent {
+  recommendationRequested: boolean;
+  dayNumber: number | null;
+}
+
+export interface RecommendedAttraction {
+  name: string;
+  reason: string;
 }
 
 @injectable()
@@ -125,73 +143,117 @@ ${JSON.stringify(userMessage)}
   }
 
   /**
-   * Detect whether the user confirms, rejects, or has not
-   * clearly decided about a pending itinerary action.
-   *
-   * @param {string} userMessage
-   * @return {*}  {Promise<UserConfirmation>}
-   * @memberof ItineraryIntentService
+   * Detect a YES/NO confirmation for itinerary creation.
+   * Modification confirmations are handled by interpretModificationResponse().
    */
   async detectConfirmation(userMessage: string): Promise<UserConfirmation> {
     const prompt = `
 You are a confirmation classifier for a travel planning application.
 
-The assistant has asked the user to confirm a pending action,
-such as creating or modifying a travel itinerary.
+The assistant has asked the user to confirm a pending itinerary creation request.
 
-Classify the user's latest message into exactly one category:
+Classify the user's message as YES, NO, or UNCLEAR.
 
-YES:
-The user clearly agrees, approves, confirms, or asks the assistant
-to proceed with the pending action.
+YES means the user clearly agrees or asks the assistant to proceed.
+Examples: "Yes", "Sure, go ahead", "That sounds good", "Please generate it".
 
-Examples:
-- "Yes"
-- "Yes, please"
-- "Sure, go ahead"
-- "That sounds good"
-- "Please proceed"
-- "Okay, generate it"
-- "Absolutely, let's do it"
-- "Go ahead and create the itinerary"
+NO means the user clearly rejects or cancels the request.
+Examples: "No", "Don't generate it", "Cancel the request", "I changed my mind".
 
-NO:
-The user clearly rejects, declines, cancels, or asks not to proceed
-with the pending action.
+UNCLEAR means the user asks a question, expresses uncertainty, or requests changes.
+Examples: "Maybe", "Can you explain more?", "I want to change the destination".
 
-Examples:
-- "No"
-- "No, thanks"
-- "Don't generate it"
-- "Cancel the request"
-- "I changed my mind"
-- "No, let me make some changes first"
+Rules:
+- Understand the complete meaning.
+- Do not classify questions or ambiguous messages as YES.
+- Return valid JSON only.
 
-UNCLEAR:
-The user does not clearly confirm or reject the pending action.
+Required JSON:
+{ "confirmation": "YES" | "NO" | "UNCLEAR" }
 
-Examples:
-- "Maybe"
-- "What will the itinerary include?"
-- "Can you explain more?"
-- "I want to change the destination"
-- "What about the budget?"
-- "I'm not sure yet"
+User message:
+${JSON.stringify(userMessage)}
+`;
 
-Important rules:
-- Interpret the meaning of the complete message, not just individual words.
-- Do not classify a question as YES merely because it contains a positive word.
-- If the user expresses uncertainty, classify it as UNCLEAR.
-- If the user requests changes before proceeding, classify it as UNCLEAR.
-- If the message contains both agreement and a clear cancellation, classify it as NO.
-- Do not assume confirmation when the meaning is ambiguous.
-- Return only valid JSON.
-- Do not include markdown or explanations.
+    try {
+      const response = await this._ai.models.generateContent({
+        model: this._model,
+        contents: prompt,
+        config: {
+          temperature: 0,
+          responseMimeType: "application/json",
+        },
+      });
 
-Required JSON format:
+      const text = response.text?.trim();
+      if (!text) return null;
 
+      const parsed: unknown = JSON.parse(text);
+      const schema = z.object({
+        confirmation: z.enum(["YES", "NO", "UNCLEAR"]),
+      });
+
+      const result = schema.safeParse(parsed);
+      if (!result.success) {
+        console.error("Invalid itinerary creation confirmation:", result.error.message);
+        return null;
+      }
+
+      return result.data.confirmation === "UNCLEAR" ? null : result.data.confirmation;
+    } catch (error) {
+      console.error("Failed to detect user confirmation:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Interpret a user's response to a proposed itinerary modification.
+   */
+  async interpretModificationResponse(
+    userMessage: string,
+  ): Promise<ModificationConfirmationResult> {
+    const prompt = `
+You are a confirmation interpreter for TripNest, an AI travel planning application.
+
+The assistant has presented proposed changes to the user's existing itinerary
+and asked whether the user wants to apply them.
+
+Classify the user's latest message into exactly one intent:
+
+CONFIRM:
+The user clearly approves the proposed changes.
+Examples: "Yes", "Go ahead", "That looks good", "Please apply the changes".
+
+REJECT:
+The user clearly rejects the proposed changes.
+Examples: "No", "Keep my original itinerary", "Cancel this modification".
+
+MODIFY:
+The user wants to change the proposal before approving it.
+Examples: "Move Chembra Peak to Day 3", "Remove Edakkal Caves",
+"Yes, but move Chembra Peak to Day 3".
+
+CLARIFY:
+The user asks a question, requests an explanation, expresses uncertainty,
+or does not clearly confirm, reject, or modify.
+Examples: "Why is the travel time so long?", "Can you explain?",
+"I'm not sure", "Maybe".
+
+Rules:
+- Understand the complete meaning, not just individual words.
+- Do not classify a question as CONFIRM.
+- A requested change must be MODIFY, not CONFIRM.
+- If the user both agrees and requests a change, classify as MODIFY.
+- For MODIFY, put only the requested changes in updatedRequest.
+- For other intents, updatedRequest must be null.
+- Do not invent modification requests.
+- Return valid JSON only.
+
+Required JSON:
 {
-  "confirmation": "YES" | "NO" | "UNCLEAR"
+  "intent": "CONFIRM" | "REJECT" | "MODIFY" | "CLARIFY",
+  "message": "A short helpful response.",
+  "updatedRequest": "The requested changes, or null."
 }
 
 User message:
@@ -209,32 +271,172 @@ ${JSON.stringify(userMessage)}
       });
 
       const text = response.text?.trim();
+      if (!text) return this._emptyModificationConfirmationResult();
+
+      const parsed: unknown = JSON.parse(text);
+      const schema = z.object({
+        intent: z.enum(["CONFIRM", "REJECT", "MODIFY", "CLARIFY"]),
+        message: z.string(),
+        updatedRequest: z.string().nullable(),
+      });
+
+      const result = schema.safeParse(parsed);
+      if (!result.success) {
+        console.error("Invalid modification confirmation response:", result.error.message);
+        return this._emptyModificationConfirmationResult();
+      }
+
+      const updatedRequest = result.data.updatedRequest?.trim() || null;
+      if (result.data.intent === "MODIFY" && !updatedRequest) {
+        return this._emptyModificationConfirmationResult();
+      }
+
+      return {
+        intent: result.data.intent,
+        message: result.data.message.trim(),
+        updatedRequest,
+      };
+    } catch (error) {
+      console.error("Failed to interpret modification confirmation:", error);
+      return this._emptyModificationConfirmationResult();
+    }
+  }
+
+  private _emptyModificationConfirmationResult(): ModificationConfirmationResult {
+    return {
+      intent: "CLARIFY",
+      message:
+        "I'm not sure I understood. Would you like to apply the proposed changes, or modify them?",
+      updatedRequest: null,
+    };
+  }
+
+  /**
+   * Detect whether the user is requesting attraction recommendations.
+   *
+   * @param userMessage
+   * @param conversationHistory
+   */
+  async detectRecommendationRequest(
+    userMessage: string,
+    conversationHistory: string,
+  ): Promise<AttractionRecommendationIntent> {
+    const prompt = `
+You are an intent detection system for TripNest, a travel planning application.
+
+Your task is to identify ONLY explicit requests for attraction or activity recommendations.
+
+IMPORTANT: Distinguish attraction recommendations from itinerary creation.
+
+CLASSIFY AS RECOMMENDATION (true):
+
+The user specifically asks for suggestions, recommendations, or a list of
+places or activities to visit.
+
+Examples:
+
+User: "Suggest some activities for Day 2."
+Result: {"recommendationRequested": true, "dayNumber": 2}
+
+User: "Can you recommend other places to visit?"
+Result: {"recommendationRequested": true, "dayNumber": null}
+
+User: "What places can I explore on Day 1?"
+Result: {"recommendationRequested": true, "dayNumber": 1}
+
+User: "What else can I explore that day?"
+Result: Use conversation history to identify the day.
+If the day cannot be identified, return null.
+
+CLASSIFY AS NOT A RECOMMENDATION (false):
+
+1. Itinerary creation requests.
+
+Examples:
+
+User: "I want an itinerary for this trip."
+Result: {"recommendationRequested": false, "dayNumber": null}
+
+User: "Create a 3-day itinerary for Wayanad."
+Result: {"recommendationRequested": false, "dayNumber": null}
+
+User: "Plan my trip day by day."
+Result: {"recommendationRequested": false, "dayNumber": null}
+
+2. Itinerary modification requests.
+
+User: "Add Pookode Lake to Day 2."
+Result: {"recommendationRequested": false, "dayNumber": null}
+
+User: "Remove Mattupetty Dam from Day 2."
+Result: {"recommendationRequested": false, "dayNumber": null}
+
+3. General travel questions.
+
+User: "What is the distance between Wayanad and Palakkad?"
+Result: {"recommendationRequested": false, "dayNumber": null}
+
+IMPORTANT RULES:
+
+- An itinerary creation request is NEVER an attraction recommendation request.
+- A request to generate a day-wise travel plan is NEVER a recommendation request.
+- Do not classify every question about places as a recommendation request.
+- Only return true when the user explicitly asks for attraction or activity suggestions.
+- Use conversation history only to resolve references such as "that day".
+- Do not invent a day number.
+- When uncertain, return false.
+- Return valid JSON only.
+
+Conversation history:
+${conversationHistory}
+
+Latest user message:
+${JSON.stringify(userMessage)}
+`;
+
+    try {
+      const response = await this._ai.models.generateContent({
+        model: this._model,
+        contents: prompt,
+        config: {
+          temperature: 0,
+          responseMimeType: "application/json",
+        },
+      });
+
+      const text = response.text?.trim();
 
       if (!text) {
-        return null;
+        return {
+          recommendationRequested: false,
+          dayNumber: null,
+        };
       }
 
       const parsed: unknown = JSON.parse(text);
 
-      if (typeof parsed !== "object" || parsed === null || !("confirmation" in parsed)) {
-        return null;
+      const schema = z.object({
+        recommendationRequested: z.boolean(),
+        dayNumber: z.number().int().positive().nullable(),
+      });
+
+      const result = schema.safeParse(parsed);
+
+      if (!result.success) {
+        return {
+          recommendationRequested: false,
+          dayNumber: null,
+        };
       }
 
-      const confirmation = parsed.confirmation;
-
-      if (confirmation === "YES" || confirmation === "NO") {
-        return confirmation;
-      }
-
-      if (confirmation === "UNCLEAR") {
-        return null;
-      }
-
-      return null;
+      return result.data;
     } catch (error) {
-      console.error("Failed to detect user confirmation:", error);
+      console.error("Failed to detect attraction recommendation request:", error);
 
-      return null;
+      return {
+        recommendationRequested: false,
+        dayNumber: null,
+      };
     }
   }
 
@@ -245,120 +447,362 @@ ${JSON.stringify(userMessage)}
    * @return {*}  {(Promise<PendingItineraryChange | null>)}
    * @memberof ItineraryIntentService
    */
-  public async extractModification(userMessage: string): Promise<PendingItineraryChange> {
+  /**
+   * Extract itinerary modifications using the user's message
+   * and previously recommended attractions.
+   *
+   * @param userMessage
+   * @param recommendedAttractions
+   * @returns PendingItineraryChange
+   */
+  public async extractModification(
+    userMessage: string,
+    recommendedAttractions: RecommendedAttraction[] = [],
+  ): Promise<PendingItineraryChange> {
     const prompt = `
-You are TripNest's itinerary modification request extractor.
+You are TripNest's intelligent itinerary modification extractor.
 
-Extract the user's requested changes to an existing travel itinerary.
+Your task is to understand the user's requested changes to an existing
+travel itinerary.
 
-USER MESSAGE:
+You must interpret the latest user message using the previously
+recommended attractions.
+
+==================================================
+LATEST USER MESSAGE
+==================================================
+
 ${JSON.stringify(userMessage)}
 
-YOUR TASK:
-Extract additions, removals, and replacements.
+==================================================
+PREVIOUSLY RECOMMENDED ATTRACTIONS
+==================================================
 
-Return all three arrays, even when an array is empty.
+${JSON.stringify(recommendedAttractions, null, 2)}
 
-1. ADD PLACES
+==================================================
+TASK 1: UNDERSTAND THE USER'S INTENTION
+==================================================
 
-For every requested addition, extract:
-- name: destination name.
-- dayNumber: explicitly specified day number, otherwise null.
-- insertBefore: destination the new place must appear immediately before, otherwise null.
-- insertAfter: destination the new place must appear immediately after, otherwise null.
-- preferredTime: the requested visiting time expressed as a natural-language string, otherwise null.
+Identify whether the user wants to:
+
+1. ADD a new attraction to the itinerary.
+2. REMOVE an existing attraction.
+3. REPLACE an existing attraction with another attraction.
+4. MOVE an existing attraction from one day to another.
+
+Extract only the changes explicitly requested by the user.
+
+==================================================
+TASK 2: RESOLVE INDIRECT ATTRACTION REFERENCES
+==================================================
+
+The user may refer to an attraction without mentioning its actual name.
+
+Use the previously recommended attractions to understand these references.
 
 Examples:
-- "Add Cheeyappara Waterfalls before Munnar Tea Gardens in the morning."
-  -> name: "Cheeyappara Waterfalls"
-  -> insertBefore: "Munnar Tea Gardens"
-  -> preferredTime: "Morning"
 
-- "Add Echo Point after Mattupetty Dam in the late afternoon."
-  -> name: "Echo Point"
-  -> insertAfter: "Mattupetty Dam"
-  -> preferredTime: "Late Afternoon"
+- Add the first one.
+- Add the second one.
+- Add that 2nd one.
+- Add that 2 nd one.
+- I want the third option.
+- Add option number two.
+- Let's include the last attraction.
+- Add the attraction you mentioned second.
+- I like the second suggestion.
+- Add that place after Lakkidi Viewpoint.
 
-- "Add Pookode Lake to day 2."
-  -> dayNumber: 2
-  -> insertBefore: null
-  -> insertAfter: null
-  -> preferredTime: null
+You must understand these expressions semantically.
 
-- "Add a waterfall visit before lunch."
-  Extract the requested place only if the user identifies a specific destination.
-  Do not invent a destination name.
+IMPORTANT RULES:
 
-IMPORTANT:
-- Do not invent a day, insertion position, or preferred time.
-- Do not convert a missing preference into a default time.
-- Do not use a predefined list of permitted time labels.
-- Extract the user's requested time in natural language.
-- If the user specifies both insertBefore and insertAfter, preserve both values.
-  Do not silently choose one over the other.
-- A position may refer to an existing destination by its name.
+1. Resolve references using the previously recommended attractions.
 
-2. REMOVE PLACES
+2. The first recommendation is the first attraction in the array.
 
-For every requested removal, extract:
-- name: destination to remove.
-- dayNumber: explicitly specified day number, otherwise null.
+3. The second recommendation is the second attraction in the array.
 
-Do not invent a day number.
+4. The third recommendation is the third attraction in the array.
 
-3. REPLACE PLACES
+5. "Last one" refers to the last attraction in the array.
 
-For every requested replacement, extract:
-- remove: existing destination to replace.
-- add: replacement destination.
-- dayNumber: explicitly specified day number, otherwise null.
-- preferredTime: requested visiting time for the replacement, otherwise null.
+6. Preserve the exact attraction name from the recommendation list.
 
-A replacement should preserve the original destination's position unless the user explicitly requests a different position.
+7. Do not interpret ordinal references as literal attraction names.
 
-Do not treat a simple addition as a replacement.
+8. Do not invent attraction names.
 
-4. DESCRIPTION
+9. If the user refers to an attraction that cannot be identified
+   confidently, set referenceResolved to false.
 
-Provide a concise, natural-language description of the requested modifications.
+10. If the user explicitly mentions an attraction by name,
+    use that name directly.
 
-5. EXTRACTION RULES
+==================================================
+REFERENCE RESOLUTION EXAMPLE
+==================================================
 
-- Extract only changes explicitly requested by the user.
-- Use null for unspecified optional values.
-- Do not add explanations or recommendations.
-- If a user requests multiple changes, extract all of them.
-- Do not treat examples in these instructions as actual requested changes.
-- Do not invent destination names.
-- Return valid JSON only.
+Previously recommended attractions:
 
-REQUIRED JSON STRUCTURE:
+[
+  {
+    "name": "Chain Tree",
+    "reason": "Located near Lakkidi."
+  },
+  {
+    "name": "Heart Shaped Lake (Chembra View)",
+    "reason": "A scenic natural attraction."
+  },
+  {
+    "name": "Thamarassery Churam Viewpoint",
+    "reason": "Offers scenic mountain views."
+  }
+]
+
+Latest user message:
+
+"ADD THAT 2 ND ONE TO DAY 1 AFTER Lakkidi Viewpoint"
+
+Expected interpretation:
 
 {
   "addPlaces": [
     {
-      "name": "Cheeyappara Waterfalls",
-      "dayNumber": null,
-      "insertBefore": "Munnar Tea Gardens",
-      "insertAfter": null,
-      "preferredTime": "Morning"
+      "name": "Heart Shaped Lake (Chembra View)",
+      "dayNumber": 1,
+      "insertBefore": null,
+      "insertAfter": "Lakkidi Viewpoint",
+      "preferredTime": null
     }
   ],
   "removePlaces": [],
   "replacePlaces": [],
-  "description": "Add Cheeyappara Waterfalls before Munnar Tea Gardens in the morning."
+  "movePlaces": [],
+  "description": "Add Heart Shaped Lake (Chembra View) to Day 1 after Lakkidi Viewpoint.",
+  "referenceResolved": true
 }
 
-The example above illustrates the structure only. Your output must reflect the actual user message.
+==================================================
+TASK 3: EXTRACT ADDITIONS
+==================================================
 
-Return only valid JSON without Markdown or code fences.
+For every requested addition, extract:
+
+- name: Exact attraction name.
+- dayNumber: Explicitly specified day number, otherwise null.
+- insertBefore: Existing attraction that the new attraction
+  should appear immediately before, otherwise null.
+- insertAfter: Existing attraction that the new attraction
+  should appear immediately after, otherwise null.
+- preferredTime: Requested visiting time, otherwise null.
+
+Examples:
+
+"Add Pookode Lake to Day 2."
+
+dayNumber: 2
+insertBefore: null
+insertAfter: null
+preferredTime: null
+
+"Add Echo Point after Mattupetty Dam in the afternoon."
+
+dayNumber: null
+insertBefore: null
+insertAfter: "Mattupetty Dam"
+preferredTime: "Afternoon"
+
+"Add Chembra View before Lakkidi Viewpoint on Day 1."
+
+dayNumber: 1
+insertBefore: "Lakkidi Viewpoint"
+insertAfter: null
+preferredTime: null
+
+==================================================
+TASK 4: EXTRACT REMOVALS
+==================================================
+
+For every requested removal, extract:
+
+- name: Exact attraction to remove.
+- dayNumber: Explicitly specified day number, otherwise null.
+
+Do not invent a day number.
+
+==================================================
+TASK 5: EXTRACT REPLACEMENTS
+==================================================
+
+For every requested replacement, extract:
+
+- remove: Existing attraction to replace.
+- add: Replacement attraction.
+- dayNumber: Explicitly specified day number, otherwise null.
+- preferredTime: Requested visiting time, otherwise null.
+
+Preserve the original attraction's position unless the user
+explicitly requests a different position.
+
+Do not interpret a simple addition as a replacement.
+
+==================================================
+TASK 6: EXTRACT MOVES
+==================================================
+
+For every requested move, extract:
+
+- name: Exact existing attraction name.
+- fromDayNumber: The current day number of the attraction.
+- toDayNumber: The destination day number.
+- insertBefore: Existing attraction before which the moved attraction
+  should appear, otherwise null.
+- insertAfter: Existing attraction after which the moved attraction
+  should appear, otherwise null.
+
+IMPORTANT RULES:
+
+1. A move means transferring an existing attraction from one day
+   to another day.
+
+2. Do not interpret a move as an addition or removal.
+
+3. Preserve the exact attraction name.
+
+4. Extract both the source day and destination day when provided.
+
+5. Do not invent day numbers.
+
+6. If the user does not provide the source day number,
+   use null only if the schema allows it. Otherwise, do not
+   create a move and set referenceResolved to false.
+
+7. If the user does not provide the destination day number,
+   do not create a move and set referenceResolved to false.
+
+8. If the user specifies a position in the destination day,
+   extract it using insertBefore or insertAfter.
+
+9. If no position is specified, use null for both fields.
+
+10. Do not create a move if the user only asks to add an attraction.
+
+==================================================
+MOVE EXAMPLES
+==================================================
+
+Example 1:
+
+User message:
+
+"Move Edakkal Caves from Day 2 to Day 3."
+
+Expected:
+
+{
+  "name": "Edakkal Caves",
+  "fromDayNumber": 2,
+  "toDayNumber": 3,
+  "insertBefore": null,
+  "insertAfter": null
+}
+
+Example 2:
+
+User message:
+
+"Move Pookode Lake from Day 2 to Day 1 after Lakkidi Viewpoint."
+
+Expected:
+
+{
+  "name": "Pookode Lake",
+  "fromDayNumber": 2,
+  "toDayNumber": 1,
+  "insertBefore": null,
+  "insertAfter": "Lakkidi Viewpoint"
+}
+
+Example 3:
+
+User message:
+
+"Move Banasura Sagar Dam from Day 2 to Day 3 before Soochipara Waterfalls."
+
+Expected:
+
+{
+  "name": "Banasura Sagar Dam",
+  "fromDayNumber": 2,
+  "toDayNumber": 3,
+  "insertBefore": "Soochipara Waterfalls",
+  "insertAfter": null
+}
+
+==================================================
+TASK 7: DESCRIPTION
+==================================================
+
+Provide a concise description of all requested modifications.
+
+==================================================
+IMPORTANT EXTRACTION RULES
+==================================================
+
+- Extract only changes explicitly requested by the user.
+- Use the recommended attractions to resolve indirect references.
+- Preserve exact attraction names.
+- Never use phrases such as "2 ND ONE", "second one",
+  or "that attraction" as an attraction name when a reference
+  can be resolved.
+- Do not invent destinations.
+- Do not invent day numbers.
+- Do not invent insertion positions.
+- Do not invent visiting times.
+- Use null for unspecified optional values.
+- Return all four arrays, even if they are empty.
+- If an indirect reference cannot be resolved confidently,
+  set referenceResolved to false.
+- If there is no actual modification request, do not invent one.
+- Return valid JSON only.
+
+==================================================
+REQUIRED JSON STRUCTURE
+==================================================
+
+{
+  "addPlaces": [],
+  "removePlaces": [],
+  "replacePlaces": [],
+  "movePlaces": [
+    {
+      "name": "Edakkal Caves",
+      "fromDayNumber": 2,
+      "toDayNumber": 3,
+      "insertBefore": null,
+      "insertAfter": null
+    }
+  ],
+  "description": "Move Edakkal Caves from Day 2 to Day 3.",
+  "referenceResolved": true
+}
+
+The example illustrates the expected structure only.
+
+Extract the actual user's request.
+
+Return JSON only without Markdown or explanations.
 `;
+
+    // STEP 1: Call Gemini to understand and extract modifications.
 
     const response = await this._ai.models.generateContent({
       model: this._model,
       contents: prompt,
       config: {
-        temperature: 0.1,
+        temperature: 0,
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
@@ -368,7 +812,9 @@ Return only valid JSON without Markdown or code fences.
               items: {
                 type: "OBJECT",
                 properties: {
-                  name: { type: "STRING" },
+                  name: {
+                    type: "STRING",
+                  },
                   dayNumber: {
                     type: "INTEGER",
                     nullable: true,
@@ -389,12 +835,15 @@ Return only valid JSON without Markdown or code fences.
                 required: ["name", "dayNumber", "insertBefore", "insertAfter", "preferredTime"],
               },
             },
+
             removePlaces: {
               type: "ARRAY",
               items: {
                 type: "OBJECT",
                 properties: {
-                  name: { type: "STRING" },
+                  name: {
+                    type: "STRING",
+                  },
                   dayNumber: {
                     type: "INTEGER",
                     nullable: true,
@@ -403,13 +852,18 @@ Return only valid JSON without Markdown or code fences.
                 required: ["name", "dayNumber"],
               },
             },
+
             replacePlaces: {
               type: "ARRAY",
               items: {
                 type: "OBJECT",
                 properties: {
-                  remove: { type: "STRING" },
-                  add: { type: "STRING" },
+                  remove: {
+                    type: "STRING",
+                  },
+                  add: {
+                    type: "STRING",
+                  },
                   dayNumber: {
                     type: "INTEGER",
                     nullable: true,
@@ -422,12 +876,56 @@ Return only valid JSON without Markdown or code fences.
                 required: ["remove", "add", "dayNumber", "preferredTime"],
               },
             },
-            description: { type: "STRING" },
+
+            movePlaces: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  name: {
+                    type: "STRING",
+                  },
+                  fromDayNumber: {
+                    type: "INTEGER",
+                  },
+                  toDayNumber: {
+                    type: "INTEGER",
+                  },
+                  insertBefore: {
+                    type: "STRING",
+                    nullable: true,
+                  },
+                  insertAfter: {
+                    type: "STRING",
+                    nullable: true,
+                  },
+                },
+                required: ["name", "fromDayNumber", "toDayNumber", "insertBefore", "insertAfter"],
+              },
+            },
+
+            description: {
+              type: "STRING",
+            },
+
+            referenceResolved: {
+              type: "BOOLEAN",
+            },
           },
-          required: ["addPlaces", "removePlaces", "replacePlaces", "description"],
+
+          required: [
+            "addPlaces",
+            "removePlaces",
+            "replacePlaces",
+            "movePlaces",
+            "description",
+            "referenceResolved",
+          ],
         },
       },
     });
+
+    // STEP 2: Validate Gemini's response.
 
     const responseText = response.text?.trim();
 
@@ -455,12 +953,14 @@ Return only valid JSON without Markdown or code fences.
           preferredTime: nullableString,
         }),
       ),
+
       removePlaces: z.array(
         z.object({
           name: z.string().trim().min(1),
           dayNumber: z.number().int().positive().nullable(),
         }),
       ),
+
       replacePlaces: z.array(
         z.object({
           remove: z.string().trim().min(1),
@@ -469,7 +969,20 @@ Return only valid JSON without Markdown or code fences.
           preferredTime: nullableString,
         }),
       ),
+
+      movePlaces: z.array(
+        z.object({
+          name: z.string().trim().min(1),
+          fromDayNumber: z.number().int().positive(),
+          toDayNumber: z.number().int().positive(),
+          insertBefore: nullableString,
+          insertAfter: nullableString,
+        }),
+      ),
+
       description: z.string(),
+
+      referenceResolved: z.boolean(),
     });
 
     const result = schema.safeParse(parsed);
@@ -485,34 +998,81 @@ Return only valid JSON without Markdown or code fences.
 
     const modification = result.data;
 
+    console.log(
+      "[Itinerary Modification] Gemini extraction result:",
+      JSON.stringify(modification, null, 2),
+    );
+
+    // STEP 3: Stop if Gemini could not resolve an indirect reference.
+
+    if (!modification.referenceResolved) {
+      throw new Error("I couldn't identify the attraction you selected. Please mention its name.");
+    }
+
+    // STEP 4: Validate move operations.
+
+    for (const move of modification.movePlaces) {
+      if (move.fromDayNumber === move.toDayNumber) {
+        throw new Error(`The source and destination days are the same for ${move.name}.`);
+      }
+
+      if (move.insertBefore && move.insertAfter) {
+        throw new Error(
+          `The move position for ${move.name} is ambiguous. Please specify either before or after another attraction.`,
+        );
+      }
+    }
+
+    // STEP 5: Validate that actual modifications were extracted.
+
     const hasChanges =
       modification.addPlaces.length > 0 ||
       modification.removePlaces.length > 0 ||
-      modification.replacePlaces.length > 0;
+      modification.replacePlaces.length > 0 ||
+      modification.movePlaces.length > 0;
 
     if (!hasChanges) {
       throw new Error("No valid itinerary modifications could be extracted from the request.");
     }
 
+    // STEP 6: Return the validated modification.
+
     return {
       addPlaces: modification.addPlaces.map((place) => ({
         name: place.name,
+
         ...(place.dayNumber !== null ? { dayNumber: place.dayNumber } : {}),
+
         ...(place.insertBefore !== null ? { insertBefore: place.insertBefore } : {}),
+
         ...(place.insertAfter !== null ? { insertAfter: place.insertAfter } : {}),
+
         ...(place.preferredTime !== null ? { preferredTime: place.preferredTime } : {}),
       })),
 
       removePlaces: modification.removePlaces.map((place) => ({
         name: place.name,
+
         ...(place.dayNumber !== null ? { dayNumber: place.dayNumber } : {}),
       })),
 
       replacePlaces: modification.replacePlaces.map((place) => ({
         remove: place.remove,
         add: place.add,
+
         ...(place.dayNumber !== null ? { dayNumber: place.dayNumber } : {}),
+
         ...(place.preferredTime !== null ? { preferredTime: place.preferredTime } : {}),
+      })),
+
+      movePlaces: modification.movePlaces.map((place) => ({
+        name: place.name,
+        fromDayNumber: place.fromDayNumber,
+        toDayNumber: place.toDayNumber,
+
+        ...(place.insertBefore !== null ? { insertBefore: place.insertBefore } : {}),
+
+        ...(place.insertAfter !== null ? { insertAfter: place.insertAfter } : {}),
       })),
 
       description: modification.description.trim(),

@@ -5,6 +5,7 @@ import { env } from "@/config/env";
 import { STATUS_CODES } from "@/enums/status.codes.enum";
 import type { TripRequirements } from "@/interfaces/trip-planning/trip.interfaces";
 import type {
+  IItinerary,
   IItineraryDay,
   IItineraryTemplate,
 } from "@/interfaces/IModel/trip-planning/itinerary.model.interfaces";
@@ -120,6 +121,54 @@ const placeMatches = (stop: IItineraryDay["stops"][number], place: string): bool
     return requiredWords.every((requiredWord) => fieldWords.includes(requiredWord));
   });
 };
+
+export interface AttractionRecommendation {
+  name: string;
+  description: string;
+  reason: string;
+  activityType?: string | undefined;
+  location?: string | undefined;
+}
+
+export interface AttractionRecommendationResult {
+  dayNumber: number;
+  recommendations: AttractionRecommendation[];
+}
+
+export interface DestinationAttractionRecommendationResult {
+  destination: string;
+  recommendations: AttractionRecommendation[];
+}
+
+export interface RescheduleDayInput {
+  day: IItineraryDay;
+  travelMode: string;
+  tripType: string;
+  preferences: string[];
+
+  travelLegs: {
+    from: string;
+    to: string;
+    durationMinutes: number | null;
+    status: "ESTIMATED" | "UNAVAILABLE";
+  }[];
+
+  operatingHours: {
+    stopName: string;
+    status: "COMPATIBLE" | "INCOMPATIBLE" | "UNKNOWN" | "NEEDS_DATE_CHECK";
+    operatingHoursStatus: "AVAILABLE" | "CLOSED" | "UNKNOWN" | "OPEN_24_HOURS";
+    openingTime: string | null;
+    closingTime: string | null;
+    lastEntryTime: string | null;
+    operatingPeriods: {
+      day: number;
+      dayName: string;
+      openingTime: string;
+      closingTime: string;
+    }[];
+    issues: string[];
+  }[];
+}
 
 @injectable()
 export class ItineraryGenerationService {
@@ -466,14 +515,26 @@ Optional stop properties may be omitted when unavailable.
     travelMode: string,
     tripType: string,
     preferences: string[],
-    existingStops: { name: string; startTime?: string }[] = [],
+    existingStops: {
+      name: string;
+      startTime?: string;
+      durationMinutes?: number;
+    }[] = [],
     preferredTime?: string,
+    operatingHours?: {
+      status: string;
+      openingTime?: string;
+      closingTime?: string;
+      regularOpeningHours?: string[];
+      unavailableReason?: string;
+    },
+    expectedArrivalTime?: string,
   ): Promise<IItineraryDay["stops"][number]> {
     const prompt = `
 You are TripNest's travel attraction and itinerary scheduling assistant.
 
-Generate useful details for one attraction or activity being added
-to an existing travel itinerary.
+Your task is to generate realistic details for an attraction being
+added to an existing travel itinerary.
 
 PLACE NAME:
 ${placeName}
@@ -499,91 +560,153 @@ ${JSON.stringify(existingStops, null, 2)}
 USER'S PREFERRED VISITING TIME:
 ${preferredTime?.trim() || "Not specified"}
 
+EXPECTED ARRIVAL TIME:
+${expectedArrivalTime?.trim() || "Unavailable - do not assume an exact arrival time."}
+
+ATTRACTION OPERATING HOURS:
+${JSON.stringify(
+  operatingHours ?? {
+    status: "UNKNOWN",
+    unavailableReason: "Operating hours were not provided.",
+  },
+  null,
+  2,
+)}
+
 YOUR TASK:
 
-Generate a meaningful description and an appropriate visiting-time label
-for the requested attraction.
+Generate the attraction description, visiting start time,
+and estimated visiting duration.
 
 RULES:
 
-1. Preserve the supplied place name. Do not replace it with another attraction.
+1. PLACE DETAILS
 
-2. Write a useful, specific description explaining what the attraction is
-   and what travelers may experience there.
+   - Preserve the supplied place name exactly.
+   - Do not replace it with another attraction.
+   - Write a useful description explaining what travelers
+     can experience at this attraction.
+   - Provide an appropriate activityType when reasonably known.
+   - Provide a location only when reasonably known.
+   - Do not invent a precise address.
 
-3. Do not use generic descriptions such as "Added at your request".
+2. VISITING START TIME
 
-4. Do not invent opening hours, ticket prices, travel durations, or verified
-   travel information.
+   - Consider the existing attractions and their start times.
+   - Consider existing attraction durations when provided.
+   - Consider the expected arrival time supplied above.
+   - Consider the requested attraction's nature.
+   - Consider travel mode, trip type, and user preferences.
+   - Consider the attraction's opening and closing times.
+   - If the user specifies a preferred visiting time,
+     respect it whenever compatible with operating hours.
+   - If no preferred time is specified, use the expected
+     arrival time when available.
+   - If neither is available, choose a reasonable visiting
+     time based on the existing itinerary.
+   - Do not invent an exact arrival time.
 
-5. Provide an appropriate activityType when reasonably known.
+3. VISITING DURATION
 
-6. Provide a location only when reasonably known. Do not fabricate a precise
-   address or coordinates.
+   - Estimate the normal visiting duration based on the
+     experience the attraction offers.
+   - Consider the attraction's size, activities, and nature.
+   - Consider the expected available visiting time.
+   - Do not use the same generic duration for every attraction.
 
-7. Generate startTime as a natural-language visiting-time label, for example
-   "Morning", "Late Afternoon", or "Around 10 AM".
+4. STRICT OPERATING-HOURS AND DURATION RULES
 
-8. Do not restrict startTime to a predefined list of time slots.
+   - Treat the supplied opening and closing times as
+     scheduling constraints.
 
-9. If the user specified a preferred visiting time, respect that preference.
-   Preserve its meaning and do not silently substitute a different time.
+   - Use the actual visiting start time you intend to return
+     when estimating the duration.
 
-10. If the preferred time is not specified, suggest a reasonable visiting-time
-    label after considering the existing stops, their start times, the trip type,
-    travel mode, and preferences.
+   - Calculate the expected finishing time:
 
-11. Existing stop information provides context, but it does not establish
-    verified travel durations or opening hours.
+     Expected finishing time =
+     Visiting start time + durationMinutes.
 
-12. Do not claim that a schedule has been verified or that travel between
-    attractions will take a particular duration unless that information is
-    supplied.
+   - The expected finishing time MUST NOT exceed the
+     attraction's closing time when a meaningful visit
+     can fit before closing.
 
-13. Do not change the user's requested day.
+   - Consider the expected arrival time and operating hours
+     together when estimating the available visiting time.
 
-14. Return only valid JSON without Markdown or additional text.
+   - If the initially estimated duration exceeds the
+     available visiting time, reduce the duration reasonably
+     so the visit finishes before closing.
+
+   - After reducing the duration, calculate the expected
+     finishing time again.
+
+   - Do not reduce the duration to an unrealistic value
+     merely to make the schedule fit.
+
+   - If there is insufficient time for a meaningful visit,
+     return the normal estimated duration.
+     The TypeScript scheduler will identify the conflict.
+
+   - Never assume that the attraction can remain open
+     beyond its supplied closing time.
+
+   - If the attraction is CLOSED, do not schedule a visit.
+
+   - If operating hours are UNKNOWN, estimate a normal
+     visiting duration without inventing operating hours.
+
+5. TRAVEL AND SCHEDULING
+
+   - Do not invent travel durations.
+   - Travel time is calculated separately by the route service.
+   - Do not claim that the complete day's schedule is feasible.
+   - The TypeScript scheduler performs the final validation.
+   - Do not change the requested day.
+
+6. OUTPUT REQUIREMENTS
+
+   - Return durationMinutes as a positive integer.
+   - Return startTime in 12-hour format, for example "01:30 PM".
+   - Ensure startTime and durationMinutes are consistent with
+     the operating-hours constraints whenever possible.
+   - These durations are planning estimates, not verified
+     visiting durations.
+   - Return only valid JSON without Markdown or additional text.
 
 REQUIRED JSON STRUCTURE:
 
 {
   "name": "${placeName}",
-  "description": "A meaningful description of the attraction.",
+  "description": "Description of the attraction",
   "activityType": "Nature",
   "location": "Location, if reasonably known",
-  "startTime": "Morning"
+  "startTime": "01:30 PM",
+  "durationMinutes": 120
 }
 
 The activityType and location fields may be omitted when unknown.
-The startTime field is required and must be a non-empty string.
+
+The startTime and durationMinutes fields are required.
 `;
 
     const response = await this._ai.models.generateContent({
       model: this._model,
       contents: prompt,
       config: {
-        temperature: 0.3,
+        temperature: 0.2,
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
           properties: {
-            name: {
-              type: "STRING",
-            },
-            description: {
-              type: "STRING",
-            },
-            activityType: {
-              type: "STRING",
-            },
-            location: {
-              type: "STRING",
-            },
-            startTime: {
-              type: "STRING",
-            },
+            name: { type: "STRING" },
+            description: { type: "STRING" },
+            activityType: { type: "STRING" },
+            location: { type: "STRING" },
+            startTime: { type: "STRING" },
+            durationMinutes: { type: "INTEGER" },
           },
-          required: ["name", "description", "startTime"],
+          required: ["name", "description", "startTime", "durationMinutes"],
         },
       },
     });
@@ -608,6 +731,7 @@ The startTime field is required and must be a non-empty string.
       activityType: z.string().trim().min(1).optional(),
       location: z.string().trim().min(1).optional(),
       startTime: z.string().trim().min(1),
+      durationMinutes: z.number().int().positive(),
     });
 
     const result = stopSchema.safeParse(parsed);
@@ -616,19 +740,17 @@ The startTime field is required and must be a non-empty string.
       throw new Error(`Invalid stop details for "${placeName}": ${result.error.message}`);
     }
 
-    // The model must not silently substitute another destination.
     if (result.data.name.trim().toLowerCase() !== placeName.trim().toLowerCase()) {
       throw new Error(`Gemini returned a different place name instead of "${placeName}".`);
     }
 
-    // Preserve the user's explicit preference rather than relying on
-    // the model to reproduce it exactly.
     const finalStartTime = preferredTime?.trim() || result.data.startTime;
 
     return {
       name: placeName.trim(),
       description: result.data.description,
       startTime: finalStartTime,
+      durationMinutes: result.data.durationMinutes,
       ...(result.data.activityType !== undefined && {
         activityType: result.data.activityType,
       }),
@@ -636,5 +758,986 @@ The startTime field is required and must be a non-empty string.
         location: result.data.location,
       }),
     };
+  }
+
+  public calculateDaySchedule(
+    input: RescheduleDayInput,
+    dayStartTime = "09:00 AM",
+    bufferMinutes = 30,
+  ): {
+    day: IItineraryDay;
+    issues: string[];
+  } {
+    const { day, travelLegs, operatingHours } = input;
+
+    const issues: string[] = [];
+
+    // Convert 12-hour or 24-hour time into minutes.
+    const toMinutes = (time: string): number | null => {
+      const value = time.trim();
+
+      const match12 = value.match(/^(0?[1-9]|1[0-2]):([0-5]\d)\s*(AM|PM)$/i);
+
+      if (match12) {
+        let hours = Number(match12[1]);
+        const minutes = Number(match12[2]);
+        const period = match12[3]?.toUpperCase();
+
+        if (period === "AM" && hours === 12) hours = 0;
+        if (period === "PM" && hours !== 12) hours += 12;
+
+        return hours * 60 + minutes;
+      }
+
+      const match24 = value.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+
+      if (match24) {
+        return Number(match24[1]) * 60 + Number(match24[2]);
+      }
+
+      return null;
+    };
+
+    // Convert minutes into a readable 12-hour time.
+    const formatTime = (minutes: number): string => {
+      const normalizedMinutes = ((minutes % 1440) + 1440) % 1440;
+
+      const hours = Math.floor(normalizedMinutes / 60);
+      const mins = normalizedMinutes % 60;
+
+      const period = hours >= 12 ? "PM" : "AM";
+      const displayHours = hours % 12 || 12;
+
+      return `${String(displayHours).padStart(2, "0")}:${String(mins).padStart(2, "0")} ${period}`;
+    };
+
+    // Format operating-hours values for user-facing messages.
+    const formatDisplayTime = (time: string | null | undefined): string => {
+      if (!time) {
+        return "";
+      }
+
+      const minutes = toMinutes(time);
+
+      return minutes !== null ? formatTime(minutes) : time;
+    };
+
+    const parsedStart = toMinutes(dayStartTime);
+
+    if (parsedStart === null) {
+      throw new Error("Invalid day start time.");
+    }
+
+    let nextStart = parsedStart;
+    let scheduleComplete = true;
+
+    const scheduledStops = day.stops.map((stop, index) => {
+      // Check travel between consecutive attractions.
+      if (index > 0) {
+        const previousStop = day.stops[index - 1];
+        const travelLeg = travelLegs[index - 1];
+
+        if (!previousStop) {
+          scheduleComplete = false;
+          return stop;
+        }
+
+        if (!travelLeg || travelLeg.status !== "ESTIMATED" || travelLeg.durationMinutes === null) {
+          issues.push(
+            `Travel duration between ${previousStop.name} and ${stop.name} is unavailable.`,
+          );
+
+          scheduleComplete = false;
+          return stop;
+        }
+
+        // Verify that the travel leg matches the actual attractions.
+        if (
+          travelLeg.from.trim().toLowerCase() !== previousStop.name.trim().toLowerCase() ||
+          travelLeg.to.trim().toLowerCase() !== stop.name.trim().toLowerCase()
+        ) {
+          issues.push(
+            `Travel route does not match the expected route between ${previousStop.name} and ${stop.name}.`,
+          );
+
+          scheduleComplete = false;
+          return stop;
+        }
+
+        nextStart += bufferMinutes + travelLeg.durationMinutes;
+      }
+
+      if (!scheduleComplete) {
+        return stop;
+      }
+
+      // Activity duration is required.
+      if (!stop.durationMinutes || stop.durationMinutes <= 0) {
+        issues.push(`Activity duration is missing or invalid for ${stop.name}.`);
+
+        scheduleComplete = false;
+        return stop;
+      }
+
+      let duration = stop.durationMinutes;
+
+      const hours = operatingHours.find(
+        (item) => item.stopName.trim().toLowerCase() === stop.name.trim().toLowerCase(),
+      );
+
+      // Check whether the attraction is closed.
+      if (hours?.operatingHoursStatus === "CLOSED") {
+        issues.push(`${stop.name} is marked as CLOSED.`);
+        scheduleComplete = false;
+        return stop;
+      }
+
+      // Check known operating hours.
+      if (hours?.operatingHoursStatus === "AVAILABLE" && hours.openingTime && hours.closingTime) {
+        const opening = toMinutes(hours.openingTime);
+        const closing = toMinutes(hours.closingTime);
+
+        if (opening !== null && closing !== null) {
+          if (nextStart < opening) {
+            nextStart = opening;
+          }
+
+          if (nextStart + duration > closing) {
+            const availableDuration = closing - nextStart;
+
+            if (availableDuration > 0) {
+              console.log(
+                `Adjusting duration for ${stop.name}: ${duration} -> ${availableDuration} minutes`,
+              );
+
+              duration = availableDuration;
+            } else {
+              issues.push(
+                `${stop.name} cannot fit within its operating hours (${formatDisplayTime(hours.openingTime)} - ${formatDisplayTime(hours.closingTime)}).`,
+              );
+            }
+          }
+        }
+
+        // Check last-entry restriction after adjusting start time.
+        if (hours.lastEntryTime) {
+          const lastEntry = toMinutes(hours.lastEntryTime);
+
+          if (lastEntry !== null && nextStart > lastEntry) {
+            issues.push(
+              `${stop.name} starts after its last-entry time (${formatDisplayTime(hours.lastEntryTime)}).`,
+            );
+          }
+        }
+      }
+
+      // Prevent scheduling beyond the current day.
+      if (nextStart + duration > 24 * 60) {
+        issues.push(`${stop.name} extends beyond the current day.`);
+        scheduleComplete = false;
+        return stop;
+      }
+
+      const startTime = formatTime(nextStart);
+
+      nextStart += duration;
+
+      return {
+        ...stop,
+        startTime,
+        durationMinutes: duration,
+      };
+    });
+
+    return {
+      day: {
+        ...day,
+        stops: scheduledStops,
+      },
+      issues,
+    };
+  }
+
+  public async rescheduleDay(input: RescheduleDayInput): Promise<IItineraryDay> {
+    const { day, travelMode, tripType, preferences, travelLegs, operatingHours } = input;
+
+    if (day.stops.length === 0) {
+      return day;
+    }
+
+    const MAX_ATTEMPTS = 2;
+    const API_MAX_ATTEMPTS = 3;
+
+    // Convert HH:MM AM/PM into minutes after midnight.
+    const toMinutes = (time: string): number | null => {
+      const value = time.trim();
+
+      const twelveHourMatch = value.match(/^(0?[1-9]|1[0-2]):([0-5]\d)\s*(AM|PM)$/i);
+
+      if (twelveHourMatch) {
+        let hours = Number(twelveHourMatch[1]);
+        const minutes = Number(twelveHourMatch[2]);
+        const period = twelveHourMatch[3]?.toUpperCase();
+
+        if (period === "AM" && hours === 12) {
+          hours = 0;
+        } else if (period === "PM" && hours !== 12) {
+          hours += 12;
+        }
+
+        return hours * 60 + minutes;
+      }
+
+      const twentyFourHourMatch = value.match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+
+      if (twentyFourHourMatch) {
+        return Number(twentyFourHourMatch[1]) * 60 + Number(twentyFourHourMatch[2]);
+      }
+
+      return null;
+    };
+
+    // Convert minutes after midnight into HH:MM AM/PM.
+    const formatTime = (totalMinutes: number): string => {
+      const normalizedMinutes = totalMinutes % (24 * 60);
+
+      const hours = Math.floor(normalizedMinutes / 60);
+      const minutes = normalizedMinutes % 60;
+
+      const period = hours >= 12 ? "PM" : "AM";
+      const displayHours = hours % 12 || 12;
+
+      return `${String(displayHours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${period}`;
+    };
+
+    let lastSchedulingIssues: string[] = [];
+
+    // Generate and validate the schedule.
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      console.log(`\n========== DAY ${day.dayNumber} SCHEDULING ATTEMPT ${attempt} ==========\n`);
+
+      const previousIssues =
+        attempt > 1
+          ? "The previous schedule had these problems:\n" +
+            "You MUST correct all of them:\n" +
+            lastSchedulingIssues.map((issue) => `- ${issue}`).join("\n")
+          : "";
+
+      const prompt = `
+You are TripNest's AI travel itinerary scheduling assistant.
+
+Your task is to assign realistic start times to all attractions
+in an existing day's itinerary.
+
+DAY DETAILS:
+
+Day number: ${day.dayNumber}
+Day title: ${day.title}
+Day description: ${day.description}
+
+TRAVEL MODE:
+${travelMode}
+
+TRIP TYPE:
+${tripType}
+
+PREFERENCES:
+${JSON.stringify(preferences)}
+
+ATTRACTIONS:
+${JSON.stringify(day.stops, null, 2)}
+
+ESTIMATED TRAVEL TIMES BETWEEN CONSECUTIVE ATTRACTIONS:
+${JSON.stringify(travelLegs, null, 2)}
+
+ATTRACTION OPERATING HOURS:
+${JSON.stringify(operatingHours, null, 2)}
+
+${previousIssues}
+
+INSTRUCTIONS:
+
+1. Schedule every attraction in the supplied itinerary.
+
+2. Preserve the existing attraction order.
+   Do not add, remove, replace, or rename attractions.
+
+3. Preserve the existing durationMinutes for every attraction.
+
+4. Assign an exact startTime to every attraction.
+
+5. Use this time format:
+   "08:00 AM", "10:30 AM", "02:00 PM".
+
+6. Consider each attraction's activity duration.
+
+7. Consider the estimated travel time between consecutive attractions.
+
+8. The next attraction must start only after:
+   Previous attraction's start time
+   + Previous attraction's activity duration
+   + Required travel time.
+
+9. Do not schedule overlapping activities.
+
+10. Consider a reasonable starting time for the day.
+    Prefer a practical daytime schedule.
+
+11. TRAVEL CONSTRAINTS:
+    - Use the supplied travel estimates.
+    - If a travel leg is UNAVAILABLE, do not pretend its
+      travel duration is known.
+    - Do not invent travel durations.
+
+12. OPERATING HOURS:
+    - Respect the supplied opening and closing times.
+    - Ensure the entire activity duration fits before closing.
+    - Respect last-entry restrictions when provided.
+    - Never assume closing time and last-entry time are the same.
+    - Do not schedule an attraction on a day when it is confirmed CLOSED.
+    - If an attraction is OPEN_24_HOURS, it can be scheduled at any time.
+    - If operating hours are UNKNOWN, do not invent opening or closing times.
+    - If the status is NEEDS_DATE_CHECK, acknowledge the uncertainty.
+    - Do not assume weekly operating periods belong to this specific
+      itinerary date unless the date is known.
+
+13. If all attractions cannot reasonably fit into one day:
+    - Do not shorten activity durations.
+    - Do not ignore operating-hour restrictions.
+    - Do not invent opening hours.
+    - Return the best possible schedule while preserving attraction order.
+
+14. ${
+        attempt > 1
+          ? "Correct ALL the scheduling problems listed above. Do not repeat the previous conflicts."
+          : "Generate a feasible schedule following all the constraints."
+      }
+
+15. Return only valid JSON.
+
+REQUIRED JSON STRUCTURE:
+
+{
+  "stops": [
+    {
+      "name": "Attraction name",
+      "startTime": "08:00 AM"
+    }
+  ]
+}
+
+Return exactly ${day.stops.length} stops.
+`;
+
+      // Call Gemini with retries for temporary API availability errors.
+      let response: Awaited<ReturnType<typeof this._ai.models.generateContent>> | undefined;
+
+      for (let apiAttempt = 1; apiAttempt <= API_MAX_ATTEMPTS; apiAttempt++) {
+        try {
+          console.log(`Gemini scheduling API attempt ${apiAttempt}/${API_MAX_ATTEMPTS}`);
+
+          response = await this._ai.models.generateContent({
+            model: this._model,
+            contents: prompt,
+            config: {
+              temperature: 0.2,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "OBJECT",
+                properties: {
+                  stops: {
+                    type: "ARRAY",
+                    items: {
+                      type: "OBJECT",
+                      properties: {
+                        name: { type: "STRING" },
+                        startTime: { type: "STRING" },
+                      },
+                      required: ["name", "startTime"],
+                    },
+                  },
+                },
+                required: ["stops"],
+              },
+            },
+          });
+
+          break;
+        } catch (error) {
+          const status = (error as { status?: number }).status;
+
+          if (status !== 503 || apiAttempt === API_MAX_ATTEMPTS) {
+            throw error;
+          }
+
+          const delay = apiAttempt * 2000;
+
+          console.log(
+            `Gemini temporarily unavailable (503). Retrying in ${delay / 1000} seconds...`,
+          );
+
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+
+      if (!response) {
+        throw new Error("Gemini failed to generate the day schedule.");
+      }
+
+      const responseText = response.text?.trim();
+
+      if (!responseText) {
+        throw new Error("Gemini returned an empty day schedule.");
+      }
+
+      let parsed: unknown;
+
+      try {
+        parsed = JSON.parse(responseText);
+      } catch {
+        throw new Error("Gemini returned invalid JSON for the day schedule.");
+      }
+
+      const scheduleSchema = z.object({
+        stops: z.array(
+          z.object({
+            name: z.string().trim().min(1),
+            startTime: z
+              .string()
+              .trim()
+              .regex(
+                /^(0?[1-9]|1[0-2]):[0-5]\d\s*(AM|PM)$/i,
+                "Start time must use the format HH:MM AM/PM.",
+              ),
+          }),
+        ),
+      });
+
+      const result = scheduleSchema.safeParse(parsed);
+
+      if (!result.success) {
+        throw new Error(`Invalid generated day schedule: ${result.error.message}`);
+      }
+
+      // DEBUG LOGS: Inspect original stops and Gemini's response.
+      console.log("\n========== DEBUG: ORIGINAL DAY STOPS ==========");
+      console.log(JSON.stringify(day.stops, null, 2));
+
+      console.log("\n========== DEBUG: GEMINI SCHEDULE RESPONSE ==========");
+      console.log(JSON.stringify(result.data.stops, null, 2));
+
+      console.log("\n========== DEBUG: STOP NAME COMPARISON ==========");
+
+      day.stops.forEach((originalStop, index) => {
+        const scheduledStop = result.data.stops[index];
+
+        console.log({
+          index,
+          originalStopName: originalStop?.name,
+          scheduledStopName: scheduledStop?.name,
+          originalStopKeys: Object.keys(originalStop ?? {}),
+          scheduledStopKeys: Object.keys(scheduledStop ?? {}),
+        });
+      });
+
+      console.log("====================================================\n");
+
+      if (result.data.stops.length !== day.stops.length) {
+        throw new Error("Gemini returned an incorrect number of scheduled stops.");
+      }
+
+      // Preserve original attraction details and validate order.
+      const updatedStops = day.stops.map((originalStop, index) => {
+        const scheduledStop = result.data.stops[index];
+
+        if (
+          !scheduledStop ||
+          scheduledStop.name.trim().toLowerCase() !== originalStop.name.trim().toLowerCase()
+        ) {
+          throw new Error(`Gemini changed the attraction order or name for Day ${day.dayNumber}.`);
+        }
+
+        return {
+          name: originalStop.name,
+          description: originalStop.description,
+          ...(originalStop.activityType !== undefined && {
+            activityType: originalStop.activityType,
+          }),
+          ...(originalStop.location !== undefined && {
+            location: originalStop.location,
+          }),
+          startTime: scheduledStop.startTime,
+          ...(originalStop.durationMinutes !== undefined && {
+            durationMinutes: originalStop.durationMinutes,
+          }),
+        };
+      });
+
+      // Automatically adjust start times to satisfy travel-time constraints.
+      console.log("\n========== TRAVEL-TIME ADJUSTMENTS ==========");
+
+      for (let index = 0; index < updatedStops.length - 1; index++) {
+        const currentStop = updatedStops[index];
+        const nextStop = updatedStops[index + 1];
+        const travelLeg = travelLegs[index];
+
+        if (!currentStop || !nextStop) {
+          continue;
+        }
+
+        const currentStart = toMinutes(currentStop.startTime);
+        const nextStart = toMinutes(nextStop.startTime);
+
+        if (currentStart === null || nextStart === null) {
+          continue;
+        }
+
+        const currentEnd = currentStart + (currentStop.durationMinutes ?? 0);
+
+        let earliestNextStart = currentEnd;
+
+        if (travelLeg?.status === "ESTIMATED" && travelLeg.durationMinutes !== null) {
+          earliestNextStart += travelLeg.durationMinutes;
+        }
+
+        if (nextStart < earliestNextStart) {
+          console.log(
+            `Adjusting ${nextStop.name}: ${nextStop.startTime} → ${formatTime(earliestNextStart)}`,
+          );
+
+          updatedStops[index + 1] = {
+            ...nextStop,
+            startTime: formatTime(earliestNextStart),
+          };
+        }
+      }
+
+      console.log("=============================================\n");
+
+      console.log("\n========== FINAL SCHEDULE BEFORE VALIDATION ==========");
+
+      updatedStops.forEach((stop, index) => {
+        console.log({
+          name: stop.name,
+          startTime: stop.startTime,
+          durationMinutes: stop.durationMinutes,
+          travelToNext: travelLegs[index]?.durationMinutes ?? null,
+        });
+      });
+
+      console.log("======================================================\n");
+
+      // Validate travel time and activity overlaps.
+      const schedulingIssues: string[] = [];
+
+      for (let index = 0; index < updatedStops.length - 1; index++) {
+        const currentStop = updatedStops[index];
+        const nextStop = updatedStops[index + 1];
+        const travelLeg = travelLegs[index];
+
+        if (!currentStop || !nextStop) {
+          continue;
+        }
+
+        const currentStart = toMinutes(currentStop.startTime);
+        const nextStart = toMinutes(nextStop.startTime);
+
+        if (currentStart === null || nextStart === null) {
+          schedulingIssues.push(
+            `Invalid start time found between ${currentStop.name} and ${nextStop.name}.`,
+          );
+          continue;
+        }
+
+        const currentDuration = currentStop.durationMinutes ?? 0;
+        const currentEnd = currentStart + currentDuration;
+
+        if (nextStart < currentEnd) {
+          schedulingIssues.push(
+            `${nextStop.name} overlaps with the previous activity (${currentStop.name}).`,
+          );
+          continue;
+        }
+
+        if (travelLeg?.status === "ESTIMATED" && travelLeg.durationMinutes !== null) {
+          const requiredStart = currentEnd + travelLeg.durationMinutes;
+
+          if (nextStart < requiredStart) {
+            schedulingIssues.push(
+              `Insufficient travel time between ${currentStop.name} and ${nextStop.name}. Required: ${travelLeg.durationMinutes} minutes.`,
+            );
+          }
+        }
+      }
+
+      // Validate operating hours.
+      const operatingHourIssues: string[] = [];
+
+      console.log("\n========== DEBUG: OPERATING HOURS DATA ==========");
+      console.log(JSON.stringify(operatingHours, null, 2));
+      console.log("=================================================");
+
+      for (const stop of updatedStops) {
+        const hours = operatingHours.find(
+          (item) => item.stopName?.trim().toLowerCase() === stop.name?.trim().toLowerCase(),
+        );
+
+        if (!hours) {
+          continue;
+        }
+
+        if (hours.operatingHoursStatus === "UNKNOWN") {
+          continue;
+        }
+
+        if (hours.operatingHoursStatus === "CLOSED") {
+          operatingHourIssues.push(`${stop.name} is marked as CLOSED.`);
+          continue;
+        }
+
+        if (hours.operatingHoursStatus === "OPEN_24_HOURS") {
+          continue;
+        }
+
+        if (hours.status === "NEEDS_DATE_CHECK") {
+          continue;
+        }
+
+        const activityStart = toMinutes(stop.startTime);
+
+        if (activityStart === null) {
+          operatingHourIssues.push(`${stop.name} has an invalid start time.`);
+          continue;
+        }
+
+        const duration = stop.durationMinutes ?? 0;
+
+        if (hours.lastEntryTime) {
+          const lastEntry = toMinutes(hours.lastEntryTime);
+
+          if (lastEntry !== null && activityStart > lastEntry) {
+            operatingHourIssues.push(
+              `${stop.name} starts after its last-entry time (${hours.lastEntryTime}).`,
+            );
+          }
+        }
+
+        if (hours.operatingPeriods.length > 0) {
+          const fitsOperatingPeriod = hours.operatingPeriods.some((period) => {
+            const opening = toMinutes(period.openingTime);
+            const closing = toMinutes(period.closingTime);
+
+            if (opening === null || closing === null) {
+              return false;
+            }
+
+            const adjustedClosing = closing <= opening ? closing + 24 * 60 : closing;
+
+            const adjustedStart = activityStart < opening ? activityStart + 24 * 60 : activityStart;
+
+            const adjustedEnd = adjustedStart + duration;
+
+            return adjustedStart >= opening && adjustedEnd <= adjustedClosing;
+          });
+
+          if (!fitsOperatingPeriod) {
+            operatingHourIssues.push(
+              `${stop.name} (${stop.startTime}) does not fit within its known operating hours.`,
+            );
+          }
+        } else if (hours.openingTime && hours.closingTime) {
+          const opening = toMinutes(hours.openingTime);
+          const closing = toMinutes(hours.closingTime);
+
+          if (opening !== null && closing !== null) {
+            const adjustedClosing = closing <= opening ? closing + 24 * 60 : closing;
+
+            const adjustedStart = activityStart < opening ? activityStart + 24 * 60 : activityStart;
+
+            const adjustedEnd = adjustedStart + duration;
+
+            if (adjustedStart < opening || adjustedEnd > adjustedClosing) {
+              operatingHourIssues.push(
+                `${stop.name} (${stop.startTime}) does not fit within its operating hours (${hours.openingTime} - ${hours.closingTime}).`,
+              );
+            }
+          }
+        }
+      }
+
+      // Combine all validation issues.
+      lastSchedulingIssues = [...schedulingIssues, ...operatingHourIssues];
+
+      if (lastSchedulingIssues.length === 0) {
+        console.log(`Day ${day.dayNumber} schedule passed validation on attempt ${attempt}.`);
+
+        return {
+          dayNumber: day.dayNumber,
+          title: day.title,
+          description: day.description,
+          stops: updatedStops,
+        };
+      }
+
+      console.error(`\nSCHEDULING CONFLICTS ON ATTEMPT ${attempt}:`, lastSchedulingIssues);
+
+      if (attempt === MAX_ATTEMPTS) {
+        throw new Error(
+          `Unable to generate a feasible schedule for Day ${day.dayNumber} after ${MAX_ATTEMPTS} attempts:\n${lastSchedulingIssues.join("\n")}`,
+        );
+      }
+    }
+
+    throw new Error(`Unable to generate a feasible schedule for Day ${day.dayNumber}.`);
+  }
+
+  public async generateAttractionRecommendations(
+    itinerary: IItinerary,
+    dayNumber: number,
+  ): Promise<AttractionRecommendationResult> {
+    // 1. Find the requested day.
+    const targetDay = itinerary.days.find((day) => day.dayNumber === dayNumber);
+
+    if (!targetDay) {
+      throw new Error(`Day ${dayNumber} does not exist in the itinerary.`);
+    }
+
+    // 2. Collect attractions already included in the itinerary.
+    const existingAttractions = itinerary.days.flatMap((day) => day.stops.map((stop) => stop.name));
+
+    // 3. Prepare the context for Gemini.
+    const prompt = `
+You are TripNest's AI travel recommendation assistant.
+
+Recommend alternative attractions and activities for an existing travel itinerary.
+
+TRIP DETAILS:
+
+Starting location: ${itinerary.source}
+
+Destinations: ${itinerary.destinations.join(", ")}
+
+Travel mode: ${itinerary.travelMode}
+
+Trip type: ${itinerary.tripType}
+
+Travel preferences: ${JSON.stringify(itinerary.preferences)}
+
+TARGET DAY:
+
+Day ${dayNumber}
+
+Day title: ${targetDay.title}
+
+Day description: ${targetDay.description}
+
+ATTRACTIONS ALREADY PLANNED FOR THIS DAY:
+
+${JSON.stringify(targetDay.stops, null, 2)}
+
+ATTRACTIONS ALREADY INCLUDED IN THE COMPLETE ITINERARY:
+
+${JSON.stringify(existingAttractions)}
+
+EXCLUDED PLACES:
+
+${JSON.stringify(itinerary.excludedPlaces)}
+
+EXCLUDED ACTIVITY TYPES:
+
+${JSON.stringify(itinerary.excludedActivityTypes)}
+
+YOUR TASK:
+
+Recommend 3 to 5 alternative attractions or activities
+that the user could consider visiting on Day ${dayNumber}.
+
+RULES:
+
+1. Recommend attractions relevant to the trip destinations.
+2. Prefer attractions that fit geographically with the existing day's plan.
+3. Consider the user's travel mode, trip type and preferences.
+4. Do not recommend attractions already included in the itinerary.
+5. Do not recommend excluded places.
+6. Do not recommend excluded activity types.
+7. Do not invent precise travel durations, opening hours or ticket prices.
+8. Do not claim that route feasibility or availability has been verified.
+9. Provide a meaningful description for every recommendation.
+10. Explain briefly why each recommendation may suit this particular day.
+11. Return only valid JSON.
+
+REQUIRED JSON STRUCTURE:
+
+{
+  "dayNumber": ${dayNumber},
+  "recommendations": [
+    {
+      "name": "Attraction name",
+      "description": "Description of the attraction",
+      "reason": "Why it is suitable for this day",
+      "activityType": "Nature",
+      "location": "Location"
+    }
+  ]
+}
+`;
+
+    // 4. Ask Gemini to generate recommendations.
+    const response = await this._ai.models.generateContent({
+      model: this._model,
+      contents: prompt,
+      config: {
+        temperature: 0.4,
+        responseMimeType: "application/json",
+      },
+    });
+
+    const responseText = response.text?.trim();
+
+    if (!responseText) {
+      throw new Error("Gemini returned an empty attraction recommendation response.");
+    }
+
+    // 5. Parse the response.
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(responseText);
+    } catch {
+      throw new Error("Gemini returned invalid JSON for attraction recommendations.");
+    }
+
+    // 6. Validate the response.
+    const recommendationSchema = z.object({
+      dayNumber: z.number().int().positive(),
+      recommendations: z
+        .array(
+          z.object({
+            name: z.string().trim().min(1),
+            description: z.string().trim().min(1),
+            reason: z.string().trim().min(1),
+            activityType: z.string().optional(),
+            location: z.string().optional(),
+          }),
+        )
+        .min(1),
+    });
+
+    const result = recommendationSchema.safeParse(parsed);
+
+    if (!result.success) {
+      throw new Error(`Invalid attraction recommendations: ${result.error.message}`);
+    }
+
+    if (result.data.dayNumber !== dayNumber) {
+      throw new Error("Gemini returned recommendations for an incorrect day.");
+    }
+
+    return result.data;
+  }
+
+  public async generateAttractionRecommendationsForDestination(
+    destination: string,
+  ): Promise<DestinationAttractionRecommendationResult> {
+    const normalizedDestination = destination.trim();
+
+    if (!normalizedDestination) {
+      throw new Error("Please provide a destination for attraction recommendations.");
+    }
+
+    const prompt = `
+You are TripNest's AI travel recommendation assistant.
+
+Your task is to recommend interesting attractions and activities
+for a traveler visiting a particular destination.
+
+DESTINATION:
+${normalizedDestination}
+
+YOUR TASK:
+
+Recommend 5 interesting tourist attractions or activities
+that travelers can explore in this destination.
+
+RULES:
+
+1. Recommend real attractions and activities relevant to the destination.
+2. Include variety, such as historical places, nature, cultural attractions,
+   museums, landmarks, and activities.
+3. Do not recommend places belonging to unrelated destinations.
+4. Avoid repeating attractions.
+5. Provide a meaningful description for each attraction.
+6. Explain why each attraction is worth visiting.
+7. Do not invent precise travel durations, opening hours, ticket prices,
+   or availability.
+8. Do not claim that route feasibility or availability has been verified.
+9. Return 5 recommendations when possible.
+10. Return only valid JSON.
+
+REQUIRED JSON STRUCTURE:
+
+{
+  "destination": "Destination name",
+  "recommendations": [
+    {
+      "name": "Attraction name",
+      "description": "Description of the attraction",
+      "reason": "Why the traveler should visit this attraction",
+      "activityType": "Historical",
+      "location": "Location"
+    }
+  ]
+}
+`;
+
+    const response = await this._ai.models.generateContent({
+      model: this._model,
+      contents: prompt,
+      config: {
+        temperature: 0.4,
+        responseMimeType: "application/json",
+      },
+    });
+
+    const responseText = response.text?.trim();
+
+    if (!responseText) {
+      throw new Error("Gemini returned an empty destination attraction recommendation response.");
+    }
+
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(responseText);
+    } catch {
+      throw new Error("Gemini returned invalid JSON for destination attraction recommendations.");
+    }
+
+    const recommendationSchema = z.object({
+      destination: z.string().trim().min(1),
+      recommendations: z
+        .array(
+          z.object({
+            name: z.string().trim().min(1),
+            description: z.string().trim().min(1),
+            reason: z.string().trim().min(1),
+            activityType: z.string().optional(),
+            location: z.string().optional(),
+          }),
+        )
+        .min(1),
+    });
+
+    const result = recommendationSchema.safeParse(parsed);
+
+    if (!result.success) {
+      throw new Error(`Invalid destination attraction recommendations: ${result.error.message}`);
+    }
+
+    if (result.data.destination.trim().toLowerCase() !== normalizedDestination.toLowerCase()) {
+      throw new Error("Gemini returned recommendations for an incorrect destination.");
+    }
+
+    return result.data;
   }
 }

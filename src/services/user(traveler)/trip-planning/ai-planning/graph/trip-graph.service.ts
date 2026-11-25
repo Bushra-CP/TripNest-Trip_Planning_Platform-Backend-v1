@@ -13,18 +13,23 @@ import { TripDateService } from "@/services/user(traveler)/trip-planning/ai-plan
 import { TripStateService } from "@/services/user(traveler)/trip-planning/ai-planning/trip-state.service";
 import { TripChangeDetectorService } from "@/services/user(traveler)/trip-planning/ai-planning/trip-change-detector.service";
 import { RoutePlanningService } from "@/services/user(traveler)/trip-planning/ai-planning/route-planning.service";
+
 import { KnowledgeVectorSearchService } from "../rag/knowledge-vector-search.service";
 import { RouteRequestService } from "../route-request.service";
 import { KnowledgeQueryClassifierService } from "../knowledge-query-classifier.service";
 import { KnowledgeSourceService } from "../knowledge-source.service";
 import { KnowledgeSufficiencyService } from "../knowledge-sufficiency.service";
 import { KnowledgeAcquisitionService } from "../knowledge-acquisition.service";
+
 import { ItineraryIntentService } from "../../itinerary/itinerary-intent.service";
 import { ItineraryTemplateRetrievalService } from "../../itinerary/itinerary-template-retrieval.service";
 import { ItineraryGenerationService } from "../../itinerary/itinerary-generation.service";
 import { ItineraryModificationValidationService } from "../../itinerary/itinerary-modification-validation.service";
 import { ItineraryModificationFeasibilityService } from "../../itinerary/itinerary-modification-feasibility.service";
+import { ItineraryModificationBuilderService } from "../../itinerary/itinerary-modification-builder.service";
+
 import type { IItineraryService } from "@/interfaces/IServices/user(traveler)/trip-planning/itinerary.service.interface";
+import { ItineraryScheduleService } from "../../itinerary/itinerary-schedule.service";
 
 @injectable()
 export class TripGraphService {
@@ -77,6 +82,9 @@ export class TripGraphService {
     @inject(TYPES.ItineraryGenerationService)
     private readonly _itineraryGenerationService: ItineraryGenerationService,
 
+    @inject(TYPES.ItineraryScheduleService)
+    private readonly _itineraryScheduleService: ItineraryScheduleService,
+
     @inject(TYPES.ItineraryModificationValidationService)
     private readonly _itineraryModificationValidationService: ItineraryModificationValidationService,
 
@@ -85,6 +93,10 @@ export class TripGraphService {
 
     @inject(TYPES.ItineraryModificationFeasibilityService)
     private readonly _itineraryModificationFeasibilityService: ItineraryModificationFeasibilityService,
+
+    // Newly added modification builder service.
+    @inject(TYPES.ItineraryModificationBuilderService)
+    private readonly _itineraryModificationBuilderService: ItineraryModificationBuilderService,
   ) {
     /*
      * The LangGraph checkpointer stores the graph state after each
@@ -92,21 +104,19 @@ export class TripGraphService {
      * threadId, LangGraph can restore the previous state.
      */
 
-    //Create a MongoDB client for LangGraph checkpoint storage.
+    // Create a MongoDB client for LangGraph checkpoint storage.
     const mongoClient = new MongoClient(env.MONGO_URI!);
 
     // Create the LangGraph checkpointer.
-    // It saves and restores graph state for each conversation thread.
     this.checkpointer = new MongoDBSaver({
       client: mongoClient,
       dbName: "TripNest",
     });
 
-    //Initialize the checkpointer.
+    // Initialize the checkpointer.
     this.checkpointerInitialization = this.initializeCheckpointer();
 
-    // Create the trip-planning graph and give it the checkpointer
-    // so LangGraph can persist the state of each conversation.
+    // Create the trip-planning graph.
     this.graph = createTripGraph(
       this._tripExtractionService,
       this._tripDateService,
@@ -119,17 +129,23 @@ export class TripGraphService {
       this._routeRequestService,
       this._knowledgeSufficiencyService,
       this._knowledgeAcquisitionService,
+
+      // Itinerary services.
       this._itineraryIntentService,
       this._itineraryTemplateRetrievalService,
       this._itineraryGenerationService,
+      this._itineraryScheduleService,
       this._itineraryModificationValidationService,
       this._itineraryService,
       this._itineraryModificationFeasibilityService,
+      this._itineraryModificationBuilderService,
+
+      // Checkpointer.
       this.checkpointer,
     );
   }
 
-  //Initialize the MongoDB checkpoint storage.
+  // Initialize MongoDB checkpoint storage.
   private async initializeCheckpointer(): Promise<void> {
     await this.checkpointer.setup();
 
@@ -137,12 +153,7 @@ export class TripGraphService {
   }
 
   /**
-   * processMessage
-   *
-   * @param {string} userMessage
-   * @param {string} threadId
-   * @return {*}  {Promise<TripGraphState>}
-   * @memberof TripGraphService
+   * Process a user message.
    */
   public async processMessage(
     userMessage: string,
@@ -150,8 +161,6 @@ export class TripGraphService {
     tripId: string,
   ): Promise<TripGraphState> {
     await this.checkpointerInitialization;
-
-    // console.log("CURRENT THREAD ID:", threadId);
 
     const result = await this.graph.invoke(
       {
@@ -176,11 +185,7 @@ export class TripGraphService {
   }
 
   /**
-   * getState
-   *
-   * @param {string} threadId
-   * @return {*}  {(Promise<TripGraphState | null>)}
-   * @memberof TripGraphService
+   * Retrieve the current graph state.
    */
   public async getState(threadId: string): Promise<TripGraphState | null> {
     await this.checkpointerInitialization;
@@ -200,6 +205,9 @@ export class TripGraphService {
     return state.values as TripGraphState;
   }
 
+  /**
+   * Update conversation history.
+   */
   public async updateConversationHistory(
     threadId: string,
     conversationHistory: TripGraphState["conversationHistory"],
